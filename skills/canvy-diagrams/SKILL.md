@@ -5,7 +5,7 @@ description: Draw a flowchart, process, architecture, org chart or decision tree
 
 # Canvy diagrams
 
-Canvy (https://kimookpong.github.io/canvy/) is a free hand-drawn diagram editor in Thai and English. A diagram can travel inside a link as plain text: opening the link builds it as an editable diagram in the person's browser. Nothing is uploaded.
+Canvy (https://canvy.thasala.dev/) is a free hand-drawn diagram editor in Thai and English. A diagram can travel inside a link as plain text: opening the link builds it as an editable diagram in the person's browser. Nothing is uploaded.
 
 ## How to deliver a diagram
 
@@ -13,10 +13,10 @@ Canvy (https://kimookpong.github.io/canvy/) is a free hand-drawn diagram editor 
 2. Write it in Canvy syntax (below). Mermaid `flowchart` syntax is also accepted.
 3. If the Canvy connector is available (tool `create_diagram`), call it with `diagram`, `title`, and `direction` (`TB` for org charts, approvals and long processes; `LR` otherwise). Give the person the edit link it returns.
 4. Otherwise, build the link yourself:
-   `https://kimookpong.github.io/canvy/app/#c=<diagram>&title=<title>&dir=<LR|TB>`
+   `https://canvy.thasala.dev/app/#c=<diagram>&title=<title>&dir=<LR|TB>`
    - If you can run code, use `encodeURIComponent` (JS) or `urllib.parse.quote(s, safe='')` (Python) on `diagram` and `title`.
    - Without code, encode at least: space → `%20`, new line → `%0A`, `&` → `%26`, `#` → `%23`, `%` → `%25`, `+` → `%2B`, `?` → `%3F`. Thai letters can stay as they are.
-   - Present it as a Markdown link, e.g. `[เปิดไดอะแกรมใน Canvy](https://kimookpong.github.io/canvy/app/#c=...)`.
+   - Present it as a Markdown link, e.g. `[เปิดไดอะแกรมใน Canvy](https://canvy.thasala.dev/app/#c=...)`.
 5. Also show the diagram text in a code block so the person can read and tweak it, and mention they can paste it into Canvy's command bar.
 6. For a read-only link add `?view=1` before `#`. Optional `&style=` one of `pencil` (default), `chalk`, `marker`, `blueprint`, `ink`, `neon`.
 
@@ -57,4 +57,4 @@ start:ยื่นคำขอ -> หัวหน้าตรวจ -> {อน�
 {อนุมัติ?} -(ไม่อนุมัติ)-> แก้ไขเอกสาร -> หัวหน้าตรวจ
 ```
 
-Link (direction TB): `https://kimookpong.github.io/canvy/app/#c=start:ยื่นคำขอ%20-%3E%20หัวหน้าตรวจ%20-%3E%20{อนุมัติ%3F}%0A{อนุมัติ%3F}%20-(อนุมัติ)-%3E%20ฝ่ายบัญชีดำเนินการ%20-%3E%20end:เสร็จ%0A{อนุมัติ%3F}%20-(ไม่อนุมัติ)-%3E%20แก้ไขเอกสาร%20-%3E%20หัวหน้าตรวจ&title=ขั้นตอนอนุมัติเอกสาร&dir=TB`
+Link (direction TB): `https://canvy.thasala.dev/app/#c=start:ยื่นคำขอ%20-%3E%20หัวหน้าตรวจ%20-%3E%20{อนุมัติ%3F}%0A{อนุมัติ%3F}%20-(อนุมัติ)-%3E%20ฝ่ายบัญชีดำเนินการ%20-%3E%20end:เสร็จ%0A{อนุมัติ%3F}%20-(ไม่อนุมัติ)-%3E%20แก้ไขเอกสาร%20-%3E%20หัวหน้าตรวจ&title=ขั้นตอนอนุมัติเอกสาร&dir=TB`

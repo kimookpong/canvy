@@ -31,7 +31,7 @@ async function exercise(label, s) {
   check(`${label}: tools/list`, list.result?.tools?.map(t => t.name).join() === 'create_diagram,get_canvy_syntax');
   const call = await s.req('tools/call', { name: 'create_diagram', arguments: { diagram: 'ลูกค้า -> สั่งซื้อ -> {มีของ?}, {มีของ?} -(มี)-> จัดส่ง', title: 'สั่งซื้อ', direction: 'TB', style: 'marker' } });
   const sc = call.result?.structuredContent;
-  check(`${label}: create_diagram returns links`, sc?.edit_url?.startsWith('https://kimookpong.github.io/canvy/app/#c=') && sc.view_url.includes('?view=1#c=') && sc.boxes === 4 && sc.arrows === 3, JSON.stringify(call));
+  check(`${label}: create_diagram returns links`, sc?.edit_url?.startsWith('https://canvy.thasala.dev/app/#c=') && sc.view_url.includes('?view=1#c=') && sc.boxes === 4 && sc.arrows === 3, JSON.stringify(call));
   const back = new URLSearchParams(new URL(sc.edit_url).hash.slice(1));
   check(`${label}: link round-trips the diagram`, back.get('c') === 'ลูกค้า -> สั่งซื้อ -> {มีของ?}, {มีของ?} -(มี)-> จัดส่ง' && back.get('title') === 'สั่งซื้อ' && back.get('dir') === 'TB' && back.get('style') === 'marker');
   const empty = await s.req('tools/call', { name: 'create_diagram', arguments: { diagram: ' ' } });

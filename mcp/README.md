@@ -10,7 +10,7 @@ Nothing is stored anywhere. The diagram travels inside the link (`#c=…`), and 
 
 ## Install
 
-**Claude Desktop:** download [canvy.mcpb](https://kimookpong.github.io/canvy/canvy.mcpb) and double-click it, or drag it into Claude Desktop, then click Install.
+**Claude Desktop:** download [canvy.mcpb](https://canvy.thasala.dev/canvy.mcpb) and double-click it, or drag it into Claude Desktop, then click Install.
 
 **Claude Code**
 
@@ -48,4 +48,4 @@ Pick one way to deploy:
 
 ## Without MCP
 
-AIs that only write text can use the same links directly: see [`/llms.txt`](https://kimookpong.github.io/canvy/llms.txt) and the Claude skill in [`skills/canvy-diagrams`](../skills/canvy-diagrams/SKILL.md).
+AIs that only write text can use the same links directly: see [`/llms.txt`](https://canvy.thasala.dev/llms.txt) and the Claude skill in [`skills/canvy-diagrams`](../skills/canvy-diagrams/SKILL.md).

@@ -1,6 +1,6 @@
 #!/bin/sh
 # Build canvy.mcpb (a zip: manifest.json + server/ + icon.png) for one-click install in Claude Desktop.
-# Output goes to the site root so it can be downloaded from https://kimookpong.github.io/canvy/canvy.mcpb
+# Output goes to the site root so it can be downloaded from https://canvy.thasala.dev/canvy.mcpb
 set -e
 cd "$(dirname "$0")/.."
 tmp=$(mktemp -d)

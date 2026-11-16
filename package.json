@@ -12,7 +12,7 @@
     "build:mcpb": "sh mcp/build-mcpb.sh"
   },
   "license": "MIT",
-  "homepage": "https://kimookpong.github.io/canvy/",
+  "homepage": "https://canvy.thasala.dev/",
   "repository": { "type": "git", "url": "https://github.com/kimookpong/canvy.git" },
   "keywords": ["mcp", "diagram", "flowchart", "thai", "hand-drawn", "canvy"]
 }

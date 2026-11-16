@@ -2,7 +2,7 @@
 // No dependencies. A diagram is plain text inside a Canvy command link, so nothing is stored anywhere:
 // the tools only write links, and the person's browser builds the diagram when the link is opened.
 
-export const APP_URL = 'https://kimookpong.github.io/canvy/app/';
+export const APP_URL = 'https://canvy.thasala.dev/app/';
 export const SERVER_INFO = { name: 'canvy', title: 'Canvy diagrams', version: '1.0.0' };
 export const PROTOCOL_VERSIONS = ['2026-07-28', '2025-11-25', '2025-06-18', '2025-03-26', '2024-11-05'];
 const STYLES = ['pencil', 'chalk', 'marker', 'blueprint', 'ink', 'neon'];

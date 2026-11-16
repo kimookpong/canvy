@@ -2,21 +2,21 @@
 
 > Canvy is a free, hand-drawn diagram editor that runs entirely in the browser, in Thai and English. No account and no server: a diagram lives in the person's browser or inside its link. An AI can make a diagram for someone by writing a command link: the diagram is plain text in the URL, and opening the link builds it as an editable diagram.
 
-- Editor: https://kimookpong.github.io/canvy/app/
-- Home: https://kimookpong.github.io/canvy/
+- Editor: https://canvy.thasala.dev/app/
+- Home: https://canvy.thasala.dev/
 - Source: https://github.com/kimookpong/canvy
 
 ## Command links
 
 ```
-https://kimookpong.github.io/canvy/app/#c=<diagram>&title=<title>&dir=<LR|TB>&style=<style>
+https://canvy.thasala.dev/app/#c=<diagram>&title=<title>&dir=<LR|TB>&style=<style>
 ```
 
 - `c` (required): the diagram, in Canvy syntax (below) or Mermaid `flowchart` / `graph` syntax. Percent-encode it with encodeURIComponent: spaces → `%20`, `->` → `-%3E`, new line → `%0A`, `&` → `%26`, `#` → `%23`, `?` → `%3F`. Thai text must be percent-encoded too.
 - `title` (optional): diagram name. Percent-encoded.
 - `dir` (optional): `LR` (left to right, default) or `TB` (top to bottom). Use `TB` for org charts, approvals and long processes.
 - `style` (optional): `pencil` (default), `chalk`, `marker`, `blueprint`, `ink`, `neon`.
-- Read-only link: put `?view=1` before the `#`: `https://kimookpong.github.io/canvy/app/?view=1#c=...`
+- Read-only link: put `?view=1` before the `#`: `https://canvy.thasala.dev/app/?view=1#c=...`
 - Embed in a page: `?embed=1` in an `<iframe>`.
 
 Opening a command link creates a new diagram in that browser. The person can then edit, restyle, present (each frame becomes a slide) and export it to PNG, SVG, PDF or Mermaid.
@@ -55,7 +55,7 @@ flowchart TB
 
 Diagram `ลูกค้า -> สั่งซื้อ -> {มีของ?}, {มีของ?} -(มี)-> จัดส่ง, {มีของ?} -(ไม่มี)-> แจ้งลูกค้า`, top to bottom, titled ขั้นตอนสั่งซื้อ:
 
-https://kimookpong.github.io/canvy/app/#c=%E0%B8%A5%E0%B8%B9%E0%B8%81%E0%B8%84%E0%B9%89%E0%B8%B2%20-%3E%20%E0%B8%AA%E0%B8%B1%E0%B9%88%E0%B8%87%E0%B8%8B%E0%B8%B7%E0%B9%89%E0%B8%AD%20-%3E%20%7B%E0%B8%A1%E0%B8%B5%E0%B8%82%E0%B8%AD%E0%B8%87%3F%7D%2C%20%7B%E0%B8%A1%E0%B8%B5%E0%B8%82%E0%B8%AD%E0%B8%87%3F%7D%20-(%E0%B8%A1%E0%B8%B5)-%3E%20%E0%B8%88%E0%B8%B1%E0%B8%94%E0%B8%AA%E0%B9%88%E0%B8%87%2C%20%7B%E0%B8%A1%E0%B8%B5%E0%B8%82%E0%B8%AD%E0%B8%87%3F%7D%20-(%E0%B9%84%E0%B8%A1%E0%B9%88%E0%B8%A1%E0%B8%B5)-%3E%20%E0%B9%81%E0%B8%88%E0%B9%89%E0%B8%87%E0%B8%A5%E0%B8%B9%E0%B8%81%E0%B8%84%E0%B9%89%E0%B8%B2&title=%E0%B8%82%E0%B8%B1%E0%B9%89%E0%B8%99%E0%B8%95%E0%B8%AD%E0%B8%99%E0%B8%AA%E0%B8%B1%E0%B9%88%E0%B8%87%E0%B8%8B%E0%B8%B7%E0%B9%89%E0%B8%AD&dir=TB
+https://canvy.thasala.dev/app/#c=%E0%B8%A5%E0%B8%B9%E0%B8%81%E0%B8%84%E0%B9%89%E0%B8%B2%20-%3E%20%E0%B8%AA%E0%B8%B1%E0%B9%88%E0%B8%87%E0%B8%8B%E0%B8%B7%E0%B9%89%E0%B8%AD%20-%3E%20%7B%E0%B8%A1%E0%B8%B5%E0%B8%82%E0%B8%AD%E0%B8%87%3F%7D%2C%20%7B%E0%B8%A1%E0%B8%B5%E0%B8%82%E0%B8%AD%E0%B8%87%3F%7D%20-(%E0%B8%A1%E0%B8%B5)-%3E%20%E0%B8%88%E0%B8%B1%E0%B8%94%E0%B8%AA%E0%B9%88%E0%B8%87%2C%20%7B%E0%B8%A1%E0%B8%B5%E0%B8%82%E0%B8%AD%E0%B8%87%3F%7D%20-(%E0%B9%84%E0%B8%A1%E0%B9%88%E0%B8%A1%E0%B8%B5)-%3E%20%E0%B9%81%E0%B8%88%E0%B9%89%E0%B8%87%E0%B8%A5%E0%B8%B9%E0%B8%81%E0%B8%84%E0%B9%89%E0%B8%B2&title=%E0%B8%82%E0%B8%B1%E0%B9%89%E0%B8%99%E0%B8%95%E0%B8%AD%E0%B8%99%E0%B8%AA%E0%B8%B1%E0%B9%88%E0%B8%87%E0%B8%8B%E0%B8%B7%E0%B9%89%E0%B8%AD&dir=TB
 
 ## Tips for good diagrams
 

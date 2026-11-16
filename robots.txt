@@ -1,5 +1,3 @@
-# Note: crawlers read robots.txt only at the domain root (kimookpong.github.io/robots.txt).
-# Keep this file for a custom domain; until then submit sitemap.xml in Google Search Console.
 User-agent: *
 Allow: /
-Sitemap: https://kimookpong.github.io/canvy/sitemap.xml
+Sitemap: https://canvy.thasala.dev/sitemap.xml
