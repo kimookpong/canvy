@@ -262,8 +262,16 @@ body.laser-on #laser{display:block}body.laser-on #stage{cursor:none}
 .modal.photo{width:min(640px,100%);max-height:92vh;overflow:auto}
 .photo .beta{font:600 10px var(--sans);letter-spacing:.08em;text-transform:uppercase;background:var(--accent-soft);color:var(--accent);padding:2px 6px;border-radius:6px;vertical-align:middle}
 .photopick{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:12px 0}
-#photoCv{display:block;max-width:100%;border-radius:10px;border:1px solid var(--line)}#photoCv[width="0"]{display:none}
+#photoCv{display:block;max-width:100%;max-height:44vh;margin:0 auto;border-radius:10px;border:1px solid var(--line)}#photoCv[width="0"]{display:none}
 #photoStatus{min-height:1.4em;margin-top:8px}
+.phototips{margin:0 0 10px;padding-left:18px;font-size:12.5px;color:var(--muted);line-height:1.55}body.photo-done .phototips{display:none}
+.photofix{display:none;grid-template-columns:1fr 1fr;gap:6px;margin:8px 0 4px;max-height:220px;overflow:auto}body.photo-done .photofix{display:grid}
+.photofix label{display:flex;gap:6px;align-items:flex-start;border:1px solid var(--line);border-radius:10px;padding:5px 8px;background:#fff}
+.photofix label.low{background:#fff7d6;border-color:#ecd98c}
+.photofix .k{font:600 10px var(--mono);color:#a19b92;padding-top:4px;min-width:22px}
+.photofix textarea{flex:1;border:0;outline:0;resize:none;font:13px/1.35 var(--sans);background:transparent;padding:2px 0;min-width:0}
+.photofix textarea::placeholder{color:#b08a1a}
+@media (max-width:560px){.photofix{grid-template-columns:1fr}}
 .photoopts{display:none;flex-direction:column;gap:6px;font-size:13px;margin-top:6px}body.photo-done .photoopts{display:flex}
 .photoopts label{display:flex;gap:8px;align-items:center;cursor:pointer}
 body.photo-busy #photoStatus::before{content:'';display:inline-block;width:10px;height:10px;margin-right:8px;border-radius:50%;border:2px solid var(--accent);border-right-color:transparent;animation:spin .8s linear infinite;vertical-align:-1px}
@@ -554,10 +562,12 @@ body.embed .zoom{bottom:14px}
 <div class="scrim" id="notesScrim"><div class="panel modal"><h3>Speaker notes <button class="ibtn" id="notesClose" title="Close">✕</button></h3><p id="notesFor"></p><textarea id="notesTa" rows="7" spellcheck="false"></textarea><div style="display:flex;justify-content:flex-end;margin-top:12px"><button class="btn dark" id="notesSave">Save notes</button></div></div></div>
 <div class="scrim pal" id="palScrim"><div class="panel palette"><input id="palIn" placeholder="Type a command…" autocomplete="off" spellcheck="false"><div id="palList"></div></div></div>
 <div class="scrim" id="photoScrim"><div class="panel modal photo"><h3>Photo to diagram <span class="beta">beta</span> <button class="ibtn" id="photoClose" title="Close">✕</button></h3>
-  <p class="note">Take a photo of a printed or on-screen diagram. Canvy reads the Thai and English text, finds boxes and arrows, and rebuilds it so you can edit it. The photo stays on this device. Handwriting is not supported yet.</p>
-  <div class="photopick"><button class="btn dark" id="photoCam">Take a photo</button><button class="btn" id="photoFile">Choose a picture</button><span class="note">or paste / drop one here</span></div>
+  <p class="note">Take a photo of a diagram on paper, a whiteboard or a screen. Canvy reads the Thai and English text, finds the boxes and arrows, and rebuilds it so you can edit it. The photo stays on this device.</p>
+  <div class="photopick"><button class="btn dark" id="photoCam">Take a photo</button><button class="btn" id="photoFile">Choose a picture</button><button class="btn ghost" id="photoSample">Try the example</button><span class="note">or paste / drop one here</span></div>
+  <ul class="phototips"><li>Shoot straight on, with the whole diagram in the frame and even light.</li><li>Printed text reads best. Handwriting is read only partly, but boxes and arrows are still found.</li><li>Check the words in the list below before adding. Yellow means the reader was unsure.</li></ul>
   <canvas id="photoCv"></canvas>
   <p class="note" id="photoStatus" aria-live="polite"></p>
+  <div class="photofix" id="photoFix"></div>
   <div class="photoopts"><label><input type="radio" name="pmode" value="keep" checked> <span>Keep the layout of the photo</span></label><label><input type="radio" name="pmode" value="tidy"> <span>Tidy into a neat flow</span></label><label><input type="radio" name="pmode" value="text"> <span>Text only</span></label><label><input type="checkbox" id="photoKeep"> <span>Also put the photo next to it</span></label></div>
   <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:14px"><button class="btn dark" id="photoInsert" disabled>Add to diagram</button></div>
 </div></div>
@@ -732,7 +742,7 @@ const TH={
 'Nothing matches. Try “db”, “queue” or “ผู้ใช้”.':'ไม่พบบล็อกที่ตรง ลองคำว่า “db”, “queue” หรือ “ผู้ใช้”',
 // toasts
 'Browser storage is full. Export a JSON backup and delete old diagrams.':'พื้นที่เก็บในเบราว์เซอร์เต็มแล้ว ให้ export เป็น JSON แล้วลบไดอะแกรมเก่า','That diagram could not be found':'ไม่พบไดอะแกรมนั้น','Diagram deleted':'ลบไดอะแกรมแล้ว','That file is not a Canvy JSON export':'ไฟล์นี้ไม่ใช่ไฟล์ JSON จาก Canvy','No changes since the last version':'ไม่มีอะไรเปลี่ยนจากเวอร์ชันล่าสุด','That version matches the canvas':'เวอร์ชันนี้เหมือนกับที่อยู่บนผืนผ้าใบ','Version restored. Undo is available.':'กู้คืนเวอร์ชันแล้ว กดเลิกทำได้',
-'Nothing to export yet':'ยังไม่มีอะไรให้ส่งออก','No shapes to export yet':'ยังไม่มีรูปให้ส่งออก','PNG export failed in this browser. Try SVG.':'ส่งออก PNG ไม่ได้ในเบราว์เซอร์นี้ ลองใช้ SVG','Select three or more to distribute':'เลือก 3 ชิ้นขึ้นไปเพื่อเว้นระยะ','Tidy arranges shapes that are connected by arrows':'การจัดเรียงใช้กับรูปที่เชื่อมกันด้วยลูกศร','Those shapes and arrows are already on the canvas':'รูปและลูกศรเหล่านั้นมีอยู่แล้ว','Nothing to draw yet. Try: user:Customer -> API -> db:Orders':'ยังไม่มีอะไรให้วาด ลองพิมพ์: user:ลูกค้า -> API -> db:คำสั่งซื้อ','That share link looks broken or was cut short. Ask for the link again, or a JSON export.':'ลิงก์แชร์นี้เสียหรือถูกตัดขาด ขอลิงก์ใหม่หรือขอไฟล์ JSON แทน','Saved in this browser.':'บันทึกในเบราว์เซอร์นี้แล้ว','New diagrams flow top to bottom':'ไดอะแกรมใหม่จะเรียงจากบนลงล่าง','New diagrams flow left to right':'ไดอะแกรมใหม่จะเรียงจากซ้ายไปขวา','Language: English':'ภาษา: English','View only: people can look and zoom, but not edit':'ดูอย่างเดียว: ดูและซูมได้ แต่แก้ไขไม่ได้','QR code':'QR code','Copy embed code':'คัดลอกโค้ดฝังเว็บ','Embed code copied':'คัดลอกโค้ดฝังเว็บแล้ว','Download QR':'ดาวน์โหลด QR','PDF (one page per frame)':'PDF (หนึ่งหน้าต่อเฟรม)','Making the PDF…':'กำลังสร้าง PDF…','This link is too long for a QR code. Share the link or a .canvy file instead.':'ลิงก์ยาวเกินกว่าจะทำเป็น QR code ให้ส่งลิงก์หรือไฟล์ .canvy แทน','Edit a copy':'แก้ไขสำเนา','Open in Canvy ↗':'เปิดใน Canvy ↗','Notes':'โน้ต','Laser':'เลเซอร์','Speaker notes — N':'โน้ตผู้พูด — N','Laser pointer — L':'เลเซอร์ชี้ — L','Speaker notes':'โน้ตผู้พูด','Speaker notes…':'โน้ตผู้พูด…','Save notes':'บันทึกโน้ต','Notes saved':'บันทึกโน้ตแล้ว','No notes for this frame. Right-click a frame → Speaker notes.':'เฟรมนี้ยังไม่มีโน้ต คลิกขวาที่เฟรม → โน้ตผู้พูด','Command palette…':'ค้นหาคำสั่ง…','Photo to diagram':'รูปถ่ายเป็นไดอะแกรม','Photo to diagram…':'รูปถ่ายเป็นไดอะแกรม…','Turn picture into diagram…':'แปลงรูปนี้เป็นไดอะแกรม…','Take a photo of a printed or on-screen diagram. Canvy reads the Thai and English text, finds boxes and arrows, and rebuilds it so you can edit it. The photo stays on this device. Handwriting is not supported yet.':'ถ่ายรูปไดอะแกรมที่พิมพ์ไว้หรืออยู่บนจอ Canvy จะอ่านข้อความไทยและอังกฤษ หากล่องและลูกศร แล้วสร้างใหม่ให้แก้ไขได้ รูปจะอยู่ในเครื่องนี้เท่านั้น ยังอ่านลายมือไม่ได้','Take a photo':'ถ่ายรูป','Choose a picture':'เลือกรูป','or paste / drop one here':'หรือวาง / ลากรูปมาที่นี่','Keep the layout of the photo':'คงตำแหน่งตามรูป','Tidy into a neat flow':'จัดเรียงใหม่ให้เป็นระเบียบ','Text only':'เฉพาะข้อความ','Also put the photo next to it':'วางรูปต้นฉบับไว้ข้าง ๆ ด้วย','Add to diagram':'ใส่ลงในไดอะแกรม','Loading the reader…':'กำลังโหลดตัวอ่าน…','Downloading the reader, once only (about 15 MB)…':'กำลังดาวน์โหลดตัวอ่าน ครั้งแรกครั้งเดียว (ประมาณ 15 MB)…','Downloading the reading model, once only…':'กำลังดาวน์โหลดโมเดลอ่านข้อความ ครั้งแรกครั้งเดียว…','Loading the reading model…':'กำลังโหลดโมเดลอ่านข้อความ…','Starting the reader…':'กำลังเริ่มตัวอ่าน…','Finding text…':'กำลังหาข้อความ…','Reading text':'กำลังอ่านข้อความ','Finding boxes and arrows…':'กำลังหากล่องและลูกศร…','Found':'พบ','shapes':'รูปทรง','text':'ข้อความ','arrows':'ลูกศร','Check the preview, then add it. You can fix anything afterwards.':'ตรวจดูตัวอย่างแล้วกดใส่ แก้ไขทีหลังได้ทุกอย่าง','No printed text found. Try a sharper, straight-on photo with good light. Handwriting is not supported yet.':'ไม่พบตัวพิมพ์ในรูป ลองถ่ายให้ชัด ตรง และมีแสงพอ (ยังอ่านลายมือไม่ได้)','That file is not a picture Canvy can open':'ไฟล์นี้ไม่ใช่รูปที่ Canvy เปิดได้','The reader could not start. Check your connection and try again.':'ตัวอ่านเริ่มทำงานไม่ได้ ตรวจการเชื่อมต่อแล้วลองใหม่','The reader needs the internet the first time. Connect and try again.':'ครั้งแรกต้องต่ออินเทอร์เน็ตเพื่อโหลดตัวอ่าน เชื่อมต่อแล้วลองใหม่','Added from the photo. Double-click any text to fix it.':'ใส่จากรูปแล้ว ดับเบิลคลิกข้อความเพื่อแก้ไขได้','Type a command…':'พิมพ์คำสั่ง…','Nothing matches':'ไม่พบคำสั่ง','Tools':'เครื่องมือ','Actions':'การทำงาน','Diagram':'ไดอะแกรม','Look':'รูปลักษณ์','Go to':'ไปที่','Tidy up':'จัดเรียง','Undo':'เลิกทำ','Redo':'ทำซ้ำ','New diagram':'ไดอะแกรมใหม่','That file is not a Canvy or Excalidraw file':'ไฟล์นี้ไม่ใช่ไฟล์ Canvy หรือ Excalidraw','Open a .canvy or .json file — Ctrl/⌘ O':'เปิดไฟล์ .canvy, .json หรือ .excalidraw — Ctrl/⌘ O','Card':'การ์ด','Table':'ตาราง','Straighten arrow':'ดัดลูกศรให้ตรง','Reset rotation':'ยกเลิกการหมุน','Added a table':'เพิ่มตารางแล้ว','Add a row':'เพิ่มแถว','Remove the last row':'ลบแถวสุดท้าย','Add a column':'เพิ่มคอลัมน์','Remove the last column':'ลบคอลัมน์สุดท้าย','+ row':'+ แถว','− row':'− แถว','+ col':'+ คอลัมน์','− col':'− คอลัมน์','Group':'จัดกลุ่ม','Ungroup':'ยกเลิกกลุ่ม','Lock':'ล็อก','Unlock':'ปลดล็อก','Grouped':'จัดกลุ่มแล้ว','Ungrouped':'ยกเลิกกลุ่มแล้ว','Locked. Right-click it to unlock.':'ล็อกแล้ว คลิกขวาที่รูปเพื่อปลดล็อก','Unlocked':'ปลดล็อกแล้ว','Select two or more to group':'เลือก 2 ชิ้นขึ้นไปเพื่อจัดกลุ่ม','Type a name to find it':'พิมพ์ชื่อเพื่อค้นหา','Overview — click to jump':'ภาพรวม — คลิกเพื่อไปยังจุดนั้น','Images are left out of links. Save a .canvy file to share pictures too.':'ลิงก์จะไม่รวมรูปภาพ ถ้าจะแชร์รูปด้วยให้บันทึกเป็นไฟล์ .canvy','Save file…':'บันทึกไฟล์…','Open file…':'เปิดไฟล์…','Saved to':'บันทึกลง','Save to a .canvy file — Ctrl/⌘ Shift S':'บันทึกเป็นไฟล์ .canvy — Ctrl/⌘ Shift S','Open a .canvy or .json file — Ctrl/⌘ O':'เปิดไฟล์ .canvy หรือ .json — Ctrl/⌘ O','Updated from another tab':'อัปเดตจากอีกแท็บแล้ว','A new version of Canvy is ready':'Canvy มีเวอร์ชันใหม่แล้ว','Reload':'โหลดใหม่','Ready to work offline':'พร้อมใช้งานแบบออฟไลน์แล้ว','Untitled diagram':'ไดอะแกรมไม่มีชื่อ','Preview':'ตัวอย่าง','Copy image':'คัดลอกรูป','Image copied':'คัดลอกรูปแล้ว','Download preview card':'ดาวน์โหลดภาพการ์ด','Paste the image next to the link so people see the diagram before they open it.':'วางรูปคู่กับลิงก์ คนรับจะเห็นไดอะแกรมก่อนเปิด','Switched to English':'Switched to English'
+'Nothing to export yet':'ยังไม่มีอะไรให้ส่งออก','No shapes to export yet':'ยังไม่มีรูปให้ส่งออก','PNG export failed in this browser. Try SVG.':'ส่งออก PNG ไม่ได้ในเบราว์เซอร์นี้ ลองใช้ SVG','Select three or more to distribute':'เลือก 3 ชิ้นขึ้นไปเพื่อเว้นระยะ','Tidy arranges shapes that are connected by arrows':'การจัดเรียงใช้กับรูปที่เชื่อมกันด้วยลูกศร','Those shapes and arrows are already on the canvas':'รูปและลูกศรเหล่านั้นมีอยู่แล้ว','Nothing to draw yet. Try: user:Customer -> API -> db:Orders':'ยังไม่มีอะไรให้วาด ลองพิมพ์: user:ลูกค้า -> API -> db:คำสั่งซื้อ','That share link looks broken or was cut short. Ask for the link again, or a JSON export.':'ลิงก์แชร์นี้เสียหรือถูกตัดขาด ขอลิงก์ใหม่หรือขอไฟล์ JSON แทน','Saved in this browser.':'บันทึกในเบราว์เซอร์นี้แล้ว','New diagrams flow top to bottom':'ไดอะแกรมใหม่จะเรียงจากบนลงล่าง','New diagrams flow left to right':'ไดอะแกรมใหม่จะเรียงจากซ้ายไปขวา','Language: English':'ภาษา: English','View only: people can look and zoom, but not edit':'ดูอย่างเดียว: ดูและซูมได้ แต่แก้ไขไม่ได้','QR code':'QR code','Copy embed code':'คัดลอกโค้ดฝังเว็บ','Embed code copied':'คัดลอกโค้ดฝังเว็บแล้ว','Download QR':'ดาวน์โหลด QR','PDF (one page per frame)':'PDF (หนึ่งหน้าต่อเฟรม)','Making the PDF…':'กำลังสร้าง PDF…','This link is too long for a QR code. Share the link or a .canvy file instead.':'ลิงก์ยาวเกินกว่าจะทำเป็น QR code ให้ส่งลิงก์หรือไฟล์ .canvy แทน','Edit a copy':'แก้ไขสำเนา','Open in Canvy ↗':'เปิดใน Canvy ↗','Notes':'โน้ต','Laser':'เลเซอร์','Speaker notes — N':'โน้ตผู้พูด — N','Laser pointer — L':'เลเซอร์ชี้ — L','Speaker notes':'โน้ตผู้พูด','Speaker notes…':'โน้ตผู้พูด…','Save notes':'บันทึกโน้ต','Notes saved':'บันทึกโน้ตแล้ว','No notes for this frame. Right-click a frame → Speaker notes.':'เฟรมนี้ยังไม่มีโน้ต คลิกขวาที่เฟรม → โน้ตผู้พูด','Command palette…':'ค้นหาคำสั่ง…','Photo to diagram':'รูปถ่ายเป็นไดอะแกรม','Try the example':'ลองกับรูปตัวอย่าง','Shoot straight on, with the whole diagram in the frame and even light.':'ถ่ายตรง ๆ ให้เห็นไดอะแกรมทั้งหมด และแสงสม่ำเสมอ','Printed text reads best. Handwriting is read only partly, but boxes and arrows are still found.':'ตัวพิมพ์อ่านได้ดีที่สุด ลายมืออ่านได้บางส่วน แต่ยังหากล่องและลูกศรได้','Check the words in the list below before adding. Yellow means the reader was unsure.':'ตรวจข้อความในรายการก่อนใส่ ช่องสีเหลืองคือที่ตัวอ่านไม่แน่ใจ','Could not read it, type it here':'อ่านไม่ออก พิมพ์เองที่นี่','Arrow label':'ป้ายลูกศร','Fix the yellow words, then add it.':'แก้คำในช่องสีเหลือง แล้วกดใส่','The example could not be loaded':'โหลดรูปตัวอย่างไม่ได้','Take a photo of a diagram on paper, a whiteboard or a screen. Canvy reads the Thai and English text, finds the boxes and arrows, and rebuilds it so you can edit it. The photo stays on this device.':'ถ่ายรูปไดอะแกรมบนกระดาษ ไวต์บอร์ด หรือหน้าจอ Canvy จะอ่านข้อความไทยและอังกฤษ หากล่องและลูกศร แล้วสร้างใหม่ให้แก้ไขได้ รูปจะอยู่ในเครื่องนี้เท่านั้น','Photo to diagram…':'รูปถ่ายเป็นไดอะแกรม…','Turn picture into diagram…':'แปลงรูปนี้เป็นไดอะแกรม…','Take a photo of a printed or on-screen diagram. Canvy reads the Thai and English text, finds boxes and arrows, and rebuilds it so you can edit it. The photo stays on this device. Handwriting is not supported yet.':'ถ่ายรูปไดอะแกรมที่พิมพ์ไว้หรืออยู่บนจอ Canvy จะอ่านข้อความไทยและอังกฤษ หากล่องและลูกศร แล้วสร้างใหม่ให้แก้ไขได้ รูปจะอยู่ในเครื่องนี้เท่านั้น ยังอ่านลายมือไม่ได้','Take a photo':'ถ่ายรูป','Choose a picture':'เลือกรูป','or paste / drop one here':'หรือวาง / ลากรูปมาที่นี่','Keep the layout of the photo':'คงตำแหน่งตามรูป','Tidy into a neat flow':'จัดเรียงใหม่ให้เป็นระเบียบ','Text only':'เฉพาะข้อความ','Also put the photo next to it':'วางรูปต้นฉบับไว้ข้าง ๆ ด้วย','Add to diagram':'ใส่ลงในไดอะแกรม','Loading the reader…':'กำลังโหลดตัวอ่าน…','Downloading the reader, once only (about 15 MB)…':'กำลังดาวน์โหลดตัวอ่าน ครั้งแรกครั้งเดียว (ประมาณ 15 MB)…','Downloading the reading model, once only…':'กำลังดาวน์โหลดโมเดลอ่านข้อความ ครั้งแรกครั้งเดียว…','Loading the reading model…':'กำลังโหลดโมเดลอ่านข้อความ…','Starting the reader…':'กำลังเริ่มตัวอ่าน…','Finding text…':'กำลังหาข้อความ…','Reading text':'กำลังอ่านข้อความ','Finding boxes and arrows…':'กำลังหากล่องและลูกศร…','Found':'พบ','shapes':'รูปทรง','text':'ข้อความ','arrows':'ลูกศร','Check the preview, then add it. You can fix anything afterwards.':'ตรวจดูตัวอย่างแล้วกดใส่ แก้ไขทีหลังได้ทุกอย่าง','No printed text found. Try a sharper, straight-on photo with good light. Handwriting is not supported yet.':'ไม่พบตัวพิมพ์ในรูป ลองถ่ายให้ชัด ตรง และมีแสงพอ (ยังอ่านลายมือไม่ได้)','That file is not a picture Canvy can open':'ไฟล์นี้ไม่ใช่รูปที่ Canvy เปิดได้','The reader could not start. Check your connection and try again.':'ตัวอ่านเริ่มทำงานไม่ได้ ตรวจการเชื่อมต่อแล้วลองใหม่','The reader needs the internet the first time. Connect and try again.':'ครั้งแรกต้องต่ออินเทอร์เน็ตเพื่อโหลดตัวอ่าน เชื่อมต่อแล้วลองใหม่','Added from the photo. Double-click any text to fix it.':'ใส่จากรูปแล้ว ดับเบิลคลิกข้อความเพื่อแก้ไขได้','Type a command…':'พิมพ์คำสั่ง…','Nothing matches':'ไม่พบคำสั่ง','Tools':'เครื่องมือ','Actions':'การทำงาน','Diagram':'ไดอะแกรม','Look':'รูปลักษณ์','Go to':'ไปที่','Tidy up':'จัดเรียง','Undo':'เลิกทำ','Redo':'ทำซ้ำ','New diagram':'ไดอะแกรมใหม่','That file is not a Canvy or Excalidraw file':'ไฟล์นี้ไม่ใช่ไฟล์ Canvy หรือ Excalidraw','Open a .canvy or .json file — Ctrl/⌘ O':'เปิดไฟล์ .canvy, .json หรือ .excalidraw — Ctrl/⌘ O','Card':'การ์ด','Table':'ตาราง','Straighten arrow':'ดัดลูกศรให้ตรง','Reset rotation':'ยกเลิกการหมุน','Added a table':'เพิ่มตารางแล้ว','Add a row':'เพิ่มแถว','Remove the last row':'ลบแถวสุดท้าย','Add a column':'เพิ่มคอลัมน์','Remove the last column':'ลบคอลัมน์สุดท้าย','+ row':'+ แถว','− row':'− แถว','+ col':'+ คอลัมน์','− col':'− คอลัมน์','Group':'จัดกลุ่ม','Ungroup':'ยกเลิกกลุ่ม','Lock':'ล็อก','Unlock':'ปลดล็อก','Grouped':'จัดกลุ่มแล้ว','Ungrouped':'ยกเลิกกลุ่มแล้ว','Locked. Right-click it to unlock.':'ล็อกแล้ว คลิกขวาที่รูปเพื่อปลดล็อก','Unlocked':'ปลดล็อกแล้ว','Select two or more to group':'เลือก 2 ชิ้นขึ้นไปเพื่อจัดกลุ่ม','Type a name to find it':'พิมพ์ชื่อเพื่อค้นหา','Overview — click to jump':'ภาพรวม — คลิกเพื่อไปยังจุดนั้น','Images are left out of links. Save a .canvy file to share pictures too.':'ลิงก์จะไม่รวมรูปภาพ ถ้าจะแชร์รูปด้วยให้บันทึกเป็นไฟล์ .canvy','Save file…':'บันทึกไฟล์…','Open file…':'เปิดไฟล์…','Saved to':'บันทึกลง','Save to a .canvy file — Ctrl/⌘ Shift S':'บันทึกเป็นไฟล์ .canvy — Ctrl/⌘ Shift S','Open a .canvy or .json file — Ctrl/⌘ O':'เปิดไฟล์ .canvy หรือ .json — Ctrl/⌘ O','Updated from another tab':'อัปเดตจากอีกแท็บแล้ว','A new version of Canvy is ready':'Canvy มีเวอร์ชันใหม่แล้ว','Reload':'โหลดใหม่','Ready to work offline':'พร้อมใช้งานแบบออฟไลน์แล้ว','Untitled diagram':'ไดอะแกรมไม่มีชื่อ','Preview':'ตัวอย่าง','Copy image':'คัดลอกรูป','Image copied':'คัดลอกรูปแล้ว','Download preview card':'ดาวน์โหลดภาพการ์ด','Paste the image next to the link so people see the diagram before they open it.':'วางรูปคู่กับลิงก์ คนรับจะเห็นไดอะแกรมก่อนเปิด','Switched to English':'Switched to English'
 };
 let LANG=(()=>{try{const q=new URLSearchParams(location.search).get('lang');if(q==='th'||q==='en')return q}catch(_){}return null})()||LS.get('canvy:lang',null)||((navigator.language||'').toLowerCase().startsWith('th')?'th':'en');
 const T=s=>LANG==='th'&&TH[s]?TH[s]:s;
@@ -2489,14 +2499,14 @@ function analyzePhoto(src,lines){
   const cv=document.createElement('canvas');cv.width=w;cv.height=h;const g=cv.getContext('2d',{willReadFrequently:true});g.fillStyle='#fff';g.fillRect(0,0,w,h);g.drawImage(src,0,0,w,h);
   const px=g.getImageData(0,0,w,h).data,N=w*h,lum=new Float32Array(N);for(let i=0,j=0;i<N;i++,j+=4)lum[i]=.299*px[j]+.587*px[j+1]+.114*px[j+2];
   {const smp=[];for(let i=0;i<N;i+=Math.max(1,(N/4000)|0))smp.push(lum[i]);if(median(smp)<110)for(let i=0;i<N;i++)lum[i]=255-lum[i]}  // light lines on a dark board
-  const L=[...lines,...(lines.weak||[])].map(l=>({text:l.text,weak:!!l.weak,x:l.x*k,y:l.y*k,w:l.w*k,h:l.h*k}));
+  const L=[...lines,...(lines.weak||[])].map(l=>({text:l.text,weak:!!l.weak,conf:l.conf??1,x:l.x*k,y:l.y*k,w:l.w*k,h:l.h*k}));
   const hm=Math.max(6,median(L.filter(l=>!l.weak).map(l=>l.h))||median(L.map(l=>l.h))||14*k);
   // ink: clearly darker than the local background (works with uneven light in photos)
   const r=Math.max(6,Math.round(hm*1.5)),I=new Float64Array((w+1)*(h+1));
   for(let y=0;y<h;y++){let s=0;for(let x=0;x<w;x++){s+=lum[y*w+x];I[(y+1)*(w+1)+x+1]=I[y*(w+1)+x+1]+s}}
   const ink=new Uint8Array(N);
   for(let y=0;y<h;y++){const y0=Math.max(0,y-r),y1=Math.min(h,y+r+1);for(let x=0;x<w;x++){const x0=Math.max(0,x-r),x1=Math.min(w,x+r+1);
-    const m=(I[y1*(w+1)+x1]-I[y0*(w+1)+x1]-I[y1*(w+1)+x0]+I[y0*(w+1)+x0])/((y1-y0)*(x1-x0)),v=lum[y*w+x];if(v<m-Math.max(16,.1*m)||v<70)ink[y*w+x]=1}}
+    const m=(I[y1*(w+1)+x1]-I[y0*(w+1)+x1]-I[y1*(w+1)+x0]+I[y0*(w+1)+x0])/((y1-y0)*(x1-x0)),v=lum[y*w+x];if((v<m-Math.max(16,.1*m)&&v<m*.78)||v<70)ink[y*w+x]=1}}  // faint ruled-paper lines (~80% of the paper's brightness) are not ink
   const at=(x,y)=>x>=0&&y>=0&&x<w&&y<h&&ink[(y|0)*w+(x|0)];
   const rowInk=(y,x0,x1)=>{y|=0;x0=Math.max(0,x0|0);x1=Math.min(w-1,x1|0);if(y<0||y>=h||x1<x0)return 0;let c=0;for(let x=x0;x<=x1;x++)c+=ink[y*w+x];return c/(x1-x0+1)};
   // 1. lines -> nodes (lines close above/below each other, with no ruled line between them)
@@ -2514,13 +2524,14 @@ function analyzePhoto(src,lines){
   const groups=new Map();L.forEach((l,i)=>{const r0=find(i);if(!groups.has(r0))groups.set(r0,[]);groups.get(r0).push(l)});
   const nodes=[...groups.values()].map(ls=>{ls.sort((a,b)=>a.y-b.y||a.x-b.x);const rows=[];for(const l of ls){const row=rows.find(rw=>Math.abs(rw.cy-(l.y+l.h/2))<.45*hm);if(row){row.ls.push(l)}else rows.push({cy:l.y+l.h/2,ls:[l]})}
     const text=rows.map(rw=>rw.ls.sort((a,b)=>a.x-b.x).map(l=>l.text).filter(Boolean).join(' ')).filter(Boolean).join('\n'),weak=ls.every(l=>l.weak),x=Math.min(...ls.map(l=>l.x)),y=Math.min(...ls.map(l=>l.y));
-    return{text,weak,x,y,w:Math.max(...ls.map(l=>l.x+l.w))-x,h:Math.max(...ls.map(l=>l.y+l.h))-y,kind:'text'}});
+    return{text,weak,conf:Math.min(...ls.map(l=>l.conf)),x,y,w:Math.max(...ls.map(l=>l.x+l.w))-x,h:Math.max(...ls.map(l=>l.y+l.h))-y,kind:'text'}});
   // 2. outline around each node: flood the blank space touching the text box; if it is closed (does not run to the
   //    edge of the picture or grow far beyond the text) it is the inside of a shape. Its fill ratio tells the kind.
   const owner=new Int32Array(N),openF=new Set();let flood=0;const st=new Int32Array(N);
   for(const n of nodes){
     const lim=(n.w+12*hm)*(n.h+10*hm),x0=Math.max(0,n.x|0),y0=Math.max(0,n.y|0),x1=Math.min(w-1,(n.x+n.w)|0),y1=Math.min(h-1,(n.y+n.h)|0);
     const seeds=[];for(let x=x0;x<=x1;x+=2){seeds.push(y0*w+x,y1*w+x)}for(let y=y0;y<=y1;y+=2){seeds.push(y*w+x0,y*w+x1)}
+    const gs=Math.max(3,(hm/3)|0);for(let y=y0+gs;y<y1;y+=gs)for(let x=x0+gs;x<x1;x+=gs)seeds.push(y*w+x);
     let area=0,bx0=x0,by0=y0,bx1=x1,by1=y1;const keep=[];
     for(const sd of seeds){if(ink[sd]||owner[sd])continue;flood++;let sp=0,sz=0,open=false,mnx=1e9,mny=1e9,mxx=-1,mxy=-1;const pts=[];st[sp++]=sd;owner[sd]=flood;
       const go=j=>{if(ink[j])return;const o=owner[j];if(!o){owner[j]=flood;st[sp++]=j}else if(o!==flood&&openF.has(o))open=true};
@@ -2528,13 +2539,26 @@ function analyzePhoto(src,lines){
         if(sz>lim||open){open=true;break}
         if(x>0)go(i-1);if(x<w-1)go(i+1);if(y>0)go(i-w);if(y<h-1)go(i+w)}
       if(open){openF.add(flood);continue}
-      const out=(mnx<x0-1)+(mxx>x1+1)+(mny<y0-1)+(mxy>y1+1);if(!out)continue;keep.push(pts);area+=pts.length;if(mnx<bx0)bx0=mnx;if(mny<by0)by0=mny;if(mxx>bx1)bx1=mxx;if(mxy>by1)by1=mxy}
-    if(!keep.length||(bx0>=x0-1)+(bx1<=x1+1)+(by0>=y0-1)+(by1<=y1+1)>2)continue;
-    const bw=bx1-bx0+1,bh=by1-by0+1;if(bw<n.w*.85||bh<n.h*.85||(bw-n.w<.25*hm&&bh-n.h<.25*hm&&area<.2*bw*bh))continue;
+      const out=(mnx<x0-1)+(mxx>x1+1)+(mny<y0-1)+(mxy>y1+1),big=pts.length>.2*(x1-x0+1)*(y1-y0+1);if(!out&&!big)continue;keep.push(pts);area+=pts.length;if(mnx<bx0)bx0=mnx;if(mny<by0)by0=mny;if(mxx>bx1)bx1=mxx;if(mxy>by1)by1=mxy}
+        if(!keep.length)continue;
+    // when every kept region sits inside the reader's box, the shape is drawn inside it: use the regions' own extent
+    if((bx0>=x0-1)+(bx1<=x1+1)+(by0>=y0-1)+(by1<=y1+1)>2){bx0=1e9;by0=1e9;bx1=-1;by1=-1;for(const P of keep)for(const i of P){const y=(i/w)|0,x=i-y*w;if(x<bx0)bx0=x;if(x>bx1)bx1=x;if(y<by0)by0=y;if(y>by1)by1=y}
+      if(area<.2*(x1-x0+1)*(y1-y0+1))continue}
+    const bw=bx1-bx0+1,bh=by1-by0+1;if(bw<n.w*.55||bh<n.h*.5||(bw-n.w<.25*hm&&bh-n.h<.25*hm&&area<.2*bw*bh))continue;
     // count the text box itself as inside (its glyphs are ink, not blank)
     let tin=0;for(let y=y0;y<=y1;y++)for(let x=x0;x<=x1;x++)if(ink[y*w+x])tin++;
-    const ratio=(area+tin)/(bw*bh);
-    const kind=ratio>.86?'rect':ratio>.62?'ellipse':ratio>.36?'diamond':null;if(!kind)continue;
+    // shape from how wide the inside is, row by row: flat for a box, curved for an ellipse, a triangle for a diamond
+    const rmin=new Int32Array(bh).fill(1e9),rmax=new Int32Array(bh).fill(-1);
+    for(const P of keep)for(const i of P){const y=((i/w)|0)-by0,x=i%w;if(y<0||y>=bh)continue;if(x<rmin[y])rmin[y]=x;if(x>rmax[y])rmax[y]=x}
+    for(let y=Math.max(y0,by0);y<=Math.min(y1,by1);y++){const r0=y-by0;if(x0<rmin[r0])rmin[r0]=Math.max(bx0,x0);if(x1>rmax[r0])rmax[r0]=Math.min(bx1,x1)}
+    const E={rect:0,ellipse:0,diamond:0};let rc=0,rs=0;
+    for(let y=0;y<bh;y++){const v=rmax[y]>=0?(rmax[y]-rmin[y]+1)/bw:0,t=Math.abs((y+.5)/bh*2-1);rs+=v;rc++;
+      E.rect+=Math.abs(v-1);E.ellipse+=Math.abs(v-Math.sqrt(Math.max(0,1-t*t)));E.diamond+=Math.abs(v-(1-t))}
+    {// a box drawn slightly tilted tapers at its top and bottom rows: let the box fit skip up to 15% at each end, at a small cost
+      const V=[];for(let y=0;y<bh;y++)V.push(rmax[y]>=0?(rmax[y]-rmin[y]+1)/bw:0);let a0=0,a1=bh-1;while(a0<bh*.15&&V[a0]<.6)a0++;while(a1>bh*.85&&V[a1]<.6)a1--;
+      let e=0;for(let y=a0;y<=a1;y++)e+=Math.abs(V[y]-1);const trimmed=(bh-(a1-a0+1))/bh;E.rect=Math.min(E.rect,(e/(a1-a0+1)+.3*trimmed)*rc)}
+    const ratio=rs/rc,best=Object.keys(E).sort((a,b)=>E[a]-E[b])[0];
+    const kind=E[best]/rc<.2?best:null;if(!kind)continue;
     const t=Math.max(1,Math.round(.08*hm));n.kind=kind;n.ox=bx0-t;n.oy=by0-t;n.ow=bw+2*t;n.oh=bh+2*t;
     const cs=[];keep.forEach(pts=>{for(let q=0;q<pts.length;q+=Math.max(1,(area/600)|0)){const j=pts[q]*4;cs.push([px[j],px[j+1],px[j+2]])}});
     const bgc=[0,1,2].map(i=>median([0,w-1,N-w,N-1,(w/2)|0,N-((w/2)|0)-1].map(q=>px[q*4+i])));
@@ -2542,7 +2566,8 @@ function analyzePhoto(src,lines){
       n.fill=mx-mn<22||Math.hypot(c[0]-bgc[0],c[1]-bgc[1],c[2]-bgc[2])<18?'none':exFill(hx)}
   }
   // 3. connectors: ink left after removing nodes and their outlines
-  const rest=ink.slice(),pad=Math.max(2,Math.round(.18*hm)),boxOf=n=>n.kind==='text'?{x:n.x-pad,y:n.y-pad,w:n.w+2*pad,h:n.h+2*pad}:{x:n.ox-pad,y:n.oy-pad,w:n.ow+2*pad,h:n.oh+2*pad};
+  // the reader pads its text boxes; for loose text erase only the core, so a line running right beside a label survives
+  const rest=ink.slice(),pad=Math.max(2,Math.round(.18*hm)),boxOf=n=>{if(n.kind!=='text')return{x:n.ox-pad,y:n.oy-pad,w:n.ow+2*pad,h:n.oh+2*pad};const d=Math.min(n.w,n.h)*.16;return{x:n.x+d,y:n.y+d,w:Math.max(2,n.w-2*d),h:Math.max(2,n.h-2*d)}};
   nodes.forEach(n=>{const b=boxOf(n);n.box=b;for(let y=Math.max(0,b.y|0);y<Math.min(h,b.y+b.h);y++)for(let x=Math.max(0,b.x|0);x<Math.min(w,b.x+b.w);x++)rest[y*w+x]=0});
   const lab=new Int32Array(N),comps=[],stack=new Int32Array(N);let C=0;
   for(let i0=0;i0<N;i0++){if(!rest[i0]||lab[i0])continue;C++;let sp=0;stack[sp++]=i0;lab[i0]=C;const pts=[];
@@ -2572,7 +2597,7 @@ function analyzePhoto(src,lines){
     if(t.length>2){const ends=t.filter(([ni])=>(m.dmin.get(ni)??0)<=.45*hm);if(ends.length>=2)t=ends}
     if(t.length>2){const second=t[1][1];t=t.filter(([,v],i)=>i<2||v>=.25*second)}
     if(t.length<2)continue;
-    const label=m.label!=null?nodes[m.label].text:'';
+    const label=m.label!=null?nodes[m.label].text:'',lconf=m.label!=null?nodes[m.label].conf:1;
     if(t.length===2){let[to,from]=[t[0][0],t[1][0]];
       // the arrowhead is a solid triangle: near that tip the ink spreads wider across the line than at the plain end
       const tipOf=ni=>{const b=nodes[ni].box;let bd=1e9,bi=0;for(const P of m.pts)for(const i of P){const y=(i/w)|0,x=i-y*w,d=Math.hypot(Math.max(b.x-x,0,x-b.x-b.w),Math.max(b.y-y,0,y-b.y-b.h));if(d<bd){bd=d;bi=i}}return[bi%w,(bi/w)|0]};
@@ -2582,15 +2607,22 @@ function analyzePhoto(src,lines){
       const vote=(a,b)=>a>1.3*b?1:b>1.3*a?-1:0,v=vote(spread(TA),spread(TB))+vote(mass(TA),mass(TB));
       if(v<0)[to,from]=[from,to];
       if(v===0){const A=nodes[from].box,B=nodes[to].box,dx=(B.x+B.w/2)-(A.x+A.w/2),dy=(B.y+B.h/2)-(A.y+A.h/2);if(Math.abs(dx)>=Math.abs(dy)?dx<0:dy<0)[from,to]=[to,from]}  // no clear arrowhead: read left-to-right, top-to-bottom
-      const key=from+'>'+to;if(!seen.has(key)){seen.add(key);edges.push({from,to,label,sure:t[0][1]>=1.15*t[1][1]})}}
+      const key=from+'>'+to;if(!seen.has(key)){seen.add(key);edges.push({from,to,label,lconf,sure:t[0][1]>=1.15*t[1][1],m})}}
     else if(t[0][1]>=1.4*t[1][1])for(const[from]of t.slice(1)){const key=from+'>'+t[0][0];if(!seen.has(key)){seen.add(key);edges.push({from,to:t[0][0],label:'',sure:true})}}}
   // an unreadable scrap that is neither a shape nor an arrow label is left out
   nodes.forEach(n=>{if(n.weak&&n.kind==='text'&&!n.isLabel)n.isLabel=true,n.drop=true});
+  // a short note floating just beside an arrow (not touching it) is that arrow's label
+  nodes.forEach((n,ni)=>{if(n.kind!=='text'||n.isLabel||!n.text||n.text.includes('\n')||n.text.length>24)return;
+    if(edges.some(e=>e.from===ni||e.to===ni))return;
+    let best=null,bd=1.2*hm;for(const e of edges){if(e.label||!e.m)continue;const b=n.box;
+      for(const P of e.m.pts)for(let q=0;q<P.length;q+=3){const i=P[q],y=(i/w)|0,x=i-y*w,d=Math.hypot(Math.max(b.x-x,0,x-b.x-b.w),Math.max(b.y-y,0,y-b.y-b.h));if(d<bd){bd=d;best=e}}}
+    if(best){best.label=n.text;best.lconf=n.conf;n.isLabel=true}});
+  edges.forEach(e=>delete e.m);
   const debug=merged.map(m=>[...m.touch.entries()].map(([i,v])=>nodes[i].text+':'+v).join(' | '));
   return{nodes:nodes.filter(n=>!n.isLabel),allNodes:nodes,edges,hm,k,w,h,debug};
 }
 function photoElements(res,mode){
-  const z=FS.m*1.3/res.hm,out=[],ids=new Map();
+  const z=FS.m*2/res.hm,out=[],ids=new Map();  // the reader's boxes are padded: real letters are ~2/3 of their height
   res.allNodes.forEach((n,i)=>{if(n.isLabel)return;let el;
     if(mode==='text'||n.kind==='text'){el=makeShape('text',n.x*z,n.y*z,10,10,{label:n.text,fs:'m',stroke:'ink',fill:'none'});fitText(el)}
     else{el=makeShape(n.kind==='rect'?'rect':n.kind,n.ox*z,n.oy*z,n.ow*z,n.oh*z,{label:n.text,fill:n.fill||'none',stroke:'ink',sw:2,fs:'m'});fitText(el)}
@@ -2598,7 +2630,19 @@ function photoElements(res,mode){
   if(mode!=='text')for(const e of res.edges){const a=ids.get(e.from),b=ids.get(e.to);if(!a||!b)continue;out.push(makeArrow(center(a),center(b),{start:a.id,end:b.id,stroke:'ink',sw:2,label:e.label||'',fs:'s'}))}
   return out;
 }
-function drawPhotoPreview(){
+function renderPhotoFix(){
+  const box=$('#photoFix'),r=photoResult;if(!r){box.innerHTML='';return}
+  const icon={rect:'▭',ellipse:'◯',diamond:'◇',text:'T'},rows=[];
+  r.allNodes.forEach((n,i)=>{if(n.isLabel||n.drop)return;rows.push(`<label class="${!n.text||n.conf<.9?'low':''}" data-n="${i}"><span class="k">${icon[n.kind]||'T'}</span><textarea rows="${Math.max(1,n.text.split('\n').length)}" placeholder="${esc(T('Could not read it, type it here'))}">${esc(n.text)}</textarea></label>`)});
+  r.edges.forEach((e,i)=>{if(!e.label&&e.lconf==null)return;if(!e.label&&!(e.lconf<1))return;rows.push(`<label class="${!e.label||e.lconf<.9?'low':''}" data-e="${i}"><span class="k">→</span><textarea rows="1" placeholder="${esc(T('Arrow label'))}">${esc(e.label)}</textarea></label>`)});
+  box.innerHTML=rows.join('');
+}
+$('#photoFix').addEventListener('input',e=>{const l=e.target.closest('label');if(!l||!photoResult)return;const v=e.target.value;
+  if(l.dataset.n!=null)photoResult.allNodes[+l.dataset.n].text=v;else photoResult.edges[+l.dataset.e].label=v;l.classList.remove('low')});
+$('#photoFix').addEventListener('focusin',e=>{const l=e.target.closest('label');if(l)drawPhotoPreview(l.dataset.n!=null?+l.dataset.n:null,l.dataset.e!=null?+l.dataset.e:null)});
+$('#photoFix').addEventListener('focusout',()=>drawPhotoPreview());
+$('#photoSample').onclick=async()=>{try{const b=await (await fetch('samples/flowchart-photo.jpg')).blob();readPhoto(b)}catch(_){toast('The example could not be loaded')}};
+function drawPhotoPreview(hiN=null,hiE=null){
   const c=$('#photoCv');if(!photoSrc)return;const W=photoSrc.width,H=photoSrc.height,s=Math.min(1,1100/W);c.width=Math.round(W*s);c.height=Math.round(H*s);
   const g=c.getContext('2d');g.drawImage(photoSrc,0,0,c.width,c.height);if(!photoResult)return;const r=photoResult,q=s/r.k;
   g.lineWidth=3;g.font='600 13px system-ui';
@@ -2609,9 +2653,12 @@ function drawPhotoPreview(){
     if(n.kind==='text')g.strokeRect(n.x*q,n.y*q,n.w*q,n.h*q);
     else{g.beginPath();const x=n.ox*q,y=n.oy*q,ww=n.ow*q,hh=n.oh*q;if(n.kind==='ellipse')g.ellipse(x+ww/2,y+hh/2,ww/2,hh/2,0,0,7);else if(n.kind==='diamond'){g.moveTo(x+ww/2,y);g.lineTo(x+ww,y+hh/2);g.lineTo(x+ww/2,y+hh);g.lineTo(x,y+hh/2);g.closePath()}else g.rect(x,y,ww,hh);g.stroke()}}
   g.setLineDash([]);
+  // the item being edited in the list
+  const hb=hiN!=null?r.allNodes[hiN]:hiE!=null?r.allNodes[r.edges[hiE].to]:null;
+  if(hb){const b=hb.kind==='text'?{x:hb.x,y:hb.y,w:hb.w,h:hb.h}:{x:hb.ox,y:hb.oy,w:hb.ow,h:hb.oh};g.strokeStyle='rgba(217,91,53,.95)';g.lineWidth=5;g.strokeRect(b.x*q-4,b.y*q-4,b.w*q+8,b.h*q+8)}
 }
 function openPhoto(file){closeFloating();$('#photoScrim').classList.add('show');document.body.classList.remove('photo-done','photo-busy');photoSrc=null;photoResult=null;$('#photoInsert').disabled=true;
-  $('#photoStatus').textContent='';const c=$('#photoCv');c.width=c.height=0;if(file)readPhoto(file)}
+  $('#photoStatus').textContent='';$('#photoFix').innerHTML='';const c=$('#photoCv');c.width=c.height=0;if(file)readPhoto(file)}
 async function readPhoto(file){
   const st=$('#photoStatus'),say=t=>st.textContent=T(t);
   let bmp;try{bmp=await createImageBitmap(file,{imageOrientation:'from-image'})}catch(_){try{bmp=await createImageBitmap(file)}catch(__){say('That file is not a picture Canvy can open');return}}
@@ -2625,9 +2672,9 @@ async function readPhoto(file){
     const lines=await OCR.read(photoSrc,(i,n)=>{st.textContent=T('Reading text')+` ${i}/${n}…`});
     if(!lines.length){say('No printed text found. Try a sharper, straight-on photo with good light. Handwriting is not supported yet.');document.body.classList.remove('photo-busy');return}
     say('Finding boxes and arrows…');await new Promise(r=>setTimeout(r,20));
-    photoResult=analyzePhoto(photoSrc,lines);drawPhotoPreview();
+    photoResult=analyzePhoto(photoSrc,lines);drawPhotoPreview();renderPhotoFix();
     const sh=photoResult.nodes.filter(n=>n.kind!=='text').length,tx=photoResult.nodes.length-sh;
-    st.textContent=T('Found')+` ${sh} ${T('shapes')}, ${tx} ${T('text')}, ${photoResult.edges.length} ${T('arrows')}. `+T('Check the preview, then add it. You can fix anything afterwards.');
+    const unsure=$('#photoFix').querySelectorAll('.low').length;st.textContent=T('Found')+` ${sh} ${T('shapes')}, ${tx} ${T('text')}, ${photoResult.edges.length} ${T('arrows')}. `+(unsure?T('Fix the yellow words, then add it.'):T('Check the preview, then add it. You can fix anything afterwards.'));
     $('#photoInsert').disabled=false;document.body.classList.add('photo-done');
   }catch(e){console.error(e);say(navigator.onLine?'The reader could not start. Check your connection and try again.':'The reader needs the internet the first time. Connect and try again.')}
   document.body.classList.remove('photo-busy');

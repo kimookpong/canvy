@@ -12,7 +12,7 @@ A hand-drawn diagram canvas that runs entirely in the browser. There is no accou
 - **PDF**: one page per frame, built in the browser.
 - **Speaker notes**: right-click a frame → Speaker notes. While presenting, `N` shows the notes and `L` turns on the laser pointer.
 - **Excalidraw import**: open or drop a `.excalidraw` file.
-- **Photo to diagram (beta)**: take or choose a photo of a printed or on-screen diagram. Text is read by [OpenThai2.0-OCR-Text](https://huggingface.co/iapp/OpenThai2.0-OCR-Text) (Apache-2.0) running in the browser with ONNX Runtime Web; boxes, ellipses, diamonds, arrows, arrow labels and fill colours are found from the picture itself. The model (~4 MB) and runtime (~15 MB) download once, from Hugging Face and jsDelivr, and are cached. The photo never leaves the device. Handwriting is not supported.
+- **Photo to diagram (beta)**: take or choose a photo of a diagram on paper, a whiteboard or a screen (try the example in the dialog). Text is read by [OpenThai2.0-OCR-Text](https://huggingface.co/iapp/OpenThai2.0-OCR-Text) (Apache-2.0) running in the browser with ONNX Runtime Web; boxes, ellipses, diamonds, arrows, arrow labels and fill colours are found from the picture itself. The model (~4 MB) and runtime (~15 MB) download once, from Hugging Face and jsDelivr, and are cached. The photo never leaves the device. Boxes and arrows are found in hand-drawn sketches too; handwriting itself is read only partly, so every word is listed for checking before insert.
 - **Ctrl/⌘ K** command palette: tools, actions, templates, looks, exports, and "go to" any labelled shape.
 - New Thai templates: ผังองค์กร, เส้นทางลูกค้า, ขั้นตอนอนุมัติเอกสาร, วิเคราะห์ SWOT, แผนงานรายไตรมาส.
 

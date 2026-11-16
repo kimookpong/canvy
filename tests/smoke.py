@@ -181,6 +181,14 @@ with sync_playwright() as p:
         kinds = {n[0]: n[1] for n in r['nodes'] if not n[3]}
         check('photo: shapes found' + (' (uneven light)' if light else ''), kinds.get('Start here')=='rect' and kinds.get('Approve?')=='diamond' and kinds.get('Send to finance')=='ellipse' and kinds.get('Fix the form\nLine two')=='rect')
         check('photo: arrows, labels and directions' + (' (uneven light)' if light else ''), sorted(map(tuple, r['edges'])) == sorted([('Start here','Approve?','',True),('Approve?','Send to finance','yes',True),('Approve?','Fix the form\nLine two','no',True)]))
+    # ---- the handwritten example photo (text boxes as the real reader returned them) ----
+    LINES=[["Lanp des' werk",100,108,485,126,.83],["No",516,451,73,73,1],["Lawp",232,462,143,81,.84],["Nes",302,762,105,95,.83],["B๙b",241,960,128,87,.91],["buwred ou?",167,1034,285,91,.81],["Ne",321,1260,87,88,.96]]
+    WEAK=[["",609,490,319,150,.46],["",168,520,303,137,.43],["Yes",501,961,90,82,.65],["",625,984,318,148,.48],["Repaic lanp",124,1394,347,130,.79]]
+    r = pg.evaluate("""async([L,W])=>{const img=await createImageBitmap(await (await fetch('samples/flowchart-photo.jpg')).blob());
+      const lines=L.map(([text,x,y,w,h,conf])=>({text,x,y,w,h,conf}));lines.weak=W.map(([text,x,y,w,h,conf])=>({text,x,y,w,h,conf,weak:true}));
+      const r=analyzePhoto(img,lines);return {kinds:r.nodes.map(n=>n.kind).sort().join(','),edges:r.edges.map(e=>e.from+'>'+e.to+':'+e.label)}}""",[LINES,WEAK])
+    check('example photo: 4 boxes and 2 diamonds on lined paper', r['kinds']=='diamond,diamond,rect,rect,rect,rect')
+    check('example photo: 5 arrows, all with their Yes/No labels but the first', len(r['edges'])==5 and sum(1 for e in r['edges'] if e.split(':')[1])==4)
     pg.evaluate("view={x:-3000,y:-3000,z:1};renderView()")
     check('minimap shows when the diagram is off screen', pg.evaluate("getComputedStyle(document.querySelector('#minimap')).display") == 'block')
 
