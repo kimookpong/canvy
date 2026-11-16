@@ -8,7 +8,16 @@ A hand-drawn diagram canvas that runs entirely in the browser. There is no accou
 ## What the editor does
 
 - **Hand-drawn canvas:** 11 shapes (box, pill, ellipse, decision, database, hexagon, in/out, document, cloud, sticky, person), 35 icons, arrows, lines, pen, highlighter, text and frames
-- **Right-click tool dial:** right-click, long-press or tap Space on empty canvas, then flick toward a tool and release. Right-clicking a shape opens a context menu
+- **Right-click menus:** right-click, long-press or tap Space on empty canvas for tools, zoom and view. Right-clicking a shape opens its own menu
+- **Smooth editing:**
+  - shapes snap to their neighbours' edges and centres, with guide lines (hold Ctrl/⌘ to place freely)
+  - long labels wrap inside their shape, Thai at word boundaries
+  - group (Ctrl/⌘ G), ungroup (Ctrl/⌘ Shift G) and lock (Ctrl/⌘ Shift L)
+  - hover a shape and drag or click a + to add a connected shape
+  - paste or drop pictures
+  - two-finger pinch zoom on touch screens
+  - an overview map when the diagram is bigger than the window
+  - Ctrl/⌘ F to find a shape by name
 - **Floating toolbar** above the selection:
   - change shape, fill, line, width, text size
   - bold, numbered badge, ✓ ✗ ⚠ marks, paper-shadow lift, pencil shading, stack ×N

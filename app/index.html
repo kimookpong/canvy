@@ -115,6 +115,9 @@ svg{display:block}
 .zoom .pct{min-width:52px;text-align:center;font-size:12px;color:var(--muted);border-radius:8px;padding:8px 2px}
 .zoom .pct:hover{background:#f5f2ec;color:var(--ink)}
 .undo{right:12px;bottom:14px;display:flex;padding:3px;gap:1px}
+.minimap{right:12px;bottom:66px;width:180px;height:110px;cursor:pointer;display:none;padding:0}
+@media (max-width:900px){.minimap{display:none!important}}
+body.presenting .minimap{display:none!important}
 .ibtn:disabled{opacity:.35;pointer-events:none}
 
 .cmd{left:50%;bottom:14px;transform:translateX(-50%);width:min(660px,calc(100% - 270px));display:flex;align-items:center;gap:6px;padding:6px 6px 6px 10px}
@@ -378,6 +381,7 @@ body.presenting .pbar{display:flex}
   <button class="ibtn" id="zIn" title="Zoom in — Ctrl/⌘ +"><svg width="14" height="14" viewBox="0 0 14 14"><path d="M3 7h8M7 3v8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></button>
   <button class="ibtn" id="zFit" title="Fit everything — 0"><svg width="15" height="15" viewBox="0 0 16 16"><path d="M2.5 6V2.5H6M10 2.5h3.5V6M13.5 10v3.5H10M6 13.5H2.5V10" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
 </div>
+<canvas class="ui panel minimap" id="minimap" width="360" height="220" title="Overview — click to jump"></canvas>
 <div class="ui panel undo">
   <button class="ibtn" id="bUndo" title="Undo — Ctrl/⌘ Z"><svg width="16" height="16" viewBox="0 0 16 16"><path d="M5.5 3.5 2.5 6.5l3 3M2.8 6.5h6.7a4 4 0 0 1 0 8H7" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
   <button class="ibtn" id="bRedo" title="Redo — Ctrl/⌘ Shift Z"><svg width="16" height="16" viewBox="0 0 16 16"><path d="M10.5 3.5l3 3-3 3M13.2 6.5H6.5a4 4 0 0 0 0 8H9" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
@@ -420,6 +424,11 @@ body.presenting .pbar{display:flex}
     <tr><td>Ctrl/⌘ Z · D · C · V · A</td><td>Undo · duplicate · copy · paste · all</td></tr>
     <tr><td>→ ← Space (presenting)</td><td>Next / previous frame</td></tr>
     <tr><td>/</td><td>Jump to the command bar</td></tr>
+    <tr><td>Ctrl/⌘ F</td><td>Find a shape by name</td></tr>
+    <tr><td>Ctrl/⌘ G · Ctrl/⌘ Shift G · Ctrl/⌘ Shift L</td><td>Group · ungroup · lock</td></tr>
+    <tr><td>Hover a shape → drag or click a +</td><td>Connect a new shape</td></tr>
+    <tr><td>Hold Ctrl/⌘ while dragging</td><td>Move without snapping</td></tr>
+    <tr><td>Paste or drop a picture</td><td>Add an image</td></tr>
     <tr><td>Ctrl/⌘ O · Ctrl/⌘ Shift S</td><td>Open a .canvy file · save to a file</td></tr>
   </table>
 </div>
@@ -530,7 +539,7 @@ const LH=1.35; // line height; roomy enough for Thai marks above and below the l
 const KINDS=[['rect','Box'],['pill','Pill'],['ellipse','Ellipse'],['diamond','Decision'],['cylinder','Database'],['hexagon','Hexagon'],['io','In / out'],['document','Document'],['cloud','Cloud'],['sticky','Sticky'],['person','Person']];
 const SHAPES=new Set([...KINDS.map(k=>k[0]),'icon']);
 const LABEL_BELOW=new Set(['person','icon']);
-const RESIZABLE=t=>SHAPES.has(t)||t==='frame';
+const RESIZABLE=t=>SHAPES.has(t)||t==='frame'||t==='image';
 const DEF_SIZE={rect:[150,76],pill:[150,60],ellipse:[150,84],diamond:[150,100],cylinder:[120,100],hexagon:[150,80],io:[160,72],document:[150,88],cloud:[170,104],sticky:[170,150],person:[60,96],icon:[64,64],frame:[440,300]};
 const KIND_ICON={
   rect:'<rect x="3" y="4.5" width="12" height="9" rx="2"/>',
@@ -643,7 +652,7 @@ const TH={
 'Zoom out — Ctrl/⌘ −':'ซูมออก — Ctrl/⌘ −','Reset to 100%':'กลับเป็น 100%','Zoom in — Ctrl/⌘ +':'ซูมเข้า — Ctrl/⌘ +','Fit everything — 0':'พอดีจอ — 0','Undo — Ctrl/⌘ Z':'เลิกทำ — Ctrl/⌘ Z','Redo — Ctrl/⌘ Shift Z':'ทำซ้ำ — Ctrl/⌘ Shift Z','Syntax and shortcuts — ?':'วิธีพิมพ์และคีย์ลัด — ?',
 'Text to diagram':'พิมพ์เป็นไดอะแกรม','Type:  user:Customer -> API -(SQL)-> db:Orders   ·  ## Heading  ·  or a name to find it':'พิมพ์:  user:ลูกค้า -> API -(SQL)-> db:คำสั่งซื้อ   ·  ## หัวข้อ  ·  หรือพิมพ์ชื่อเพื่อค้นหา','Layout direction for typed diagrams':'ทิศการจัดวางของไดอะแกรมที่พิมพ์',
 'Type a diagram':'พิมพ์ไดอะแกรม','Boxes joined by arrows':'กล่องเชื่อมด้วยลูกศร','Label on an arrow':'ข้อความบนลูกศร','Plain line · both ways · dashed':'เส้นธรรมดา · สองทาง · เส้นประ','Pick a shape by name':'เลือกรูปทรงด้วยชื่อ','Or by brackets':'หรือใช้วงเล็บ','Self-loop':'ลูกศรวนเข้าตัวเอง','A section title above what you add':'หัวข้อเหนือสิ่งที่เพิ่ม','A name that already exists: fly to it':'ชื่อที่มีอยู่แล้ว: พาไปที่รูปนั้น','Mermaid flowcharts work too (or paste them)':'ใช้ Mermaid ได้ (หรือวางลงมาเลย)','Separate chains':'แยกหลายสาย',', ; or new line':', ; หรือขึ้นบรรทัดใหม่',
-'Shortcuts':'คีย์ลัด','Right-click · long-press · tap Space':'คลิกขวา · กดค้าง · แตะ Space','Quick menu: tools, zoom, view':'เมนูด่วน: เครื่องมือ ซูม มุมมอง','Tools (R again switches shape)':'เครื่องมือ (กด R ซ้ำเพื่อเปลี่ยนรูปทรง)','Double-click · Enter':'ดับเบิลคลิก · Enter','Edit a label, or add text':'แก้ข้อความ หรือเพิ่มข้อความ','Space + drag · scroll':'Space + ลาก · เลื่อนล้อเมาส์','Ctrl/⌘ + scroll':'Ctrl/⌘ + เลื่อนล้อเมาส์','Zoom':'ซูม','Zoom · fit all · zoom to selection · fly to frame':'ซูม · พอดีจอ · ซูมไปที่ที่เลือก · ไปยังเฟรม','Make the selection bigger / smaller':'ขยาย / ย่อสิ่งที่เลือก','Drag · Shift-drag · Alt-drag':'ลาก · Shift-ลาก · Alt-ลาก','Move · move along one axis · move a copy':'ย้าย · ย้ายแนวเดียว · ลากสำเนา','Arrows · Shift · Alt':'ปุ่มลูกศร · Shift · Alt','Nudge 1 · 10 · 50 px':'ขยับ 1 · 10 · 50 px','Tidy · present · look':'จัดเรียง · นำเสนอ · รูปลักษณ์','Undo · duplicate · copy · paste · all':'เลิกทำ · สำเนา · คัดลอก · วาง · ทั้งหมด','Next / previous frame':'เฟรมถัดไป / ก่อนหน้า','Jump to the command bar':'ไปที่ช่องพิมพ์','Open a .canvy file · save to a file':'เปิดไฟล์ .canvy · บันทึกเป็นไฟล์',
+'Shortcuts':'คีย์ลัด','Right-click · long-press · tap Space':'คลิกขวา · กดค้าง · แตะ Space','Quick menu: tools, zoom, view':'เมนูด่วน: เครื่องมือ ซูม มุมมอง','Tools (R again switches shape)':'เครื่องมือ (กด R ซ้ำเพื่อเปลี่ยนรูปทรง)','Double-click · Enter':'ดับเบิลคลิก · Enter','Edit a label, or add text':'แก้ข้อความ หรือเพิ่มข้อความ','Space + drag · scroll':'Space + ลาก · เลื่อนล้อเมาส์','Ctrl/⌘ + scroll':'Ctrl/⌘ + เลื่อนล้อเมาส์','Zoom':'ซูม','Zoom · fit all · zoom to selection · fly to frame':'ซูม · พอดีจอ · ซูมไปที่ที่เลือก · ไปยังเฟรม','Make the selection bigger / smaller':'ขยาย / ย่อสิ่งที่เลือก','Drag · Shift-drag · Alt-drag':'ลาก · Shift-ลาก · Alt-ลาก','Move · move along one axis · move a copy':'ย้าย · ย้ายแนวเดียว · ลากสำเนา','Arrows · Shift · Alt':'ปุ่มลูกศร · Shift · Alt','Nudge 1 · 10 · 50 px':'ขยับ 1 · 10 · 50 px','Tidy · present · look':'จัดเรียง · นำเสนอ · รูปลักษณ์','Undo · duplicate · copy · paste · all':'เลิกทำ · สำเนา · คัดลอก · วาง · ทั้งหมด','Next / previous frame':'เฟรมถัดไป / ก่อนหน้า','Jump to the command bar':'ไปที่ช่องพิมพ์','Find a shape by name':'ค้นหารูปจากชื่อ','Group · ungroup · lock':'จัดกลุ่ม · ยกเลิกกลุ่ม · ล็อก','Hover a shape → drag or click a +':'ชี้ที่รูป แล้วลากหรือคลิกปุ่ม +','Connect a new shape':'เพิ่มรูปใหม่ที่เชื่อมกัน','Hold Ctrl/⌘ while dragging':'กด Ctrl/⌘ ค้างขณะลาก','Move without snapping':'ย้ายโดยไม่ดูดติด','Paste or drop a picture':'วางหรือลากรูปภาพมาใส่','Add an image':'เพิ่มรูปภาพ','Open a .canvy file · save to a file':'เปิดไฟล์ .canvy · บันทึกเป็นไฟล์',
 'A blank page. Your move.':'หน้าว่างพร้อมแล้ว เริ่มเลย','Draw with the tools on the left, right-click for the quick menu, or type a line at the bottom.':'วาดด้วยเครื่องมือด้านซ้าย คลิกขวาเพื่อเปิดเมนูด่วน หรือพิมพ์ที่ช่องด้านล่าง','Templates…':'เทมเพลต…','Web app':'เว็บแอป','Login flow':'ขั้นตอนล็อกอิน',
 'Diagrams are saved in this browser only. Save a .canvy file to keep a copy or move it to another device.':'ไดอะแกรมถูกบันทึกในเบราว์เซอร์นี้เท่านั้น บันทึกเป็นไฟล์ .canvy เพื่อเก็บสำรองหรือย้ายไปเครื่องอื่น','Diagrams are saved in this browser only. Export a JSON backup to move them to another device.':'ไดอะแกรมถูกบันทึกในเบราว์เซอร์นี้เท่านั้น ถ้าจะย้ายไปเครื่องอื่นให้ export เป็น JSON','+ New diagram':'+ ไดอะแกรมใหม่','Templates':'เทมเพลต','Import JSON':'นำเข้า JSON','Close':'ปิด','Delete':'ลบ','Sure?':'แน่ใจ?',
 'Insert':'แทรก','Search all blocks: cache, queue, gear, ผู้ใช้…':'ค้นหาบล็อก: cache, queue, ผู้ใช้, ฐานข้อมูล…','Sections':'ส่วน','Systems':'ระบบ','Data & APIs':'ข้อมูลและ API','Notes':'โน้ต','Patterns':'แพตเทิร์น','Icons':'ไอคอน',
@@ -657,7 +666,7 @@ const TH={
 'Nothing matches. Try “db”, “queue” or “ผู้ใช้”.':'ไม่พบบล็อกที่ตรง ลองคำว่า “db”, “queue” หรือ “ผู้ใช้”',
 // toasts
 'Browser storage is full. Export a JSON backup and delete old diagrams.':'พื้นที่เก็บในเบราว์เซอร์เต็มแล้ว ให้ export เป็น JSON แล้วลบไดอะแกรมเก่า','That diagram could not be found':'ไม่พบไดอะแกรมนั้น','Diagram deleted':'ลบไดอะแกรมแล้ว','That file is not a Canvy JSON export':'ไฟล์นี้ไม่ใช่ไฟล์ JSON จาก Canvy','No changes since the last version':'ไม่มีอะไรเปลี่ยนจากเวอร์ชันล่าสุด','That version matches the canvas':'เวอร์ชันนี้เหมือนกับที่อยู่บนผืนผ้าใบ','Version restored. Undo is available.':'กู้คืนเวอร์ชันแล้ว กดเลิกทำได้',
-'Nothing to export yet':'ยังไม่มีอะไรให้ส่งออก','No shapes to export yet':'ยังไม่มีรูปให้ส่งออก','PNG export failed in this browser. Try SVG.':'ส่งออก PNG ไม่ได้ในเบราว์เซอร์นี้ ลองใช้ SVG','Select three or more to distribute':'เลือก 3 ชิ้นขึ้นไปเพื่อเว้นระยะ','Tidy arranges shapes that are connected by arrows':'การจัดเรียงใช้กับรูปที่เชื่อมกันด้วยลูกศร','Those shapes and arrows are already on the canvas':'รูปและลูกศรเหล่านั้นมีอยู่แล้ว','Nothing to draw yet. Try: user:Customer -> API -> db:Orders':'ยังไม่มีอะไรให้วาด ลองพิมพ์: user:ลูกค้า -> API -> db:คำสั่งซื้อ','That share link looks broken or was cut short. Ask for the link again, or a JSON export.':'ลิงก์แชร์นี้เสียหรือถูกตัดขาด ขอลิงก์ใหม่หรือขอไฟล์ JSON แทน','Saved in this browser.':'บันทึกในเบราว์เซอร์นี้แล้ว','New diagrams flow top to bottom':'ไดอะแกรมใหม่จะเรียงจากบนลงล่าง','New diagrams flow left to right':'ไดอะแกรมใหม่จะเรียงจากซ้ายไปขวา','Language: English':'ภาษา: English','Save file…':'บันทึกไฟล์…','Open file…':'เปิดไฟล์…','Saved to':'บันทึกลง','Save to a .canvy file — Ctrl/⌘ Shift S':'บันทึกเป็นไฟล์ .canvy — Ctrl/⌘ Shift S','Open a .canvy or .json file — Ctrl/⌘ O':'เปิดไฟล์ .canvy หรือ .json — Ctrl/⌘ O','Updated from another tab':'อัปเดตจากอีกแท็บแล้ว','A new version of Canvy is ready':'Canvy มีเวอร์ชันใหม่แล้ว','Reload':'โหลดใหม่','Ready to work offline':'พร้อมใช้งานแบบออฟไลน์แล้ว','Untitled diagram':'ไดอะแกรมไม่มีชื่อ','Preview':'ตัวอย่าง','Copy image':'คัดลอกรูป','Image copied':'คัดลอกรูปแล้ว','Download preview card':'ดาวน์โหลดภาพการ์ด','Paste the image next to the link so people see the diagram before they open it.':'วางรูปคู่กับลิงก์ คนรับจะเห็นไดอะแกรมก่อนเปิด','Switched to English':'Switched to English'
+'Nothing to export yet':'ยังไม่มีอะไรให้ส่งออก','No shapes to export yet':'ยังไม่มีรูปให้ส่งออก','PNG export failed in this browser. Try SVG.':'ส่งออก PNG ไม่ได้ในเบราว์เซอร์นี้ ลองใช้ SVG','Select three or more to distribute':'เลือก 3 ชิ้นขึ้นไปเพื่อเว้นระยะ','Tidy arranges shapes that are connected by arrows':'การจัดเรียงใช้กับรูปที่เชื่อมกันด้วยลูกศร','Those shapes and arrows are already on the canvas':'รูปและลูกศรเหล่านั้นมีอยู่แล้ว','Nothing to draw yet. Try: user:Customer -> API -> db:Orders':'ยังไม่มีอะไรให้วาด ลองพิมพ์: user:ลูกค้า -> API -> db:คำสั่งซื้อ','That share link looks broken or was cut short. Ask for the link again, or a JSON export.':'ลิงก์แชร์นี้เสียหรือถูกตัดขาด ขอลิงก์ใหม่หรือขอไฟล์ JSON แทน','Saved in this browser.':'บันทึกในเบราว์เซอร์นี้แล้ว','New diagrams flow top to bottom':'ไดอะแกรมใหม่จะเรียงจากบนลงล่าง','New diagrams flow left to right':'ไดอะแกรมใหม่จะเรียงจากซ้ายไปขวา','Language: English':'ภาษา: English','Group':'จัดกลุ่ม','Ungroup':'ยกเลิกกลุ่ม','Lock':'ล็อก','Unlock':'ปลดล็อก','Grouped':'จัดกลุ่มแล้ว','Ungrouped':'ยกเลิกกลุ่มแล้ว','Locked. Right-click it to unlock.':'ล็อกแล้ว คลิกขวาที่รูปเพื่อปลดล็อก','Unlocked':'ปลดล็อกแล้ว','Select two or more to group':'เลือก 2 ชิ้นขึ้นไปเพื่อจัดกลุ่ม','Type a name to find it':'พิมพ์ชื่อเพื่อค้นหา','Overview — click to jump':'ภาพรวม — คลิกเพื่อไปยังจุดนั้น','Images are left out of links. Save a .canvy file to share pictures too.':'ลิงก์จะไม่รวมรูปภาพ ถ้าจะแชร์รูปด้วยให้บันทึกเป็นไฟล์ .canvy','Save file…':'บันทึกไฟล์…','Open file…':'เปิดไฟล์…','Saved to':'บันทึกลง','Save to a .canvy file — Ctrl/⌘ Shift S':'บันทึกเป็นไฟล์ .canvy — Ctrl/⌘ Shift S','Open a .canvy or .json file — Ctrl/⌘ O':'เปิดไฟล์ .canvy หรือ .json — Ctrl/⌘ O','Updated from another tab':'อัปเดตจากอีกแท็บแล้ว','A new version of Canvy is ready':'Canvy มีเวอร์ชันใหม่แล้ว','Reload':'โหลดใหม่','Ready to work offline':'พร้อมใช้งานแบบออฟไลน์แล้ว','Untitled diagram':'ไดอะแกรมไม่มีชื่อ','Preview':'ตัวอย่าง','Copy image':'คัดลอกรูป','Image copied':'คัดลอกรูปแล้ว','Download preview card':'ดาวน์โหลดภาพการ์ด','Paste the image next to the link so people see the diagram before they open it.':'วางรูปคู่กับลิงก์ คนรับจะเห็นไดอะแกรมก่อนเปิด','Switched to English':'Switched to English'
 };
 let LANG=(()=>{try{const q=new URLSearchParams(location.search).get('lang');if(q==='th'||q==='en')return q}catch(_){}return null})()||LS.get('canvy:lang',null)||((navigator.language||'').toLowerCase().startsWith('th')?'th':'en');
 const T=s=>LANG==='th'&&TH[s]?TH[s]:s;
@@ -801,13 +810,14 @@ function hitTest(p,opts={}){
   const tol=7/view.z;
   for(let i=els.length-1;i>=0;i--){const el=els[i];
     if(el.type==='frame')continue;
-    if(opts.shapesOnly&&!(SHAPES.has(el.type)||el.type==='text'))continue;
+    if(opts.shapesOnly&&!(SHAPES.has(el.type)||el.type==='text'||el.type==='image'))continue;
+    if(el.locked&&!opts.withLocked)continue;
     if(opts.exclude&&el.id===opts.exclude)continue;
     if(el.type==='arrow'){if(distPoly(p,arrowGeom(el).poly)<tol+2)return el}
     else if(el.type==='draw'){const pts=el.points,w=el.hl?9:SW[el.sw||2];for(let j=1;j<pts.length;j++)if(distSeg(p,pts[j-1],pts[j])<tol+w)return el;if(pts.length===1&&Math.hypot(p[0]-pts[0][0],p[1]-pts[0][1])<tol+w)return el}
     else{const b=bbox(el);if(p[0]>=b.x-tol&&p[0]<=b.x+b.w+tol&&p[1]>=b.y-tol&&p[1]<=b.y+b.h+tol)return el}
   }
-  if(!opts.shapesOnly)for(let i=els.length-1;i>=0;i--){const el=els[i];if(el.type==='frame'&&hitFrame(el,p,tol))return el}
+  if(!opts.shapesOnly)for(let i=els.length-1;i>=0;i--){const el=els[i];if(el.type==='frame'&&(!el.locked||opts.withLocked)&&hitFrame(el,p,tol))return el}
   return null;
 }
 function frames(){
@@ -831,12 +841,29 @@ function padFor(type,m){
     case'pill':return[56,24];case'sticky':return[40,40];default:return[40,28];
   }
 }
+// labels wrap inside their shape; Thai has no spaces, so break on word boundaries from Intl.Segmenter
+const SEG=(()=>{try{return new Intl.Segmenter('th',{granularity:'word'})}catch(_){return null}})();
+const MAXW=280;
+function innerW(el){const w=el.w;switch(el.type){case'ellipse':return w*.74-16;case'cloud':return w*.66-16;case'diamond':return w*.56-12;case'hexagon':case'io':return w-64;case'pill':return w-48;case'cylinder':case'document':case'sticky':return w-32;default:return w-28}}
+function wrapText(text,size,bold,maxW){
+  if(maxW<20)return String(text);const out=[];
+  for(const para of String(text).split('\n')){
+    if(measure(para,size,bold).w<=maxW){out.push(para);continue}
+    const words=SEG?[...SEG.segment(para)].map(x=>x.segment):para.split(/(\s+)/);let line='';
+    for(const w of words){const t=line+w;if(line.trim()&&measure(t,size,bold).w>maxW){out.push(line.trimEnd());line=w.trimStart()}else line=t}
+    if(line)out.push(line.trimEnd());
+  }
+  return out.join('\n');
+}
+const shownLabel=el=>SHAPES.has(el.type)&&!LABEL_BELOW.has(el.type)&&el.type!=='icon'?wrapText(el.label,FS[el.fs||'m'],el.bold,innerW(el)):el.label;
 function fitText(el){
   if(el.type==='text'){const m=measure(el.label,FS[el.fs||'m'],el.bold);el.w=Math.max(8,m.w);el.h=m.h;return}
   if(!SHAPES.has(el.type)||!el.label||LABEL_BELOW.has(el.type))return;
-  const m=measure(el.label,FS[el.fs||'m'],el.bold),[px,py]=padFor(el.type,m);
-  const nw=Math.ceil(m.w+px),nh=Math.ceil(m.h+py);
+  const size=FS[el.fs||'m'],m=measure(el.label,size,el.bold),[px,py]=padFor(el.type,m);
+  // grow to fit, but past MAXW wrap the words instead of making the shape ever wider
+  const nw=Math.ceil(Math.min(m.w,Math.max(MAXW,innerW(el)))+px);
   if(nw>el.w){el.x-=(nw-el.w)/2;el.w=nw}
+  const mh=measure(shownLabel(el),size,el.bold),nh=Math.ceil(mh.h+py);
   if(nh>el.h){el.y-=(nh-el.h)/2;el.h=nh}
 }
 function remeasureAll(){for(const el of els)if(el.type==='text')fitText(el)}
@@ -979,7 +1006,7 @@ function renderEl(el,frameIdx){
     if(el.type==='sticky'){o+=`<path d="M${f1(el.x+el.w-18)} ${f1(el.y+el.h)}L${f1(el.x+el.w)} ${f1(el.y+el.h-18)}" stroke="${sc}" stroke-opacity=".35" stroke-width="1.2"/>`}
     if(el.label&&editing!==el.id){
       if(LABEL_BELOW.has(el.type)){const size=FS[el.fs||'m'],m=measure(el.label,size,el.bold);o+=labelSvg(el.label,el.x+el.w/2,el.y+el.h+6+m.h/2,size,sc,'middle',el.bold)}
-      else{const cyOff=el.type==='cylinder'?Math.min(16,el.h*.18)/2:el.type==='document'?-Math.min(10,el.h*.12)/2:0;o+=labelSvg(el.label,el.x+el.w/2,el.y+el.h/2+cyOff,FS[el.fs||'m'],sc,'middle',el.bold)}
+      else{const cyOff=el.type==='cylinder'?Math.min(16,el.h*.18)/2:el.type==='document'?-Math.min(10,el.h*.12)/2:0;o+=labelSvg(shownLabel(el),el.x+el.w/2,el.y+el.h/2+cyOff,FS[el.fs||'m'],sc,'middle',el.bold)}
     }
     if(n>1)o+=`<g><rect x="${f1(el.x+el.w+7*(n-1)-14)}" y="${f1(el.y-7*(n-1)-9)}" width="24" height="16" rx="8" fill="${s.dark?'#f1eee6':'#171717'}"/><text x="${f1(el.x+el.w+7*(n-1)-2)}" y="${f1(el.y-7*(n-1)-1)}" text-anchor="middle" dominant-baseline="central" font-family="${esc(CLEAN)}" font-weight="700" font-size="10" fill="${s.dark?'#171717':'#fff'}">×${n}</text></g>`;
     if(el.badge){const bx=el.x+2,by=el.y+2;o+=`<circle cx="${bx}" cy="${by}" r="12" fill="${s.accent}"/><text x="${bx}" y="${by}" text-anchor="middle" dominant-baseline="central" font-family="${esc(CLEAN)}" font-weight="700" font-size="13" fill="${s.dark?'#111':'#fff'}">${el.badge}</text>`}
@@ -988,6 +1015,9 @@ function renderEl(el,frameIdx){
       else if(el.mark==='no')o+=`<circle cx="${mx}" cy="${my}" r="11" fill="#c8432b"/><path d="M${mx-4.5} ${my-4.5}l9 9M${mx+4.5} ${my-4.5}l-9 9" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/>`;
       else o+=`<path d="M${mx} ${my-12}L${mx+12} ${my+9}H${mx-12}Z" fill="#e4a11b" stroke-linejoin="round"/><path d="M${mx} ${my-4}v6" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/><circle cx="${mx}" cy="${my+5.5}" r="1.3" fill="#fff"/>`;
     }
+  }else if(el.type==='image'){
+    o+=`<image href="${esc(el.src||'')}" x="${f1(el.x)}" y="${f1(el.y)}" width="${f1(el.w)}" height="${f1(el.h)}" preserveAspectRatio="none"/>`;
+    if(el.border)o+=`<rect x="${f1(el.x)}" y="${f1(el.y)}" width="${f1(el.w)}" height="${f1(el.h)}" rx="4" fill="none" stroke="${sc}" stroke-width="${sw}"/>`;
   }else if(el.type==='arrow'){o+=renderArrow(el)}
   else if(el.type==='draw'){
     const P=el.points;let d='M'+pt(P[0]);
@@ -1022,9 +1052,25 @@ function renderView(){
   stage.style.backgroundPosition=`${view.x}px ${view.y}px`;
   world.setAttribute('filter',s.glow?'url(#glow)':'');
   $('#zPct').textContent=Math.round(view.z*100)+'%';
+  drawMinimap();
   if(editing)placeEditor();
   placeProps();
 }
+// overview map: shows when the diagram is bigger than the window
+let mm=null;
+function drawMinimap(){
+  const c=$('#minimap'),b=els.length?unionBox(els):null;if(!b){c.style.display='none';return}
+  const[vx0,vy0]=toWorld(0,0),[vx1,vy1]=toWorld(innerWidth,innerHeight);
+  const inside=b.x>=vx0&&b.y>=vy0&&b.x+b.w<=vx1&&b.y+b.h<=vy1;c.style.display=inside||innerWidth<=900?'none':'block';if(inside)return;
+  const W=c.width,H=c.height,x0=Math.min(b.x,vx0),y0=Math.min(b.y,vy0),x1=Math.max(b.x+b.w,vx1),y1=Math.max(b.y+b.h,vy1),k=Math.min((W-20)/(x1-x0),(H-20)/(y1-y0)),ox=(W-(x1-x0)*k)/2-x0*k,oy=(H-(y1-y0)*k)/2-y0*k;
+  mm={k,ox,oy};const g=c.getContext('2d'),s=S();g.clearRect(0,0,W,H);g.fillStyle=s.dark?'#22252a':'#faf8f4';g.fillRect(0,0,W,H);
+  for(const el of els){if(el.type==='arrow'){const q=arrowGeom(el);g.strokeStyle='#b8b2a8';g.lineWidth=1;g.beginPath();g.moveTo(q.p1[0]*k+ox,q.p1[1]*k+oy);g.lineTo(q.p2[0]*k+ox,q.p2[1]*k+oy);g.stroke();continue}
+    const r=el.type==='frame'?rectOf(el):bbox(el);if(el.type==='frame'){g.strokeStyle='#cfc9be';g.strokeRect(r.x*k+ox,r.y*k+oy,r.w*k,r.h*k);continue}
+    g.fillStyle=SHAPES.has(el.type)&&el.fill&&el.fill!=='none'?s.fills[el.fill]:'#d9d4ca';g.fillRect(r.x*k+ox,r.y*k+oy,Math.max(2,r.w*k),Math.max(2,r.h*k))}
+  g.strokeStyle=s.accent;g.lineWidth=2;g.strokeRect(vx0*k+ox,vy0*k+oy,(vx1-vx0)*k,(vy1-vy0)*k);
+}
+{const c=$('#minimap');let down=false;const go=e=>{if(!mm)return;const r=c.getBoundingClientRect(),px=(e.clientX-r.left)*c.width/r.width,py=(e.clientY-r.top)*c.height/r.height,wx=(px-mm.ox)/mm.k,wy=(py-mm.oy)/mm.k;view.x=innerWidth/2-wx*view.z;view.y=innerHeight/2-wy*view.z;renderView();renderOverlay();saveViewSoon()};
+  c.addEventListener('pointerdown',e=>{down=true;c.setPointerCapture(e.pointerId);go(e)});c.addEventListener('pointermove',e=>{if(down)go(e)});c.addEventListener('pointerup',()=>down=false)}
 function renderOverlay(){
   const s=S(),z=view.z,lw=1.3/z,hs=8/z,ac=s.accent;let o='';
   const list=selected();
@@ -1035,6 +1081,8 @@ function renderOverlay(){
     }else{const b=el.type==='frame'?rectOf(el):bbox(el),pd=6/z;o+=`<rect x="${b.x-pd}" y="${b.y-pd}" width="${b.w+2*pd}" height="${b.h+2*pd}" rx="${4/z}" fill="none" stroke="${ac}" stroke-width="${lw}" stroke-dasharray="${5/z} ${4/z}"/>`;
       if(list.length===1&&RESIZABLE(el.type))for(const[hx,hy]of corners(el))o+=`<rect x="${hx-hs/2}" y="${hy-hs/2}" width="${hs}" height="${hs}" rx="${2/z}" fill="#fff" stroke="${ac}" stroke-width="${lw}"/>`}
   }
+  if(guides.length){const[vx0,vy0]=toWorld(0,0),[vx1,vy1]=toWorld(innerWidth,innerHeight);for(const g of guides){if(g.x!=null)o+=`<path d="M${f1(g.x)} ${f1(vy0)}V${f1(vy1)}" stroke="${ac}" stroke-width="${lw}" stroke-dasharray="${3/z} ${3/z}" opacity=".8"/>`;else o+=`<path d="M${f1(vx0)} ${f1(g.y)}H${f1(vx1)}" stroke="${ac}" stroke-width="${lw}" stroke-dasharray="${3/z} ${3/z}" opacity=".8"/>`}}
+  if(quickHover&&tool==='select'&&!drag&&byId(quickHover)){for(const q of quickHandles(byId(quickHover)))o+=`<g><circle cx="${f1(q.x)}" cy="${f1(q.y)}" r="${9/z}" fill="#fff" stroke="${ac}" stroke-width="${lw}"/><path d="M${f1(q.x-4/z)} ${f1(q.y)}h${f1(8/z)}M${f1(q.x)} ${f1(q.y-4/z)}v${f1(8/z)}" stroke="${ac}" stroke-width="${1.6/z}" stroke-linecap="round"/></g>`}
   if(drag&&drag.kind==='marquee'){const[a,b]=[drag.start,drag.cur];o+=`<rect x="${Math.min(a[0],b[0])}" y="${Math.min(a[1],b[1])}" width="${Math.abs(a[0]-b[0])}" height="${Math.abs(a[1]-b[1])}" fill="${ac}" fill-opacity=".06" stroke="${ac}" stroke-width="${lw}" stroke-dasharray="${4/z} ${4/z}"/>`}
   if(drag&&(drag.kind==='arrow'||drag.kind==='arrowEnd')&&drag.target){const t=byId(drag.target);if(t){const b=bbox(t),pd=8/z;o+=`<rect x="${b.x-pd}" y="${b.y-pd}" width="${b.w+2*pd}" height="${b.h+2*pd}" rx="${10/z}" fill="${ac}" fill-opacity=".07" stroke="${ac}" stroke-width="${lw}"/>`}}
   overlay.innerHTML=o;
@@ -1117,6 +1165,10 @@ function withContents(ids){const out=new Set(ids);for(const id of ids){const el=
   // arrows whose both ends are moving come along too
   for(const a of els)if(a.type==='arrow'&&a.start&&a.end&&out.has(a.start)&&out.has(a.end))out.add(a.id);return out}
 function selected(){return[...sel].map(byId).filter(Boolean)}
+const groupOf=el=>el.group?els.filter(x=>x.group===el.group).map(x=>x.id):[el.id];
+function groupSel(){const list=selected();if(list.length<2)return toast('Select two or more to group');pushUndo();const g=uid();for(const e of list)e.group=g;commit();toast('Grouped')}
+function ungroupSel(){const list=selected().filter(e=>e.group);if(!list.length)return;pushUndo();for(const e of list)delete e.group;commit();toast('Ungrouped')}
+function lockSel(){const list=selected();if(!list.length)return;pushUndo();const v=!list.every(e=>e.locked);for(const e of list){if(v)e.locked=true;else delete e.locked}if(v)sel.clear();commit();toast(v?'Locked. Right-click it to unlock.':'Unlocked')}
 function duplicate(){const list=selected();if(!list.length)return;pushUndo();const c=cloneSet(list,24,24);els.push(...c);sel=new Set(c.map(e=>e.id));commit()}
 function copySel(){const list=selected();if(!list.length)return;clip=JSON.stringify(list);pasteN=0;toast(`Copied ${list.length} item${list.length>1?'s':''}`)}
 function paste(){if(!clip)return;pasteN++;pushUndo();const list=JSON.parse(clip);const c=cloneSet(list,24*pasteN,24*pasteN);els.push(...c);sel=new Set(c.map(e=>e.id));commit()}
@@ -1290,16 +1342,30 @@ function openCtx(x,y,el){
   items.push(['dup','Duplicate',mod+'D'],['copy','Copy',mod+'C']);if(clip)items.push(['paste','Paste',mod+'V']);
   items.push('-',['bigger','Make bigger','⇧+'],['smaller','Make smaller','⇧−'],['front','Bring to front',']'],['back','Send to back','['],['zoom','Zoom to selection','⇧2']);
   if(sel.size>=2)items.push(['tidy','Tidy selection','⇧T']);
+  const anyG=selected().some(x=>x.group),locked=selected().every(x=>x.locked);
+  if(sel.size>=2&&!selected().every(x=>x.group&&x.group===selected()[0].group))items.push(['group','Group',mod+'G']);
+  if(anyG)items.push(['ungroup','Ungroup',mod+'⇧G']);
+  items.push([locked?'unlock':'lock',locked?'Unlock':'Lock',mod+'⇧L']);
   items.push('-',['del','Delete','Del']);
   C.innerHTML=items.map(i=>i==='-'?'<hr>':`<button data-c="${i[0]}" class="${i[0]==='del'?'danger':''}">${i[1]}<kbd>${i[2]}</kbd></button>`).join('');
   C.classList.add('show');const w=C.offsetWidth,h=C.offsetHeight;C.style.left=clamp(x,8,innerWidth-w-8)+'px';C.style.top=clamp(y,8,innerHeight-h-8)+'px';
   C.onclick=e=>{const b=e.target.closest('[data-c]');if(!b)return;C.classList.remove('show');
-    ({edit:()=>{const one=selected()[0];if(one)startEdit(one)},dup:duplicate,copy:copySel,paste,front:()=>reorder(true),back:()=>reorder(false),zoom:zoomToSel,bigger:()=>scaleSel(1.2),smaller:()=>scaleSel(1/1.2),tidy:()=>tidy(true),del:deleteSel})[b.dataset.c]()};
+    ({edit:()=>{const one=selected()[0];if(one)startEdit(one)},dup:duplicate,copy:copySel,paste,front:()=>reorder(true),back:()=>reorder(false),zoom:zoomToSel,bigger:()=>scaleSel(1.2),smaller:()=>scaleSel(1/1.2),tidy:()=>tidy(true),del:deleteSel,group:groupSel,ungroup:ungroupSel,lock:lockSel,unlock:lockSel})[b.dataset.c]()};
 }
 // right-click / long-press / tap Space on empty canvas: a plain menu at the cursor (no dial)
 function openCanvasMenu(x,y){closeFloating();dialState={x,y,flick:false,hot:null,menuOnly:true};showDialMenu(x,y,toWorld(x,y))}
 
 /* ============================== pointer ============================== */
+// snapping: edges and centres of other shapes; hold Ctrl/⌘ to place freely
+function snapTargets(moving){
+  const set=withContents([...moving]),xs=[],ys=[];
+  for(const el of els){if(set.has(el.id)||el.type==='arrow'||el.type==='draw')continue;const b=el.type==='frame'?rectOf(el):bbox(el);xs.push(b.x,b.x+b.w/2,b.x+b.w);ys.push(b.y,b.y+b.h/2,b.y+b.h)}
+  return{xs,ys};
+}
+function snapAxis(vals,targets,tol){let best=null;for(const v of vals)for(const t of targets){const d=t-v;if(Math.abs(d)<=tol&&(!best||Math.abs(d)<Math.abs(best.d)))best={d,at:t}}return best}
+let guides=[],quickHover=null;
+function quickHandles(el){const g=20/view.z,b=rectOf(el);return[{dir:'e',x:b.x+b.w+g,y:b.y+b.h/2},{dir:'s',x:b.x+b.w/2,y:b.y+b.h+g},{dir:'w',x:b.x-g,y:b.y+b.h/2},{dir:'n',x:b.x+b.w/2,y:b.y-g}]}
+function hitQuick(p){const el=quickHover&&byId(quickHover);if(!el||!SHAPES.has(el.type)||el.locked)return null;const r=11/view.z;for(const q of quickHandles(el))if(Math.hypot(p[0]-q.x,p[1]-q.y)<r)return{el,dir:q.dir};return null}
 function hitHandle(p){
   const list=selected();if(list.length!==1)return null;const el=list[0],r=9/view.z;
   if(el.type==='arrow'){const g=arrowGeom(el);if(g.kind==='loop')return null;for(const[i,q]of[[0,g.p1],[1,g.p2]])if(Math.hypot(p[0]-q[0],p[1]-q[1])<r)return{kind:'arrowEnd',el,i};return null}
@@ -1309,14 +1375,20 @@ function hitHandle(p){
 }
 let pressT=null;
 document.addEventListener('contextmenu',e=>{if(!e.target.closest('input,textarea,select'))e.preventDefault()},true);
+const touches=new Map();
 stage.addEventListener('pointerdown',e=>{
+  if(e.pointerType==='touch'){touches.set(e.pointerId,[e.clientX,e.clientY]);
+    if(touches.size===2){ // second finger: switch to pinch zoom / pan
+      if(drag&&drag.snap&&drag.kind!=='move'&&drag.kind!=='marquee'&&drag.kind!=='pan')restore(drag.snap);
+      const[a,b]=[...touches.values()];drag={kind:'pinch',d0:Math.hypot(a[0]-b[0],a[1]-b[1])||1,m0:[(a[0]+b[0])/2,(a[1]+b[1])/2],v0:{...view}};clearTimeout(pressT);render();return}
+    if(touches.size>2)return}
   if(editing){commitEdit();return}
   if(dialState&&e.button!==2){closeDial();return}
   closeFloating();
   const p=toWorld(e.clientX,e.clientY);
   if(e.button===2){
-    const el=hitTest(p);
-    if(el){if(!sel.has(el.id))sel=new Set([el.id]);if(tool!=='select')setTool('select');render();openCtx(e.clientX,e.clientY,el)}
+    const el=hitTest(p,{withLocked:true});
+    if(el){if(!sel.has(el.id))sel=new Set(groupOf(el));if(tool!=='select')setTool('select');render();openCtx(e.clientX,e.clientY,el)}
     else openCanvasMenu(e.clientX,e.clientY);
     return;
   }
@@ -1330,12 +1402,14 @@ stage.addEventListener('pointerdown',e=>{
   const s0=snap();
   switch(tool){
     case'select':{
+      const qh=hitQuick(p);
+      if(qh){const a=makeArrow(center(qh.el),[p[0],p[1]],{start:qh.el.id});els.push(a);drag={kind:'quick',el:a,src:qh.el,dir:qh.dir,snap:s0,start:p,far:0};break}
       const h=hitHandle(p);
       if(h){drag=h.kind==='resize'?{kind:'resize',el:h.el,c:h.c,o:{x:h.el.x,y:h.el.y,w:h.el.w,h:h.el.h},start:p,snap:s0,moved:false}:{kind:'arrowEnd',el:h.el,i:h.i,snap:s0,moved:false};break}
       const el=hitTest(p);
-      if(el){if(e.shiftKey){sel.has(el.id)?sel.delete(el.id):sel.add(el.id)}else if(!sel.has(el.id))sel=new Set([el.id]);
+      if(el){const gids=groupOf(el);if(e.shiftKey){if(sel.has(el.id))gids.forEach(i=>sel.delete(i));else gids.forEach(i=>sel.add(i))}else if(!sel.has(el.id))sel=new Set(gids);
         if(e.altKey){const c=cloneSet(selected(),0,0);pushUndo(s0);els.push(...c);sel=new Set(c.map(x=>x.id));drag={kind:'move',last:p,start:p,applied:[0,0],snap:null,moved:true,set:withContents([...sel])}}
-        else drag={kind:'move',last:p,start:p,applied:[0,0],snap:s0,moved:false,set:withContents([...sel])}}
+        else drag={kind:'move',last:p,start:p,applied:[0,0],snap:s0,moved:false,set:withContents([...sel].filter(i=>!byId(i)?.locked)),snapT:snapTargets(sel)}}
       else{if(!e.shiftKey)sel.clear();drag={kind:'marquee',start:p,cur:p,base:new Set(sel)};
         if(e.pointerType==='touch'){clearTimeout(pressT);const cx=e.clientX,cy=e.clientY;pressT=setTimeout(()=>{if(drag&&drag.kind==='marquee'&&Math.hypot(drag.cur[0]-drag.start[0],drag.cur[1]-drag.start[1])*view.z<8){drag=null;render();openCanvasMenu(cx,cy)}},520)}}
       render();break}
@@ -1354,23 +1428,34 @@ stage.addEventListener('pointerdown',e=>{
 });
 stage.addEventListener('pointermove',e=>{
   const p=toWorld(e.clientX,e.clientY);
+  if(e.pointerType==='touch'&&touches.has(e.pointerId))touches.set(e.pointerId,[e.clientX,e.clientY]);
+  if(drag&&drag.kind==='pinch'){if(touches.size<2)return;const[a,b]=[...touches.values()],d=Math.hypot(a[0]-b[0],a[1]-b[1]),m=[(a[0]+b[0])/2,(a[1]+b[1])/2],v=drag.v0;
+    const z=clamp(v.z*d/drag.d0,.15,4),wx=(drag.m0[0]-v.x)/v.z,wy=(drag.m0[1]-v.y)/v.z;view={z,x:m[0]-wx*z,y:m[1]-wy*z};renderView();renderOverlay();return}
   if(!drag){hoverCursor(p);return}
   switch(drag.kind){
     case'pan':view.x=drag.vx+e.clientX-drag.sx;view.y=drag.vy+e.clientY-drag.sy;renderView();return;
     case'move':{let tx=p[0]-drag.start[0],ty=p[1]-drag.start[1];if(!drag.moved&&Math.hypot(tx,ty)*view.z<3)return;
       if(!drag.moved){drag.moved=true;if(drag.snap)pushUndo(drag.snap)}
       if(e.shiftKey){if(Math.abs(tx)>Math.abs(ty))ty=0;else tx=0}
+      guides=[];
+      if(drag.snapT&&!(e.ctrlKey||e.metaKey)){const b0=drag.box0||(drag.box0=unionBox([...drag.set].map(byId).filter(x=>x&&x.type!=='arrow')));
+        if(b0){const tol=6/view.z,bx=b0.x+tx,by=b0.y+ty;
+          const sx=snapAxis([bx,bx+b0.w/2,bx+b0.w],drag.snapT.xs,tol),sy=snapAxis([by,by+b0.h/2,by+b0.h],drag.snapT.ys,tol);
+          if(sx&&!(e.shiftKey&&tx===0)){tx+=sx.d;guides.push({x:sx.at})}if(sy&&!(e.shiftKey&&ty===0)){ty+=sy.d;guides.push({y:sy.at})}}}
       const dx=tx-drag.applied[0],dy=ty-drag.applied[1];moveSet(drag.set,dx,dy);drag.applied=[tx,ty];drag.last=p;
       showMoveTip(e.clientX,e.clientY,tx,ty);break}
     case'marquee':{drag.cur=p;const x0=Math.min(drag.start[0],p[0]),y0=Math.min(drag.start[1],p[1]),x1=Math.max(drag.start[0],p[0]),y1=Math.max(drag.start[1],p[1]);
-      sel=new Set(drag.base);for(const el of els){const b=bbox(el);if(b.x>=x0&&b.y>=y0&&b.x+b.w<=x1&&b.y+b.h<=y1)sel.add(el.id)}renderOverlay();return}
+      sel=new Set(drag.base);for(const el of els){if(el.locked)continue;const b=bbox(el);if(b.x>=x0&&b.y>=y0&&b.x+b.w<=x1&&b.y+b.h<=y1)groupOf(el).forEach(i=>sel.add(i))}renderOverlay();return}
     case'create':{const el=drag.el;let w=p[0]-drag.start[0],h=p[1]-drag.start[1];if(e.shiftKey){const m=Math.max(Math.abs(w),Math.abs(h));w=Math.sign(w||1)*m;h=Math.sign(h||1)*m}
       el.x=w<0?drag.start[0]+w:drag.start[0];el.y=h<0?drag.start[1]+h:drag.start[1];el.w=Math.abs(w);el.h=Math.abs(h);break}
     case'resize':{const{o,c,el}=drag;if(!drag.moved){drag.moved=true;pushUndo(drag.snap)}
       let x0=o.x,y0=o.y,x1=o.x+o.w,y1=o.y+o.h;if(c.includes('w'))x0=p[0];if(c.includes('e'))x1=p[0];if(c.includes('n'))y0=p[1];if(c.includes('s'))y1=p[1];
+      guides=[];if(!(e.ctrlKey||e.metaKey)){drag.snapT=drag.snapT||snapTargets(new Set([el.id]));const tol=6/view.z;
+        const ex=c.includes('w')?'x0':'x1',ey=c.includes('n')?'y0':'y1',sx=snapAxis([ex==='x0'?x0:x1],drag.snapT.xs,tol),sy=snapAxis([ey==='y0'?y0:y1],drag.snapT.ys,tol);
+        if(sx){if(ex==='x0')x0+=sx.d;else x1+=sx.d;guides.push({x:sx.at})}if(sy){if(ey==='y0')y0+=sy.d;else y1+=sy.d;guides.push({y:sy.at})}}
       if(e.shiftKey){const s=Math.max(Math.abs(x1-x0),Math.abs(y1-y0));if(c.includes('w'))x0=x1-s;else x1=x0+s;if(c.includes('n'))y0=y1-s;else y1=y0+s}
       el.x=Math.min(x0,x1);el.y=Math.min(y0,y1);el.w=Math.max(16,Math.abs(x1-x0));el.h=Math.max(16,Math.abs(y1-y0));break}
-    case'arrow':{const el=drag.el;el.points[1]=[p[0],p[1]];drag.far=Math.max(drag.far,Math.hypot(p[0]-drag.start[0],p[1]-drag.start[1])*view.z);
+    case'quick':case'arrow':{const el=drag.el;el.points[1]=[p[0],p[1]];drag.far=Math.max(drag.far,Math.hypot(p[0]-drag.start[0],p[1]-drag.start[1])*view.z);
       let t=hitTest(p,{shapesOnly:true});if(t&&t.id===el.start&&drag.far<70)t=null;drag.target=t?t.id:null;break}
     case'arrowEnd':{const el=drag.el;if(!drag.moved){drag.moved=true;pushUndo(drag.snap);const g=arrowGeom(el);el.points=[g.p1,g.p2]}
       el.points[drag.i]=[p[0],p[1]];if(drag.i===0)el.start=null;else el.end=null;
@@ -1381,7 +1466,8 @@ stage.addEventListener('pointermove',e=>{
   scheduleRender();
 });
 function endDrag(e){
-  clearTimeout(pressT);rafPending=false;hideMoveTip();
+  if(e&&e.pointerType==='touch'){touches.delete(e.pointerId);if(drag&&drag.kind==='pinch'){if(touches.size<2){drag=null;saveViewSoon()}return}}
+  clearTimeout(pressT);rafPending=false;hideMoveTip();guides=[];
   if(!drag)return;const d=drag;drag=null;stage.classList.remove('c-grabbing');
   switch(d.kind){
     case'pan':saveViewSoon();break;
@@ -1393,6 +1479,15 @@ function endDrag(e){
     case'arrow':{const el=d.el;const t=d.target&&byId(d.target);if(t)el.end=t.id;
       const g=arrowGeom(el);if(g.kind!=='loop'&&Math.hypot(g.p1[0]-g.p2[0],g.p1[1]-g.p2[1])<10&&!el.end){setEls(els.filter(x=>x!==el));render();break}
       pushUndo(d.snap);sel=new Set([el.id]);setTool('select');commit();break}
+    case'quick':{const a=d.el,src=d.src,t=d.target&&byId(d.target);
+      if(t&&t.id!==src.id){a.end=t.id}
+      else{const type=src.type==='person'||src.type==='icon'?'rect':src.type,[w,h]=type===src.type?[src.w,src.h]:DEF_SIZE.rect;let cx,cy;
+        if(d.far<10){const gap=90,c=center(src);cx=c[0]+(d.dir==='e'?src.w/2+gap+w/2:d.dir==='w'?-(src.w/2+gap+w/2):0);cy=c[1]+(d.dir==='s'?src.h/2+gap+h/2:d.dir==='n'?-(src.h/2+gap+h/2):0)}
+        else{cx=a.points[1][0];cy=a.points[1][1]}
+        const n=makeShape(type,cx-w/2,cy-h/2,w,h,{fill:src.fill,stroke:src.stroke,sw:src.sw,fs:src.fs});
+        let guard=0;while(overlaps(rectOf(n),20)&&guard++<20){if(d.dir==='e'||d.dir==='w')n.y+=h+30;else n.x+=w+30}
+        els.splice(els.indexOf(a),0,n);a.end=n.id;sel=new Set([n.id]);pushUndo(d.snap);quickHover=n.id;commit();startEdit(n);break}
+      pushUndo(d.snap);sel=new Set([a.id]);commit();break}
     case'arrowEnd':{const el=d.el;if(d.target){if(d.i===0)el.start=d.target;else el.end=d.target}if(d.moved)commit();else render();break}
     case'resize':if(d.moved){fitText(d.el);commit()}break;
     case'draw':{const el=d.el;el.points=simplify(el.points);pushUndo(d.snap);commit();break}
@@ -1402,7 +1497,11 @@ function endDrag(e){
 }
 stage.addEventListener('pointerup',endDrag);stage.addEventListener('pointercancel',endDrag);
 function hoverCursor(p){
-  if(tool!=='select'||spaceDown)return;const h=hitHandle(p);
+  if(tool!=='select'||spaceDown)return;
+  const q=hitQuick(p);if(q){stage.className='c-cross';return}
+  const under=hitTest(p,{shapesOnly:true}),nh=under&&SHAPES.has(under.type)&&!under.locked?under.id:null;
+  if(nh!==quickHover){quickHover=nh;renderOverlay()}
+  const h=hitHandle(p);
   let c='';if(h)c=h.kind==='arrowEnd'?'c-move':(h.c==='nw'||h.c==='se')?'c-nwse':'c-nesw';else if(hitTest(p))c='c-move';
   stage.className=c;
 }
@@ -1572,7 +1671,8 @@ function nodeSize(n){
   if(n.shape==='person')return[60,96];
   const m=measure(n.label,FS.m),d=DEF_SIZE[n.shape]||[120,64],[px,py]=padFor(n.shape,m);
   const minW=n.shape==='rect'?120:Math.min(d[0],140),minH=n.shape==='sticky'?110:n.shape==='rect'?64:Math.min(d[1],n.shape==='cylinder'?92:76);
-  return[Math.max(minW,Math.ceil(m.w+px)),Math.max(minH,Math.ceil(m.h+py))];
+  const w=Math.max(minW,Math.ceil(Math.min(m.w,MAXW)+px)),mh=measure(wrapText(n.label,FS.m,false,innerW({type:n.shape,w})),FS.m);
+  return[w,Math.max(minH,Math.ceil(mh.h+py))];
 }
 function findByName(q){q=q.toLowerCase();return els.find(e=>(e.label||'').toLowerCase()===q)||els.find(e=>(e.label||'').toLowerCase().includes(q))}
 function applyCommand(src,opts={}){
@@ -1755,7 +1855,10 @@ addEventListener('keydown',e=>{
   if(mod&&k==='c'){copySel();return}
   if(mod&&k==='x'){if(sel.size){copySel();deleteSel()}return}
   if(mod&&k==='v'){if(clip){e.preventDefault();paste()}return}
-  if(mod&&k==='a'){e.preventDefault();setTool('select');sel=new Set(els.map(x=>x.id));render();return}
+  if(mod&&k==='a'){e.preventDefault();setTool('select');sel=new Set(els.filter(x=>!x.locked).map(x=>x.id));render();return}
+  if(mod&&k==='g'){e.preventDefault();e.shiftKey?ungroupSel():groupSel();return}
+  if(mod&&e.shiftKey&&k==='l'){e.preventDefault();lockSel();return}
+  if(mod&&k==='f'){e.preventDefault();$('#cmdIn').focus();toast('Type a name to find it',1800);return}
   if(mod&&(k==='='||k==='+')){e.preventDefault();zoomAt(1.2);return}
   if(mod&&k==='-'){e.preventDefault();zoomAt(1/1.2);return}
   if(mod&&k==='0'){e.preventDefault();zoomAt(1/view.z);return}
@@ -1785,8 +1888,21 @@ addEventListener('keydown',e=>{
 });
 addEventListener('keyup',e=>{if(e.key===' '&&spaceDown){spaceDown=false;stage.className=CURSOR[tool]||'';
   if(!spaceUsed&&performance.now()-spaceAt<260&&!e.target.matches('input,textarea,select'))openCanvasMenu(mouse[0],mouse[1])}});
+async function addImage(file,at){
+  if(!file||!/^image\/(png|jpe?g|webp|gif)$/.test(file.type))return false;
+  const url=URL.createObjectURL(file);const img=new Image();img.src=url;try{await img.decode()}catch(_){URL.revokeObjectURL(url);return false}
+  // shrink big pictures so the diagram stays light (stored inside the diagram)
+  const k=Math.min(1,1600/Math.max(img.naturalWidth,img.naturalHeight)),W=Math.max(1,Math.round(img.naturalWidth*k)),H=Math.max(1,Math.round(img.naturalHeight*k));
+  const c=document.createElement('canvas');c.width=W;c.height=H;c.getContext('2d').drawImage(img,0,0,W,H);URL.revokeObjectURL(url);
+  let src=c.toDataURL('image/webp',.86);if(!src.startsWith('data:image/webp'))src=c.toDataURL('image/png');
+  const s=Math.min(1,420/Math.max(W,H)),w=W*s,h=H*s,[cx,cy]=at||toWorld(innerWidth/2,innerHeight/2);
+  pushUndo();const el={id:uid(),type:'image',x:cx-w/2,y:cy-h/2,w,h,src,fill:'none',stroke:'ink',sw:1,seed:seed()};els.push(el);sel=new Set([el.id]);setTool('select');commit();return true;
+}
 addEventListener('paste',e=>{
-  if(e.target.matches('input,textarea')||clip)return;
+  if(e.target.matches('input,textarea'))return;
+  const imgItem=[...(e.clipboardData?.items||[])].find(i=>i.kind==='file'&&i.type.startsWith('image/'));
+  if(imgItem){e.preventDefault();addImage(imgItem.getAsFile());return}
+  if(clip)return;
   const t=(e.clipboardData||{}).getData?.('text/plain');if(t&&(/->|→|-->|---/.test(t)||/^\s*(graph|flowchart)\b/i.test(t))){e.preventDefault();applyCommand(t)}
 });
 
@@ -1845,7 +1961,8 @@ async function openFile(){
 $('#btnSaveFile').onclick=()=>saveFile(true);
 $('#btnImport').onclick=openFile;
 stage.addEventListener('dragover',e=>{if([...(e.dataTransfer?.items||[])].some(i=>i.kind==='file')){e.preventDefault();e.dataTransfer.dropEffect='copy'}});
-stage.addEventListener('drop',e=>{const f=[...(e.dataTransfer?.files||[])].find(f=>/\.(canvy|json)$/i.test(f.name));if(f){e.preventDefault();importFileObj(f)}});
+stage.addEventListener('drop',e=>{const files=[...(e.dataTransfer?.files||[])];const f=files.find(f=>/\.(canvy|json)$/i.test(f.name));if(f){e.preventDefault();importFileObj(f);return}
+  const im=files.find(f=>f.type.startsWith('image/'));if(im){e.preventDefault();addImage(im,toWorld(e.clientX,e.clientY))}});
 $('#fileIn').onchange=e=>{const f=e.target.files[0];e.target.value='';if(f)importFileObj(f)};
 
 function renderHist(){
@@ -1863,7 +1980,8 @@ $('#btnSnap').onclick=()=>{autoSnapshot(true,'Saved by you');renderHist()};
 function b64u(u8){let s='';for(let i=0;i<u8.length;i+=0x8000)s+=String.fromCharCode.apply(null,u8.subarray(i,i+0x8000));return btoa(s).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'')}
 function unb64u(s){s=s.replace(/-/g,'+').replace(/_/g,'/');const b=atob(s);const u=new Uint8Array(b.length);for(let i=0;i<b.length;i++)u[i]=b.charCodeAt(i);return u}
 async function packDoc(){
-  const slim=els.map(e=>{const c={...e};delete c.seed;return c});
+  // pictures would make the link enormous, so links carry everything except images
+  const slim=els.filter(e=>e.type!=='image').map(e=>{const c={...e};delete c.seed;return c});
   const bytes=new TextEncoder().encode(JSON.stringify({v:2,n:doc.name,s:doc.style,p:doc.paper,k:doc.strokeMode,e:slim}));
   if('CompressionStream' in window){try{const st=new Blob([bytes]).stream().pipeThrough(new CompressionStream('deflate-raw'));return'z'+b64u(new Uint8Array(await new Response(st).arrayBuffer()))}catch(_){}}
   return'j'+b64u(bytes);
@@ -1874,9 +1992,10 @@ async function unpack(s){
   return JSON.parse(new TextDecoder().decode(bytes));
 }
 function sanitize(list){
-  const ok=new Set([...SHAPES,'text','arrow','draw','frame']);const out=[];
+  const ok=new Set([...SHAPES,'text','arrow','draw','frame','image']);const out=[];
   for(const e of list){if(!e||!ok.has(e.type))continue;const c={...e,id:String(e.id||uid()),seed:Number.isFinite(e.seed)?e.seed:seed(),label:String(e.label||'')};
     if(c.type==='icon'&&!ICONS[c.icon])c.icon='gear';
+    if(c.type==='image'&&!/^data:image\/(png|jpe?g|webp|gif);base64,/.test(c.src||''))continue;
     if(c.type==='arrow'){if(!Array.isArray(c.points)||c.points.length<2)continue;c.points=c.points.slice(0,2).map(p=>[+p[0]||0,+p[1]||0]);if(!ENDS.includes(c.ends))c.ends='end';if(c.route!=='elbow')delete c.route}
     else if(c.type==='draw'){if(!Array.isArray(c.points)||!c.points.length)continue;c.points=c.points.map(p=>[+p[0]||0,+p[1]||0])}
     else{for(const k of['x','y','w','h'])c[k]=+c[k]||0}
@@ -1891,8 +2010,8 @@ $('#btnShare').onclick=async()=>{
   if(!els.length){inp.value='Draw something first';$('#shareNote').textContent='The canvas is empty, so there is nothing to share yet.';return}
   const pv=$('#sharePv');pv.innerHTML='';const r0=buildSvg(true);if(r0){const im=new Image();im.alt='';im.src='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(r0.svg);pv.appendChild(im)}
   const code=await packDoc();const url=location.href.split('#')[0].split('?')[0]+'#d='+code;inp.value=url;
-  $('#shareNote').classList.toggle('warn',url.length>8000);
-  $('#shareNote').textContent=TX(url.length>8000?`This diagram makes a long link (${Math.round(url.length/1000)}k characters). Some chat apps cut long links, so a JSON export may be safer.`:'The whole diagram is packed into this link. Nothing is uploaded: whoever opens it gets their own copy.');
+  $('#shareNote').classList.toggle('warn',url.length>8000||els.some(e=>e.type==='image'));
+  $('#shareNote').textContent=TX(url.length>8000?`This diagram makes a long link (${Math.round(url.length/1000)}k characters). Some chat apps cut long links, so a JSON export may be safer.`:(els.some(e=>e.type==='image')?'Images are left out of links. Save a .canvy file to share pictures too.':'The whole diagram is packed into this link. Nothing is uploaded: whoever opens it gets their own copy.'));
 };
 $('#shareClose').onclick=()=>$('#shareScrim').classList.remove('show');
 $('#shareScrim').addEventListener('pointerdown',e=>{if(e.target.id==='shareScrim')$('#shareScrim').classList.remove('show')});

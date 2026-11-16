@@ -54,6 +54,51 @@ with sync_playwright() as p:
     pg.evaluate("setLang('en')")
 
     check('Mermaid round trip', 'flowchart' in pg.evaluate("toMermaid()"))
+    # ---- phase 2 ----
+    pg.evaluate("openDoc(newDoc('Phase 2'));view={x:640,y:400,z:1};render()")
+    pg.evaluate("applyCommand('Alpha -> Beta')"); pg.keyboard.press('Escape')
+    a = pg.evaluate("(()=>{const e=els.find(x=>x.label==='Alpha');return [e.x,e.y,e.w,e.h]})()")
+    b0 = pg.evaluate("(()=>{const e=els.find(x=>x.label==='Beta');return [e.x,e.y,e.w,e.h]})()")
+    # drag Beta so its top is 4px off Alpha's top: it should snap level
+    sx = lambda wx: wx*1+640; sy = lambda wy: wy*1+400
+    cx, cy = sx(b0[0]+b0[2]/2), sy(b0[1]+b0[3]/2)
+    pg.mouse.move(cx, cy); pg.mouse.down(); pg.mouse.move(cx+30, cy+60, steps=4); pg.mouse.move(cx+30, cy+(a[1]-b0[1])+4, steps=3)
+    check('smart guide shows while dragging', pg.evaluate("guides.length") > 0)
+    pg.mouse.up()
+    check('snaps level with a neighbour', abs(pg.evaluate("els.find(x=>x.label==='Beta').y") - a[1]) < 0.5)
+
+    pg.evaluate("sel=new Set(els.filter(e=>e.type!=='arrow').map(e=>e.id));groupSel()")
+    scr = lambda lab: pg.evaluate("(l=>{const e=els.find(x=>x.label===l);return [(e.x+e.w/2)*view.z+view.x,(e.y+e.h/2)*view.z+view.y]})", lab)
+    pg.evaluate("sel.clear();render()")
+    pg.mouse.click(*scr('Alpha'))
+    check('clicking one grouped shape selects the group', pg.evaluate("sel.size") >= 2)
+    pg.evaluate("lockSel()"); pg.wait_for_timeout(450)  # not a double-click
+    pg.mouse.click(*scr('Alpha'))
+    check('locked shapes ignore clicks', pg.evaluate("sel.size") == 0)
+    pg.evaluate("sel=new Set(els.filter(e=>e.locked).map(e=>e.id));lockSel();sel.clear();render()")
+
+    pg.evaluate("applyCommand('Ein Satz der viel zu lang ist um in eine einzige Zeile zu passen und umbrechen muss')")
+    check('long labels wrap instead of growing forever', pg.evaluate("(()=>{const e=els.at(-1);return e.w<=330&&shownLabel(e).includes('\\n')})()"))
+    pg.evaluate("applyCommand('ระบบจัดการคำสั่งซื้อและการชำระเงินสำหรับร้านค้าออนไลน์ขนาดใหญ่มาก')")
+    check('Thai labels wrap on word boundaries', pg.evaluate("(()=>{const e=els.at(-1);const t=shownLabel(e);return t.includes('\\n')&&t.replace(/\\n/g,'')===e.label})()"))
+
+    pg.evaluate("sel.clear();render()")
+    pg.evaluate("view={x:640,y:400,z:1};renderView()")
+    al = pg.evaluate("(()=>{const e=els.find(x=>x.label==='Alpha');return [(e.x+e.w)*view.z+view.x,(e.y+e.h/2)*view.z+view.y]})()")
+    pg.mouse.move(al[0]-10, al[1]); pg.wait_for_timeout(50)
+    pg.mouse.move(al[0]+20, al[1]); pg.mouse.down(); pg.mouse.up(); pg.wait_for_timeout(100)
+    pg.keyboard.press('Escape')
+    check('quick-connect + adds a connected shape', pg.evaluate("els.filter(e=>e.type==='arrow'&&e.start===els.find(x=>x.label==='Alpha').id).length") >= 2)
+
+    pg.evaluate("""(async()=>{const c=document.createElement('canvas');c.width=40;c.height=30;const g=c.getContext('2d');g.fillStyle='#d95b35';g.fillRect(0,0,40,30);
+      const b=await new Promise(r=>c.toBlob(r,'image/png'));await addImage(new File([b],'x.png',{type:'image/png'}))})()""")
+    pg.wait_for_timeout(300)
+    check('images can be added', pg.evaluate("els.some(e=>e.type==='image'&&e.src.startsWith('data:image/'))"))
+    check('links leave images out', 'image' not in pg.evaluate("packDoc().then(c=>unpack(c)).then(d=>d.e.map(e=>e.type).join())"))
+
+    pg.evaluate("view={x:-3000,y:-3000,z:1};renderView()")
+    check('minimap shows when the diagram is off screen', pg.evaluate("getComputedStyle(document.querySelector('#minimap')).display") == 'block')
+
     check('no page errors', not errors)
     if errors: print('\n'.join(errors))
     b.close()
