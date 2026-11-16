@@ -5,6 +5,16 @@ A hand-drawn diagram canvas that runs entirely in the browser. There is no accou
 - `index.html` is the landing page
 - `app/index.html` is the editor
 
+### Sharing and presenting (phase 3)
+- **View-only links**: tick "View only" in Share, and the link (`?view=1#d=…`) opens read-only with pan/zoom and an "Edit a copy" button. Nothing is saved on the viewer's side.
+- **Embed**: "Copy embed code" gives an `<iframe>` (`?embed=1`) for blogs and Notion.
+- **QR code** for the share link (long diagrams may be too big; share a `.canvy` file instead).
+- **PDF**: one page per frame, built in the browser.
+- **Speaker notes**: right-click a frame → Speaker notes. While presenting, `N` shows the notes and `L` turns on the laser pointer.
+- **Excalidraw import**: open or drop a `.excalidraw` file.
+- **Ctrl/⌘ K** command palette: tools, actions, templates, looks, exports, and "go to" any labelled shape.
+- New Thai templates: ผังองค์กร, เส้นทางลูกค้า, ขั้นตอนอนุมัติเอกสาร, วิเคราะห์ SWOT, แผนงานรายไตรมาส.
+
 ## What the editor does
 
 - **Hand-drawn canvas:** 12 shapes plus tables (box, pill, ellipse, decision, database, hexagon, in/out, document, cloud, sticky, person), 35 icons, arrows, lines, pen, highlighter, text and frames

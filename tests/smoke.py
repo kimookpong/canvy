@@ -119,6 +119,33 @@ with sync_playwright() as p:
     check('add a table row', pg.evaluate("els.at(-1).rows.length") == 3)
     pg.evaluate("applyCommand('card:Launch plan')")
     check('card shape', pg.evaluate("els.some(e=>e.type==='card'&&e.label==='Launch plan')"))
+    # ---- phase 3 ----
+    pg.evaluate("openDoc(newDoc('Phase 3'));view={x:640,y:400,z:1};render()")
+    pg.evaluate("runTemplate(TEMPLATES.find(t=>t.name==='วิเคราะห์ SWOT'))")
+    check('SWOT template builds a frame and four cards', pg.evaluate("els.filter(e=>e.type==='card').length===4&&els.some(e=>e.type==='frame')"))
+    pg.evaluate("runTemplate(TEMPLATES.find(t=>t.name==='ผังองค์กร'))")
+    check('Thai org chart template', pg.evaluate("els.some(e=>e.label==='ผู้บริหาร')"))
+    pdf = pg.evaluate("(async()=>{const b=await boxImage(frames()[0]?rectOf(frames()[0]):unionBox(els));const bytes=pdfBytes([b,b]);return [bytes.length,new TextDecoder('latin1').decode(bytes.slice(0,8)),new TextDecoder('latin1').decode(bytes.slice(-6))]})()")
+    check('PDF bytes look right', pdf[0] > 5000 and pdf[1].startswith('%PDF-1.4') and 'EOF' in pdf[2])
+    m = pg.evaluate("QR.encode('https://kimookpong.github.io/canvy/').length")
+    check('QR code matrix', m == 29)
+    ex = {"type":"excalidraw","elements":[{"id":"a","type":"rectangle","x":0,"y":0,"width":120,"height":60,"strokeColor":"#1e1e1e","backgroundColor":"#a5d8ff"},
+          {"id":"t","type":"text","x":10,"y":10,"width":50,"height":20,"text":"Hello","containerId":"a"},
+          {"id":"b","type":"ellipse","x":300,"y":0,"width":120,"height":60,"strokeColor":"#1e1e1e","backgroundColor":"transparent"},
+          {"id":"r","type":"arrow","x":120,"y":30,"width":180,"height":0,"points":[[0,0],[180,0]],"startBinding":{"elementId":"a"},"endBinding":{"elementId":"b"},"endArrowhead":"arrow","strokeColor":"#1e1e1e"}]}
+    conv = pg.evaluate("d=>{const o=excalidrawToCanvy(d);const r=o.find(e=>e.type==='rect'),a=o.find(e=>e.type==='arrow');return [r.label,r.fill,!!a.start&&!!a.end,a.ends]}", ex)
+    check('Excalidraw import converts shapes, labels and bound arrows', conv == ['Hello','blue',True,'end'])
+    pg.keyboard.press('Control+k'); pg.wait_for_timeout(100); pg.keyboard.type('present')
+    check('command palette finds actions', 'Present' in pg.inner_text('#palList') or 'นำเสนอ' in pg.inner_text('#palList'))
+    pg.keyboard.press('Escape')
+    code = pg.evaluate("packDoc()")
+    vp = ctx.new_page(); vp.on('pageerror', lambda e: errors.append('view: '+str(e)))
+    vp.goto(BASE + '/app/?view=1#d=' + code); vp.wait_for_function("typeof doc!=='undefined'&&doc&&els.length>0")
+    n_before = vp.evaluate("indexList().length")
+    check('view-only link opens read-only', vp.evaluate("READONLY&&document.body.classList.contains('readonly')"))
+    vp.mouse.move(600,400); vp.mouse.down(); vp.mouse.move(700,450,steps=3); vp.mouse.up()
+    check('view-only link does not save a copy', vp.evaluate("indexList().length") == n_before and not vp.evaluate("indexList().some(d=>d.id===doc.id)"))
+    vp.close()
     pg.evaluate("view={x:-3000,y:-3000,z:1};renderView()")
     check('minimap shows when the diagram is off screen', pg.evaluate("getComputedStyle(document.querySelector('#minimap')).display") == 'block')
 

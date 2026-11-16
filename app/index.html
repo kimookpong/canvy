@@ -241,6 +241,32 @@ body.presenting .ui,body.presenting .drawer,body.presenting .help,body.presentin
 .pbar{position:fixed;z-index:11;bottom:16px;left:50%;transform:translateX(-50%);display:none;align-items:center;gap:4px;padding:4px;font-size:12.5px}
 body.presenting .pbar{display:flex}
 .pbar span{padding:0 10px;color:var(--muted);white-space:nowrap}
+.pbar .btn.on{background:var(--accent-soft);color:var(--accent)}
+.pnotes{position:fixed;z-index:11;left:50%;bottom:70px;transform:translateX(-50%);width:min(760px,calc(100% - 32px));max-height:30vh;overflow:auto;padding:14px 18px;font-size:16px;line-height:1.55;white-space:pre-wrap;display:none}
+body.presenting.notes-on .pnotes{display:block}
+#laser{position:fixed;inset:0;z-index:12;pointer-events:none;display:none}
+body.laser-on #laser{display:block}body.laser-on #stage{cursor:none}
+.opt{display:flex;gap:8px;align-items:center;font-size:12.5px;color:var(--muted);margin-top:10px;cursor:pointer}
+.qrbox{display:none;align-items:center;gap:14px;margin-top:12px}.qrbox.show{display:flex}
+.qrbox canvas{width:150px;height:150px;image-rendering:pixelated;border:1px solid var(--line);border-radius:8px}
+#notesTa{width:100%;border:1px solid var(--line);border-radius:10px;padding:10px 12px;font:14px/1.5 var(--sans);resize:vertical}
+.pal{place-items:start center;padding-top:12vh}
+.palette{width:min(560px,100%);padding:8px;max-height:70vh;display:flex;flex-direction:column}
+#palIn{border:0;outline:0;font-size:16px;padding:10px 12px;border-bottom:1px solid var(--line)}
+#palList{overflow:auto;padding-top:6px}
+#palList button{display:flex;justify-content:space-between;align-items:center;width:100%;padding:9px 12px;border-radius:9px;text-align:left;font-size:14px}
+#palList button.on{background:var(--accent-soft)}
+#palList button small{color:#a19b92;font:11px var(--mono)}
+#palList .grp{font:600 10.5px var(--sans);letter-spacing:.14em;text-transform:uppercase;color:#a19b92;padding:8px 12px 2px}
+.embedlink,.editcopy{display:none}
+body.readonly .rail,body.readonly .props,body.readonly .cmd,body.readonly #btnDocs,body.readonly .lookbtn,body.readonly .rbar #btnTidy,body.readonly .rbar #btnHist,body.readonly #btnShare,body.readonly .undo,body.readonly #empty,body.readonly #saved,body.readonly .help{display:none!important}
+body.readonly #docName{pointer-events:none}
+body.readonly .editcopy{display:inline-flex;position:fixed;z-index:10;top:12px;right:12px}
+body.readonly .right{margin-right:130px}
+body.embed .top{display:none}
+body.embed .editcopy{display:none!important}
+body.embed .embedlink{display:block;position:fixed;z-index:10;right:12px;bottom:14px;padding:8px 12px;font-size:12.5px;font-weight:500}
+body.embed .zoom{bottom:14px}
 
 @media (max-width:1180px){
   #saved{display:none}
@@ -428,6 +454,8 @@ body.presenting .pbar{display:flex}
     <tr><td>Ctrl/⌘ Z · D · C · V · A</td><td>Undo · duplicate · copy · paste · all</td></tr>
     <tr><td>→ ← Space (presenting)</td><td>Next / previous frame</td></tr>
     <tr><td>/</td><td>Jump to the command bar</td></tr>
+    <tr><td>Ctrl/⌘ K</td><td>Command palette: every action, template and shape name</td></tr>
+    <tr><td>N · L (presenting)</td><td>Speaker notes · laser pointer</td></tr>
     <tr><td>Ctrl/⌘ F</td><td>Find a shape by name</td></tr>
     <tr><td>Ctrl/⌘ G · Ctrl/⌘ Shift G · Ctrl/⌘ Shift L</td><td>Group · ungroup · lock</td></tr>
     <tr><td>Hover a shape → drag or click a +</td><td>Connect a new shape</td></tr>
@@ -485,13 +513,16 @@ body.presenting .pbar{display:flex}
     <p id="shareNote">The whole diagram is packed into this link. Nothing is uploaded: whoever opens it gets their own copy.</p>
     <div class="sharepv" id="sharePv"></div>
     <div class="linkrow"><input id="shareLink" readonly value="Preparing link…"><button class="btn dark" id="copyLink">Copy</button></div>
-    <div class="btns" style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap"><button class="btn sm" id="copyImg">Copy image</button><button class="btn sm" id="dlCard">Download preview card</button></div>
+    <label class="opt"><input type="checkbox" id="optView"> <span>View only: people can look and zoom, but not edit</span></label>
+    <div class="btns" style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap"><button class="btn sm" id="copyImg">Copy image</button><button class="btn sm" id="dlCard">Download preview card</button><button class="btn sm" id="btnQr">QR code</button><button class="btn sm" id="copyEmbed">Copy embed code</button></div>
+    <div class="qrbox" id="qrBox"><canvas id="qrCanvas"></canvas><button class="btn sm" id="dlQr">Download QR</button></div>
     <small class="pvnote">Paste the image next to the link so people see the diagram before they open it.</small>
     <div class="mrow">
       <h5>Export</h5>
       <div class="btns">
         <button class="btn sm" id="exPng">PNG image</button>
         <button class="btn sm" id="exSvg">SVG</button>
+        <button class="btn sm" id="exPdf">PDF (one page per frame)</button>
         <button class="btn sm" id="exJson">JSON backup</button>
         <button class="btn sm" id="exMermaid">Copy as Mermaid</button>
       </div>
@@ -504,9 +535,17 @@ body.presenting .pbar{display:flex}
   <button class="ibtn" id="pPrev" title="Previous — ←"><svg width="14" height="14" viewBox="0 0 14 14"><path d="M8.5 3 4.5 7l4 4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
   <span id="pInfo">1 / 1</span>
   <button class="ibtn" id="pNext" title="Next — →"><svg width="14" height="14" viewBox="0 0 14 14"><path d="M5.5 3l4 4-4 4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+  <button class="btn sm ghost" id="pNotes" title="Speaker notes — N">Notes</button>
+  <button class="btn sm ghost" id="pLaser" title="Laser pointer — L">Laser</button>
   <button class="btn sm" id="exitPresent">Exit · Esc</button>
 </div>
-<input type="file" id="fileIn" accept=".canvy,.json,application/json" hidden>
+<div class="panel pnotes" id="pNotesBox"></div>
+<canvas id="laser"></canvas>
+<div class="scrim" id="notesScrim"><div class="panel modal"><h3>Speaker notes <button class="ibtn" id="notesClose" title="Close">✕</button></h3><p id="notesFor"></p><textarea id="notesTa" rows="7" spellcheck="false"></textarea><div style="display:flex;justify-content:flex-end;margin-top:12px"><button class="btn dark" id="notesSave">Save notes</button></div></div></div>
+<div class="scrim pal" id="palScrim"><div class="panel palette"><input id="palIn" placeholder="Type a command…" autocomplete="off" spellcheck="false"><div id="palList"></div></div></div>
+<a class="panel embedlink" id="embedLink" target="_blank" rel="noopener">Open in Canvy ↗</a>
+<button class="btn dark editcopy" id="editCopy">Edit a copy</button>
+<input type="file" id="fileIn" accept=".canvy,.json,.excalidraw,application/json" hidden>
 <div class="toast" id="toast"></div>
 <div class="panel updbar" id="updBar"><span>A new version of Canvy is ready</span><button class="btn sm dark">Reload</button></div>
 <div id="moveTip"></div>
@@ -660,7 +699,7 @@ const TH={
 'Zoom out — Ctrl/⌘ −':'ซูมออก — Ctrl/⌘ −','Reset to 100%':'กลับเป็น 100%','Zoom in — Ctrl/⌘ +':'ซูมเข้า — Ctrl/⌘ +','Fit everything — 0':'พอดีจอ — 0','Undo — Ctrl/⌘ Z':'เลิกทำ — Ctrl/⌘ Z','Redo — Ctrl/⌘ Shift Z':'ทำซ้ำ — Ctrl/⌘ Shift Z','Syntax and shortcuts — ?':'วิธีพิมพ์และคีย์ลัด — ?',
 'Text to diagram':'พิมพ์เป็นไดอะแกรม','Type:  user:Customer -> API -(SQL)-> db:Orders   ·  ## Heading  ·  or a name to find it':'พิมพ์:  user:ลูกค้า -> API -(SQL)-> db:คำสั่งซื้อ   ·  ## หัวข้อ  ·  หรือพิมพ์ชื่อเพื่อค้นหา','Layout direction for typed diagrams':'ทิศการจัดวางของไดอะแกรมที่พิมพ์',
 'Type a diagram':'พิมพ์ไดอะแกรม','Boxes joined by arrows':'กล่องเชื่อมด้วยลูกศร','Label on an arrow':'ข้อความบนลูกศร','Plain line · both ways · dashed':'เส้นธรรมดา · สองทาง · เส้นประ','Pick a shape by name':'เลือกรูปทรงด้วยชื่อ','Or by brackets':'หรือใช้วงเล็บ','Self-loop':'ลูกศรวนเข้าตัวเอง','A section title above what you add':'หัวข้อเหนือสิ่งที่เพิ่ม','A name that already exists: fly to it':'ชื่อที่มีอยู่แล้ว: พาไปที่รูปนั้น','Mermaid flowcharts work too (or paste them)':'ใช้ Mermaid ได้ (หรือวางลงมาเลย)','Separate chains':'แยกหลายสาย',', ; or new line':', ; หรือขึ้นบรรทัดใหม่',
-'Shortcuts':'คีย์ลัด','Right-click · long-press · tap Space':'คลิกขวา · กดค้าง · แตะ Space','Quick menu: tools, zoom, view':'เมนูด่วน: เครื่องมือ ซูม มุมมอง','Tools (R again switches shape)':'เครื่องมือ (กด R ซ้ำเพื่อเปลี่ยนรูปทรง)','Double-click · Enter':'ดับเบิลคลิก · Enter','Edit a label, or add text':'แก้ข้อความ หรือเพิ่มข้อความ','Space + drag · scroll':'Space + ลาก · เลื่อนล้อเมาส์','Ctrl/⌘ + scroll':'Ctrl/⌘ + เลื่อนล้อเมาส์','Zoom':'ซูม','Zoom · fit all · zoom to selection · fly to frame':'ซูม · พอดีจอ · ซูมไปที่ที่เลือก · ไปยังเฟรม','Make the selection bigger / smaller':'ขยาย / ย่อสิ่งที่เลือก','Drag · Shift-drag · Alt-drag':'ลาก · Shift-ลาก · Alt-ลาก','Move · move along one axis · move a copy':'ย้าย · ย้ายแนวเดียว · ลากสำเนา','Arrows · Shift · Alt':'ปุ่มลูกศร · Shift · Alt','Nudge 1 · 10 · 50 px':'ขยับ 1 · 10 · 50 px','Tidy · present · look':'จัดเรียง · นำเสนอ · รูปลักษณ์','Undo · duplicate · copy · paste · all':'เลิกทำ · สำเนา · คัดลอก · วาง · ทั้งหมด','Next / previous frame':'เฟรมถัดไป / ก่อนหน้า','Jump to the command bar':'ไปที่ช่องพิมพ์','Find a shape by name':'ค้นหารูปจากชื่อ','Group · ungroup · lock':'จัดกลุ่ม · ยกเลิกกลุ่ม · ล็อก','Hover a shape → drag or click a +':'ชี้ที่รูป แล้วลากหรือคลิกปุ่ม +','Connect a new shape':'เพิ่มรูปใหม่ที่เชื่อมกัน','Hold Ctrl/⌘ while dragging':'กด Ctrl/⌘ ค้างขณะลาก','Move without snapping':'ย้ายโดยไม่ดูดติด','Paste or drop a picture':'วางหรือลากรูปภาพมาใส่','Drag the ◇ on an arrow · the ○ above a shape':'ลาก ◇ บนลูกศร · ลาก ○ เหนือรูป','Bend the arrow · rotate (Shift: 15° steps)':'ดัดลูกศร · หมุนรูป (Shift: ทีละ 15°)','Type a table; Tab moves between cells':'พิมพ์เป็นตาราง กด Tab เพื่อไปช่องถัดไป','Add an image':'เพิ่มรูปภาพ','Open a .canvy file · save to a file':'เปิดไฟล์ .canvy · บันทึกเป็นไฟล์',
+'Shortcuts':'คีย์ลัด','Right-click · long-press · tap Space':'คลิกขวา · กดค้าง · แตะ Space','Quick menu: tools, zoom, view':'เมนูด่วน: เครื่องมือ ซูม มุมมอง','Tools (R again switches shape)':'เครื่องมือ (กด R ซ้ำเพื่อเปลี่ยนรูปทรง)','Double-click · Enter':'ดับเบิลคลิก · Enter','Edit a label, or add text':'แก้ข้อความ หรือเพิ่มข้อความ','Space + drag · scroll':'Space + ลาก · เลื่อนล้อเมาส์','Ctrl/⌘ + scroll':'Ctrl/⌘ + เลื่อนล้อเมาส์','Zoom':'ซูม','Zoom · fit all · zoom to selection · fly to frame':'ซูม · พอดีจอ · ซูมไปที่ที่เลือก · ไปยังเฟรม','Make the selection bigger / smaller':'ขยาย / ย่อสิ่งที่เลือก','Drag · Shift-drag · Alt-drag':'ลาก · Shift-ลาก · Alt-ลาก','Move · move along one axis · move a copy':'ย้าย · ย้ายแนวเดียว · ลากสำเนา','Arrows · Shift · Alt':'ปุ่มลูกศร · Shift · Alt','Nudge 1 · 10 · 50 px':'ขยับ 1 · 10 · 50 px','Tidy · present · look':'จัดเรียง · นำเสนอ · รูปลักษณ์','Undo · duplicate · copy · paste · all':'เลิกทำ · สำเนา · คัดลอก · วาง · ทั้งหมด','Next / previous frame':'เฟรมถัดไป / ก่อนหน้า','Jump to the command bar':'ไปที่ช่องพิมพ์','Command palette: every action, template and shape name':'ค้นหาคำสั่ง เทมเพลต และชื่อรูปทั้งหมด','N · L (presenting)':'N · L (ตอนนำเสนอ)','Speaker notes · laser pointer':'โน้ตผู้พูด · เลเซอร์ชี้','Find a shape by name':'ค้นหารูปจากชื่อ','Group · ungroup · lock':'จัดกลุ่ม · ยกเลิกกลุ่ม · ล็อก','Hover a shape → drag or click a +':'ชี้ที่รูป แล้วลากหรือคลิกปุ่ม +','Connect a new shape':'เพิ่มรูปใหม่ที่เชื่อมกัน','Hold Ctrl/⌘ while dragging':'กด Ctrl/⌘ ค้างขณะลาก','Move without snapping':'ย้ายโดยไม่ดูดติด','Paste or drop a picture':'วางหรือลากรูปภาพมาใส่','Drag the ◇ on an arrow · the ○ above a shape':'ลาก ◇ บนลูกศร · ลาก ○ เหนือรูป','Bend the arrow · rotate (Shift: 15° steps)':'ดัดลูกศร · หมุนรูป (Shift: ทีละ 15°)','Type a table; Tab moves between cells':'พิมพ์เป็นตาราง กด Tab เพื่อไปช่องถัดไป','Add an image':'เพิ่มรูปภาพ','Open a .canvy file · save to a file':'เปิดไฟล์ .canvy · บันทึกเป็นไฟล์',
 'A blank page. Your move.':'หน้าว่างพร้อมแล้ว เริ่มเลย','Draw with the tools on the left, right-click for the quick menu, or type a line at the bottom.':'วาดด้วยเครื่องมือด้านซ้าย คลิกขวาเพื่อเปิดเมนูด่วน หรือพิมพ์ที่ช่องด้านล่าง','Templates…':'เทมเพลต…','Web app':'เว็บแอป','Login flow':'ขั้นตอนล็อกอิน',
 'Diagrams are saved in this browser only. Save a .canvy file to keep a copy or move it to another device.':'ไดอะแกรมถูกบันทึกในเบราว์เซอร์นี้เท่านั้น บันทึกเป็นไฟล์ .canvy เพื่อเก็บสำรองหรือย้ายไปเครื่องอื่น','Diagrams are saved in this browser only. Export a JSON backup to move them to another device.':'ไดอะแกรมถูกบันทึกในเบราว์เซอร์นี้เท่านั้น ถ้าจะย้ายไปเครื่องอื่นให้ export เป็น JSON','+ New diagram':'+ ไดอะแกรมใหม่','Templates':'เทมเพลต','Import JSON':'นำเข้า JSON','Close':'ปิด','Delete':'ลบ','Sure?':'แน่ใจ?',
 'Insert':'แทรก','Search all blocks: cache, queue, gear, ผู้ใช้…':'ค้นหาบล็อก: cache, queue, ผู้ใช้, ฐานข้อมูล…','Sections':'ส่วน','Systems':'ระบบ','Data & APIs':'ข้อมูลและ API','Notes':'โน้ต','Patterns':'แพตเทิร์น','Icons':'ไอคอน',
@@ -674,7 +713,7 @@ const TH={
 'Nothing matches. Try “db”, “queue” or “ผู้ใช้”.':'ไม่พบบล็อกที่ตรง ลองคำว่า “db”, “queue” หรือ “ผู้ใช้”',
 // toasts
 'Browser storage is full. Export a JSON backup and delete old diagrams.':'พื้นที่เก็บในเบราว์เซอร์เต็มแล้ว ให้ export เป็น JSON แล้วลบไดอะแกรมเก่า','That diagram could not be found':'ไม่พบไดอะแกรมนั้น','Diagram deleted':'ลบไดอะแกรมแล้ว','That file is not a Canvy JSON export':'ไฟล์นี้ไม่ใช่ไฟล์ JSON จาก Canvy','No changes since the last version':'ไม่มีอะไรเปลี่ยนจากเวอร์ชันล่าสุด','That version matches the canvas':'เวอร์ชันนี้เหมือนกับที่อยู่บนผืนผ้าใบ','Version restored. Undo is available.':'กู้คืนเวอร์ชันแล้ว กดเลิกทำได้',
-'Nothing to export yet':'ยังไม่มีอะไรให้ส่งออก','No shapes to export yet':'ยังไม่มีรูปให้ส่งออก','PNG export failed in this browser. Try SVG.':'ส่งออก PNG ไม่ได้ในเบราว์เซอร์นี้ ลองใช้ SVG','Select three or more to distribute':'เลือก 3 ชิ้นขึ้นไปเพื่อเว้นระยะ','Tidy arranges shapes that are connected by arrows':'การจัดเรียงใช้กับรูปที่เชื่อมกันด้วยลูกศร','Those shapes and arrows are already on the canvas':'รูปและลูกศรเหล่านั้นมีอยู่แล้ว','Nothing to draw yet. Try: user:Customer -> API -> db:Orders':'ยังไม่มีอะไรให้วาด ลองพิมพ์: user:ลูกค้า -> API -> db:คำสั่งซื้อ','That share link looks broken or was cut short. Ask for the link again, or a JSON export.':'ลิงก์แชร์นี้เสียหรือถูกตัดขาด ขอลิงก์ใหม่หรือขอไฟล์ JSON แทน','Saved in this browser.':'บันทึกในเบราว์เซอร์นี้แล้ว','New diagrams flow top to bottom':'ไดอะแกรมใหม่จะเรียงจากบนลงล่าง','New diagrams flow left to right':'ไดอะแกรมใหม่จะเรียงจากซ้ายไปขวา','Language: English':'ภาษา: English','Card':'การ์ด','Table':'ตาราง','Straighten arrow':'ดัดลูกศรให้ตรง','Reset rotation':'ยกเลิกการหมุน','Added a table':'เพิ่มตารางแล้ว','Add a row':'เพิ่มแถว','Remove the last row':'ลบแถวสุดท้าย','Add a column':'เพิ่มคอลัมน์','Remove the last column':'ลบคอลัมน์สุดท้าย','+ row':'+ แถว','− row':'− แถว','+ col':'+ คอลัมน์','− col':'− คอลัมน์','Group':'จัดกลุ่ม','Ungroup':'ยกเลิกกลุ่ม','Lock':'ล็อก','Unlock':'ปลดล็อก','Grouped':'จัดกลุ่มแล้ว','Ungrouped':'ยกเลิกกลุ่มแล้ว','Locked. Right-click it to unlock.':'ล็อกแล้ว คลิกขวาที่รูปเพื่อปลดล็อก','Unlocked':'ปลดล็อกแล้ว','Select two or more to group':'เลือก 2 ชิ้นขึ้นไปเพื่อจัดกลุ่ม','Type a name to find it':'พิมพ์ชื่อเพื่อค้นหา','Overview — click to jump':'ภาพรวม — คลิกเพื่อไปยังจุดนั้น','Images are left out of links. Save a .canvy file to share pictures too.':'ลิงก์จะไม่รวมรูปภาพ ถ้าจะแชร์รูปด้วยให้บันทึกเป็นไฟล์ .canvy','Save file…':'บันทึกไฟล์…','Open file…':'เปิดไฟล์…','Saved to':'บันทึกลง','Save to a .canvy file — Ctrl/⌘ Shift S':'บันทึกเป็นไฟล์ .canvy — Ctrl/⌘ Shift S','Open a .canvy or .json file — Ctrl/⌘ O':'เปิดไฟล์ .canvy หรือ .json — Ctrl/⌘ O','Updated from another tab':'อัปเดตจากอีกแท็บแล้ว','A new version of Canvy is ready':'Canvy มีเวอร์ชันใหม่แล้ว','Reload':'โหลดใหม่','Ready to work offline':'พร้อมใช้งานแบบออฟไลน์แล้ว','Untitled diagram':'ไดอะแกรมไม่มีชื่อ','Preview':'ตัวอย่าง','Copy image':'คัดลอกรูป','Image copied':'คัดลอกรูปแล้ว','Download preview card':'ดาวน์โหลดภาพการ์ด','Paste the image next to the link so people see the diagram before they open it.':'วางรูปคู่กับลิงก์ คนรับจะเห็นไดอะแกรมก่อนเปิด','Switched to English':'Switched to English'
+'Nothing to export yet':'ยังไม่มีอะไรให้ส่งออก','No shapes to export yet':'ยังไม่มีรูปให้ส่งออก','PNG export failed in this browser. Try SVG.':'ส่งออก PNG ไม่ได้ในเบราว์เซอร์นี้ ลองใช้ SVG','Select three or more to distribute':'เลือก 3 ชิ้นขึ้นไปเพื่อเว้นระยะ','Tidy arranges shapes that are connected by arrows':'การจัดเรียงใช้กับรูปที่เชื่อมกันด้วยลูกศร','Those shapes and arrows are already on the canvas':'รูปและลูกศรเหล่านั้นมีอยู่แล้ว','Nothing to draw yet. Try: user:Customer -> API -> db:Orders':'ยังไม่มีอะไรให้วาด ลองพิมพ์: user:ลูกค้า -> API -> db:คำสั่งซื้อ','That share link looks broken or was cut short. Ask for the link again, or a JSON export.':'ลิงก์แชร์นี้เสียหรือถูกตัดขาด ขอลิงก์ใหม่หรือขอไฟล์ JSON แทน','Saved in this browser.':'บันทึกในเบราว์เซอร์นี้แล้ว','New diagrams flow top to bottom':'ไดอะแกรมใหม่จะเรียงจากบนลงล่าง','New diagrams flow left to right':'ไดอะแกรมใหม่จะเรียงจากซ้ายไปขวา','Language: English':'ภาษา: English','View only: people can look and zoom, but not edit':'ดูอย่างเดียว: ดูและซูมได้ แต่แก้ไขไม่ได้','QR code':'QR code','Copy embed code':'คัดลอกโค้ดฝังเว็บ','Embed code copied':'คัดลอกโค้ดฝังเว็บแล้ว','Download QR':'ดาวน์โหลด QR','PDF (one page per frame)':'PDF (หนึ่งหน้าต่อเฟรม)','Making the PDF…':'กำลังสร้าง PDF…','This link is too long for a QR code. Share the link or a .canvy file instead.':'ลิงก์ยาวเกินกว่าจะทำเป็น QR code ให้ส่งลิงก์หรือไฟล์ .canvy แทน','Edit a copy':'แก้ไขสำเนา','Open in Canvy ↗':'เปิดใน Canvy ↗','Notes':'โน้ต','Laser':'เลเซอร์','Speaker notes — N':'โน้ตผู้พูด — N','Laser pointer — L':'เลเซอร์ชี้ — L','Speaker notes':'โน้ตผู้พูด','Speaker notes…':'โน้ตผู้พูด…','Save notes':'บันทึกโน้ต','Notes saved':'บันทึกโน้ตแล้ว','No notes for this frame. Right-click a frame → Speaker notes.':'เฟรมนี้ยังไม่มีโน้ต คลิกขวาที่เฟรม → โน้ตผู้พูด','Command palette…':'ค้นหาคำสั่ง…','Type a command…':'พิมพ์คำสั่ง…','Nothing matches':'ไม่พบคำสั่ง','Tools':'เครื่องมือ','Actions':'การทำงาน','Diagram':'ไดอะแกรม','Look':'รูปลักษณ์','Go to':'ไปที่','Tidy up':'จัดเรียง','Undo':'เลิกทำ','Redo':'ทำซ้ำ','New diagram':'ไดอะแกรมใหม่','That file is not a Canvy or Excalidraw file':'ไฟล์นี้ไม่ใช่ไฟล์ Canvy หรือ Excalidraw','Open a .canvy or .json file — Ctrl/⌘ O':'เปิดไฟล์ .canvy, .json หรือ .excalidraw — Ctrl/⌘ O','Card':'การ์ด','Table':'ตาราง','Straighten arrow':'ดัดลูกศรให้ตรง','Reset rotation':'ยกเลิกการหมุน','Added a table':'เพิ่มตารางแล้ว','Add a row':'เพิ่มแถว','Remove the last row':'ลบแถวสุดท้าย','Add a column':'เพิ่มคอลัมน์','Remove the last column':'ลบคอลัมน์สุดท้าย','+ row':'+ แถว','− row':'− แถว','+ col':'+ คอลัมน์','− col':'− คอลัมน์','Group':'จัดกลุ่ม','Ungroup':'ยกเลิกกลุ่ม','Lock':'ล็อก','Unlock':'ปลดล็อก','Grouped':'จัดกลุ่มแล้ว','Ungrouped':'ยกเลิกกลุ่มแล้ว','Locked. Right-click it to unlock.':'ล็อกแล้ว คลิกขวาที่รูปเพื่อปลดล็อก','Unlocked':'ปลดล็อกแล้ว','Select two or more to group':'เลือก 2 ชิ้นขึ้นไปเพื่อจัดกลุ่ม','Type a name to find it':'พิมพ์ชื่อเพื่อค้นหา','Overview — click to jump':'ภาพรวม — คลิกเพื่อไปยังจุดนั้น','Images are left out of links. Save a .canvy file to share pictures too.':'ลิงก์จะไม่รวมรูปภาพ ถ้าจะแชร์รูปด้วยให้บันทึกเป็นไฟล์ .canvy','Save file…':'บันทึกไฟล์…','Open file…':'เปิดไฟล์…','Saved to':'บันทึกลง','Save to a .canvy file — Ctrl/⌘ Shift S':'บันทึกเป็นไฟล์ .canvy — Ctrl/⌘ Shift S','Open a .canvy or .json file — Ctrl/⌘ O':'เปิดไฟล์ .canvy หรือ .json — Ctrl/⌘ O','Updated from another tab':'อัปเดตจากอีกแท็บแล้ว','A new version of Canvy is ready':'Canvy มีเวอร์ชันใหม่แล้ว','Reload':'โหลดใหม่','Ready to work offline':'พร้อมใช้งานแบบออฟไลน์แล้ว','Untitled diagram':'ไดอะแกรมไม่มีชื่อ','Preview':'ตัวอย่าง','Copy image':'คัดลอกรูป','Image copied':'คัดลอกรูปแล้ว','Download preview card':'ดาวน์โหลดภาพการ์ด','Paste the image next to the link so people see the diagram before they open it.':'วางรูปคู่กับลิงก์ คนรับจะเห็นไดอะแกรมก่อนเปิด','Switched to English':'Switched to English'
 };
 let LANG=(()=>{try{const q=new URLSearchParams(location.search).get('lang');if(q==='th'||q==='en')return q}catch(_){}return null})()||LS.get('canvy:lang',null)||((navigator.language||'').toLowerCase().startsWith('th')?'th':'en');
 const T=s=>LANG==='th'&&TH[s]?TH[s]:s;
@@ -736,6 +775,7 @@ function writeIndex(){const idx=indexList().filter(d=>d.id!==doc.id);idx.unshift
 
 let saveT=null;
 function save(now){
+  if(typeof READONLY!=='undefined'&&READONLY)return;
   clearTimeout(saveT);
   $('#saved').textContent='Saving…';
   const run=()=>{doc.updated=Date.now();doc.view={...view};
@@ -1389,14 +1429,14 @@ function openDial(x,y,flick){
 function closeDial(){$('#dial').classList.remove('show');$('#dialMenu').classList.remove('show');dialState=null}
 function showDialMenu(x,y,wp){
   const M=$('#dialMenu'),mod=/Mac/.test(navigator.platform)?'⌘':'Ctrl ';
-  const items=[['t-select','Select','V'],['t-shape','Shapes','R'],['t-arrow','Arrow','A'],['t-text','Text','T'],['t-sticky','Sticky note','N'],['lib','Insert blocks…','I'],'-',['zin','Zoom in','+'],['zout','Zoom out','−'],['z100','Zoom to 100%',mod+'0'],['fit','Fit everything','0'],'-',['here','Center view here',''],['pan','Move canvas (hand)','H'],['sel','Select all',mod+'A']];
+  const items=[['pal','Command palette…',mod+'K'],'-',['t-select','Select','V'],['t-shape','Shapes','R'],['t-arrow','Arrow','A'],['t-text','Text','T'],['t-sticky','Sticky note','N'],['lib','Insert blocks…','I'],'-',['zin','Zoom in','+'],['zout','Zoom out','−'],['z100','Zoom to 100%',mod+'0'],['fit','Fit everything','0'],'-',['here','Center view here',''],['pan','Move canvas (hand)','H'],['sel','Select all',mod+'A']];
   if(clip)items.push(['paste','Paste here',mod+'V']);
   M.innerHTML=items.map(i=>i==='-'?'<hr>':`<button data-c="${i[0]}">${i[1]}<kbd>${i[2]}</kbd></button>`).join('');
   M.classList.add('show');const w=M.offsetWidth,h=M.offsetHeight;
   let left=x+2,top=y+2;if(left+w>innerWidth-8)left=x-w-2;if(top+h>innerHeight-8)top=y-h-2;M.style.left=clamp(left,8,innerWidth-w-8)+'px';M.style.top=clamp(top,8,innerHeight-h-8)+'px';
   M.onclick=e=>{const b=e.target.closest('[data-c]');if(!b)return;const c=b.dataset.c;closeDial();
     ({zin:()=>zoomAt(1.25,x,y),zout:()=>zoomAt(1/1.25,x,y),z100:()=>zoomAt(1/view.z,x,y),fit,here:()=>{view.x+=innerWidth/2-x;view.y+=innerHeight/2-y;renderView();renderOverlay();saveViewSoon()},
-      't-select':()=>setTool('select'),'t-shape':()=>{setTool('shape');toggleShapeFly(true)},'t-arrow':()=>setTool('arrow'),'t-text':()=>setTool('text'),'t-sticky':()=>setTool('sticky'),lib:()=>openLib(),
+      pal:openPalette,'t-select':()=>setTool('select'),'t-shape':()=>{setTool('shape');toggleShapeFly(true)},'t-arrow':()=>setTool('arrow'),'t-text':()=>setTool('text'),'t-sticky':()=>setTool('sticky'),lib:()=>openLib(),
       pan:()=>setTool('hand'),sel:()=>{setTool('select');sel=new Set(els.map(x=>x.id));render()},
       paste:()=>{const list=JSON.parse(clip),b=unionBox(list);pushUndo();const c2=cloneSet(list,wp[0]-(b.x+b.w/2),wp[1]-(b.y+b.h/2));els.push(...c2);sel=new Set(c2.map(e=>e.id));commit()}})[c]()};
 }
@@ -1417,6 +1457,7 @@ function openCtx(x,y,el){
   if(sel.size>=2)items.push(['tidy','Tidy selection','⇧T']);
   if(el.type==='arrow'&&el.bend)items.push(['straight','Straighten arrow','']);
   if(rotOf(el))items.push(['unrot','Reset rotation','']);
+  if(el.type==='frame')items.push(['notes','Speaker notes…','']);
   const anyG=selected().some(x=>x.group),locked=selected().every(x=>x.locked);
   if(sel.size>=2&&!selected().every(x=>x.group&&x.group===selected()[0].group))items.push(['group','Group',mod+'G']);
   if(anyG)items.push(['ungroup','Ungroup',mod+'⇧G']);
@@ -1425,7 +1466,7 @@ function openCtx(x,y,el){
   C.innerHTML=items.map(i=>i==='-'?'<hr>':`<button data-c="${i[0]}" class="${i[0]==='del'?'danger':''}">${i[1]}<kbd>${i[2]}</kbd></button>`).join('');
   C.classList.add('show');const w=C.offsetWidth,h=C.offsetHeight;C.style.left=clamp(x,8,innerWidth-w-8)+'px';C.style.top=clamp(y,8,innerHeight-h-8)+'px';
   C.onclick=e=>{const b=e.target.closest('[data-c]');if(!b)return;C.classList.remove('show');
-    ({edit:()=>{const one=selected()[0];if(one)startEdit(one)},dup:duplicate,copy:copySel,paste,front:()=>reorder(true),back:()=>reorder(false),zoom:zoomToSel,bigger:()=>scaleSel(1.2),smaller:()=>scaleSel(1/1.2),tidy:()=>tidy(true),del:deleteSel,group:groupSel,ungroup:ungroupSel,lock:lockSel,unlock:lockSel,straight:()=>{pushUndo();delete el.bend;commit()},unrot:()=>{pushUndo();delete el.rot;commit()}})[b.dataset.c]()};
+    ({edit:()=>{const one=selected()[0];if(one)startEdit(one)},dup:duplicate,copy:copySel,paste,front:()=>reorder(true),back:()=>reorder(false),zoom:zoomToSel,bigger:()=>scaleSel(1.2),smaller:()=>scaleSel(1/1.2),tidy:()=>tidy(true),del:deleteSel,group:groupSel,ungroup:ungroupSel,lock:lockSel,unlock:lockSel,straight:()=>{pushUndo();delete el.bend;commit()},unrot:()=>{pushUndo();delete el.rot;commit()},notes:()=>editNotes(el)})[b.dataset.c]()};
 }
 // right-click / long-press / tap Space on empty canvas: a plain menu at the cursor (no dial)
 function openCanvasMenu(x,y){closeFloating();dialState={x,y,flick:false,hot:null,menuOnly:true};showDialMenu(x,y,toWorld(x,y))}
@@ -1460,6 +1501,7 @@ stage.addEventListener('pointerdown',e=>{
       const[a,b]=[...touches.values()];drag={kind:'pinch',d0:Math.hypot(a[0]-b[0],a[1]-b[1])||1,m0:[(a[0]+b[0])/2,(a[1]+b[1])/2],v0:{...view}};clearTimeout(pressT);render();return}
     if(touches.size>2)return}
   if(editing){commitEdit();return}
+  if(READONLY){if(e.button===2)return;try{stage.setPointerCapture(e.pointerId)}catch(_){}drag={kind:'pan',sx:e.clientX,sy:e.clientY,vx:view.x,vy:view.y};stage.classList.add('c-grabbing');return}
   if(dialState&&e.button!==2){closeDial();return}
   closeFloating();
   const p=toWorld(e.clientX,e.clientY);
@@ -1888,6 +1930,13 @@ const TEMPLATES=[
   {name:'State machine',desc:'Self-loops and two-way transitions',dir:'LR',cmd:'(Idle) -(fetch)-> (Loading), (Loading) -(ok)-> (Ready), (Loading) -(error)-> (Failed), (Failed) -(retry)-> (Loading), (Ready) -(refresh)-> (Loading), (Loading) -(poll)-> (Loading)'},
   {name:'Mind map',desc:'A topic with sticky-note branches',dir:'LR',cmd:'(Launch plan) -- note:Landing page, (Launch plan) -- note:Demo video, (Launch plan) -- note:Beta invites, (Launch plan) -- note:Docs + FAQ, (Launch plan) -- note:Pricing'},
   {name:'Sequence of steps',desc:'A simple left-to-right pipeline',dir:'LR',cmd:'Collect -> Clean -> Analyze -> Visualize -> Share'},
+  {name:'ผังองค์กร',desc:'โครงสร้างทีมจากบนลงล่าง',dir:'TB',cmd:'ผู้บริหาร -> ฝ่ายขาย, ผู้บริหาร -> ฝ่ายการตลาด, ผู้บริหาร -> ฝ่ายเทคโนโลยี, ฝ่ายเทคโนโลยี -> ทีมพัฒนา, ฝ่ายเทคโนโลยี -> ทีมดูแลระบบ, ฝ่ายขาย -> ทีมขายองค์กร'},
+  {name:'เส้นทางลูกค้า',desc:'Customer journey ห้าขั้น',dir:'LR',cmd:'start:รู้จักแบรนด์ -> สนใจสินค้า -> {ตัดสินใจซื้อ?}, {ตัดสินใจซื้อ?} -(ซื้อ)-> ใช้งานสินค้า -> end:บอกต่อ, {ตัดสินใจซื้อ?} -(ยังไม่ซื้อ)-> note:ส่งโปรโมชันติดตาม'},
+  {name:'ขั้นตอนอนุมัติเอกสาร',desc:'ยื่น ตรวจ อนุมัติ หรือส่งกลับแก้',dir:'TB',cmd:'start:ยื่นคำขอ -> หัวหน้าตรวจสอบ -> {อนุมัติ?}, {อนุมัติ?} -(อนุมัติ)-> ฝ่ายบัญชีดำเนินการ -> end:เสร็จสิ้น, {อนุมัติ?} -(ไม่อนุมัติ)-> แก้ไขเอกสาร -> หัวหน้าตรวจสอบ'},
+  {name:'วิเคราะห์ SWOT',desc:'จุดแข็ง จุดอ่อน โอกาส อุปสรรค',build:()=>buildSwot(true)},
+  {name:'แผนงานรายไตรมาส',desc:'สี่ไตรมาส เชื่อมต่อกัน',build:()=>buildQuarters(true)},
+  {name:'SWOT analysis',desc:'Strengths, weaknesses, opportunities, threats',build:()=>buildSwot(false)},
+  {name:'Quarterly roadmap',desc:'Four quarters in a row',build:()=>buildQuarters(false)},
   {name:'ขั้นตอนการสั่งซื้อ',desc:'ตัวอย่าง flow ภาษาไทย',dir:'LR',cmd:'user:ลูกค้า -> สั่งซื้อสินค้า -> {ชำระเงินสำเร็จ?}, {ชำระเงินสำเร็จ?} -(ใช่)-> ส่งอีเมลยืนยัน -> db:คำสั่งซื้อ, {ชำระเงินสำเร็จ?} -(ไม่)-> แจ้งลองใหม่'}
 ];
 const TPL_TH={'Flowchart':['ผังงาน','ขั้นตอนบนลงล่างพร้อมทางแยก'],'System architecture':['สถาปัตยกรรมระบบ','ไคลเอนต์ เกตเวย์ เซอร์วิส ฐานข้อมูล และคิว'],'RAG pipeline':['ระบบ RAG','สองทางเข้ารวมเป็นคำตอบ'],'State machine':['State machine','สถานะ ลูกศรวน และการเปลี่ยนสถานะ'],'Mind map':['แผนที่ความคิด','หัวข้อหลักกับโน้ตแตกแขนง'],'Sequence of steps':['ลำดับขั้นตอน','ไปป์ไลน์จากซ้ายไปขวา'],'Load-balanced service':['เซอร์วิสหลัง Load balancer','ทางเข้าเดียว 3 สำเนา'],'Cache-aside':['Cache-aside','อ่านแคชก่อน ไม่เจอค่อยอ่านฐานข้อมูล'],'Publish / subscribe':['Publish / subscribe','ผู้ส่งหนึ่ง ผู้รับหลายราย'],'Retry with backoff':['ลองใหม่เมื่อพลาด','วนกลับเพื่อลองใหม่'],'Request / response':['ร้องขอ / ตอบกลับ','สื่อสารสองทาง'],'Fan-out / fan-in':['กระจายงาน / รวมผล','แตกงานแล้วรวมผลลัพธ์'],'CQRS':['CQRS','แยกทางเขียนกับทางอ่าน'],'ETL pipeline':['ETL','ดึง แปลง และโหลดข้อมูล']};
@@ -1899,7 +1948,7 @@ function renderLib(){
   $('#libTabs').innerHTML=LIB_TABS.map(([k,n])=>`<button data-tab="${k}" class="${k===libTab&&!q?'on':''}">${n}</button>`).join('');
   const sv=S();L.style.background=sv.dark?sv.bg:'';L.classList.toggle('dark',!!sv.dark);
   if(!q&&(libTab==='templates'||libTab==='patterns')){const list=libTab==='templates'?TEMPLATES:PATTERNS;
-    L.innerHTML='<div class="tpl">'+list.map((t,i)=>`<button data-${libTab==='templates'?'tpl':'pat'}="${i}"><b>${esc(tn(t)[0])}</b><small>${esc(tn(t)[1])}</small><code>${esc(t.cmd.length>90?t.cmd.slice(0,88)+'…':t.cmd)}</code></button>`).join('')+'</div>';return}
+    L.innerHTML='<div class="tpl">'+list.map((t,i)=>`<button data-${libTab==='templates'?'tpl':'pat'}="${i}"><b>${esc(tn(t)[0])}</b><small>${esc(tn(t)[1])}</small>${t.cmd?`<code>${esc(t.cmd.length>90?t.cmd.slice(0,88)+'…':t.cmd)}</code>`:''}</button>`).join('')+'</div>';return}
   const groups=q?Object.entries(BLOCKS):[[libTab,BLOCKS[libTab]]];let h='<div class="lib">';let any=false;
   for(const[key,g]of groups){const items=g.items.map((b,i)=>[b,i]).filter(([b])=>!q||b.n.toLowerCase().includes(q)||(b.l||'').toLowerCase().includes(q)||b.k.includes(q)||(b.i||'').includes(q));if(!items.length)continue;any=true;
     if(q)h+=`<div class="cat">${esc(g.name)}</div>`;
@@ -1911,7 +1960,7 @@ $('#btnLib').onclick=()=>{const d=$('#libDrawer');if(d.classList.contains('show'
 $('#libSearch').addEventListener('input',renderLib);
 $('#libTabs').addEventListener('click',e=>{const b=e.target.closest('[data-tab]');if(!b)return;libTab=b.dataset.tab;$('#libSearch').value='';renderLib()});
 $('#libList').addEventListener('click',e=>{
-  const t=e.target.closest('[data-tpl]');if(t){const tp=TEMPLATES[+t.dataset.tpl];applyCommand(tp.cmd,{dir:tp.dir});$('#libDrawer').classList.remove('show');if(innerWidth<900)fit();return}
+  const t=e.target.closest('[data-tpl]');if(t){const tp=TEMPLATES[+t.dataset.tpl];runTemplate(tp);$('#libDrawer').classList.remove('show');if(innerWidth<900)fit();return}
   const pt=e.target.closest('[data-pat]');if(pt){const tp=PATTERNS[+pt.dataset.pat];applyCommand(tp.cmd,{dir:tp.dir});return}
   const b=e.target.closest('[data-b]');if(!b)return;const blk=BLOCKS[b.dataset.g].items[+b.dataset.b];
   pushUndo();insN=(insN+1)%6;const[cx,cy]=toWorld(innerWidth/2+insN*18,innerHeight/2+insN*18);
@@ -1947,6 +1996,9 @@ let spaceAt=0,spaceUsed=false;
 addEventListener('keydown',e=>{
   if(e.target.matches('input,textarea,select')){return}
   const mod=e.metaKey||e.ctrlKey,k=e.key.toLowerCase(),presenting=document.body.classList.contains('presenting');
+  if(mod&&k==='k'&&!READONLY){e.preventDefault();openPalette();return}
+  if(presenting&&(k==='n'||k==='l')){e.preventDefault();k==='n'?toggleNotes():toggleLaser();return}
+  if(READONLY&&!presenting){if(e.key==='0')fit();else if(e.key==='+'||e.key==='=')zoomAt(1.2);else if(e.key==='-')zoomAt(1/1.2);else if(e.shiftKey&&k==='p')startPresent();return}
   if(presenting){if(e.key==='Escape'){exitPresent();return}if(['ArrowRight','ArrowDown','PageDown',' ','Enter'].includes(e.key)){e.preventDefault();slide(1)}else if(['ArrowLeft','ArrowUp','PageUp','Backspace'].includes(e.key)){e.preventDefault();slide(-1)}return}
   if(e.key===' '){e.preventDefault();if(!spaceDown){spaceDown=true;spaceAt=performance.now();spaceUsed=false;stage.className='c-grab'}return}
   if(e.key==='Escape'){if(dialState){closeDial();return}if(closeFloating())return;if(drag)return;sel.clear();setTool('select');render();return}
@@ -2038,7 +2090,7 @@ function deleteDoc(id){
 $('#btnDocs').onclick=()=>{const d=$('#docsDrawer');const s=!d.classList.contains('show');closeFloating();if(s){renderDocs();d.classList.add('show')}};
 $('#btnNew').onclick=()=>{openDoc(newDoc());$('#docsDrawer').classList.remove('show');setTimeout(()=>{$('#docName').focus();$('#docName').select()},50)};
 $('#btnTplOpen').onclick=()=>openLib('templates');
-const FILE_TYPES=[{description:'Canvy diagram',accept:{'application/json':['.canvy','.json']}}];
+const FILE_TYPES=[{description:'Canvy or Excalidraw diagram',accept:{'application/json':['.canvy','.json','.excalidraw']}}];
 const fileHandles=new Map(); // doc id -> FileSystemFileHandle, so Ctrl+S writes back to the same file
 const docJson=()=>JSON.stringify({app:'canvy',v:2,name:doc.name,style:doc.style,paper:doc.paper,strokeMode:doc.strokeMode,elements:els},null,1);
 async function saveFile(saveAs){
@@ -2050,10 +2102,10 @@ async function saveFile(saveAs){
   download(new Blob([data],{type:'application/json'}),slug()+'.canvy');
 }
 async function importFileObj(f,handle){
-  try{const d=JSON.parse(await f.text());const els2=Array.isArray(d)?d:d.elements;if(!Array.isArray(els2))throw 0;
-    const nd=newDoc(d.name||f.name.replace(/\.(canvy|json)$/i,''));nd.style=STYLES[d.style]?d.style:'pencil';if(d.paper)nd.paper=d.paper;if(d.strokeMode)nd.strokeMode=d.strokeMode;nd.elements=sanitize(els2);
+  try{const d=JSON.parse(await f.text());const isEx=d&&(d.type==='excalidraw'||/\.excalidraw$/i.test(f.name));const els2=isEx?excalidrawToCanvy(d):Array.isArray(d)?d:d.elements;if(!Array.isArray(els2))throw 0;
+    const nd=newDoc(d.name||f.name.replace(/\.(canvy|json|excalidraw)$/i,''));nd.style=STYLES[d.style]?d.style:'pencil';if(d.paper)nd.paper=d.paper;if(d.strokeMode)nd.strokeMode=d.strokeMode;nd.elements=sanitize(els2);
     if(handle)fileHandles.set(nd.id,handle);openDoc(nd);fit();save(true);closeFloating();toast('Imported '+nd.name)}
-  catch(_){toast('That file is not a Canvy JSON export')}
+  catch(_){toast('That file is not a Canvy or Excalidraw file')}
 }
 async function openFile(){
   if(window.showOpenFilePicker){try{const[h]=await showOpenFilePicker({types:FILE_TYPES});await importFileObj(await h.getFile(),h);return}catch(e){if(e&&e.name==='AbortError')return}}
@@ -2062,7 +2114,7 @@ async function openFile(){
 $('#btnSaveFile').onclick=()=>saveFile(true);
 $('#btnImport').onclick=openFile;
 stage.addEventListener('dragover',e=>{if([...(e.dataTransfer?.items||[])].some(i=>i.kind==='file')){e.preventDefault();e.dataTransfer.dropEffect='copy'}});
-stage.addEventListener('drop',e=>{const files=[...(e.dataTransfer?.files||[])];const f=files.find(f=>/\.(canvy|json)$/i.test(f.name));if(f){e.preventDefault();importFileObj(f);return}
+stage.addEventListener('drop',e=>{const files=[...(e.dataTransfer?.files||[])];const f=files.find(f=>/\.(canvy|json|excalidraw)$/i.test(f.name));if(f){e.preventDefault();importFileObj(f);return}
   const im=files.find(f=>f.type.startsWith('image/'));if(im){e.preventDefault();addImage(im,toWorld(e.clientX,e.clientY))}});
 $('#fileIn').onchange=e=>{const f=e.target.files[0];e.target.value='';if(f)importFileObj(f)};
 
@@ -2113,7 +2165,7 @@ $('#btnShare').onclick=async()=>{
   closeFloating();$('#shareScrim').classList.add('show');const inp=$('#shareLink');inp.value='Preparing link…';
   if(!els.length){inp.value='Draw something first';$('#shareNote').textContent='The canvas is empty, so there is nothing to share yet.';return}
   const pv=$('#sharePv');pv.innerHTML='';const r0=buildSvg(true);if(r0){const im=new Image();im.alt='';im.src='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(r0.svg);pv.appendChild(im)}
-  const code=await packDoc();const url=location.href.split('#')[0].split('?')[0]+'#d='+code;inp.value=url;
+  const code=await packDoc();lastCode=code;$('#qrBox').classList.remove('show');const url=shareUrl();inp.value=url;
   $('#shareNote').classList.toggle('warn',url.length>8000||els.some(e=>e.type==='image'));
   $('#shareNote').textContent=TX(url.length>8000?`This diagram makes a long link (${Math.round(url.length/1000)}k characters). Some chat apps cut long links, so a JSON export may be safer.`:(els.some(e=>e.type==='image')?'Images are left out of links. Save a .canvy file to share pictures too.':'The whole diagram is packed into this link. Nothing is uploaded: whoever opens it gets their own copy.'));
 };
@@ -2184,15 +2236,212 @@ let preView=null,slides=[],slideI=0;
 function startPresent(){
   if(!els.length)return toast('Draw something first');
   preView={...view};sel.clear();closeFloating();
-  const F=frames();slides=F.length?F.map(f=>({box:rectOf(f),name:f.label||'Frame'})):[{box:unionBox(els),name:doc.name}];slideI=0;
+  const F=frames();slides=F.length?F.map(f=>({box:rectOf(f),name:f.label||'Frame',notes:f.notes||''})):[{box:unionBox(els),name:doc.name,notes:''}];slideI=0;
   document.body.classList.add('presenting');document.documentElement.requestFullscreen?.().catch(()=>{});
   setTimeout(()=>{render();showSlide()},140);
 }
-function showSlide(){const sl=slides[slideI];if(!sl)return;fitBox(sl.box,2.4);$('#pInfo').textContent=`${slideI+1} / ${slides.length} · ${sl.name}`}
+function showSlide(){const sl=slides[slideI];if(!sl)return;fitBox(sl.box,2.4);$('#pInfo').textContent=`${slideI+1} / ${slides.length} · ${sl.name}`;$('#pNotesBox').textContent=sl.notes||T('No notes for this frame. Right-click a frame → Speaker notes.')}
 function slide(d){slideI=clamp(slideI+d,0,slides.length-1);showSlide()}
-function exitPresent(){document.body.classList.remove('presenting');if(document.fullscreenElement)document.exitFullscreen?.();if(preView){view=preView;preView=null}render()}
+function exitPresent(){document.body.classList.remove('presenting','notes-on');if(document.body.classList.contains('laser-on'))toggleLaser();if(document.fullscreenElement)document.exitFullscreen?.();if(preView){view=preView;preView=null}render()}
 $('#btnPresent').onclick=startPresent;$('#exitPresent').onclick=exitPresent;$('#pNext').onclick=()=>slide(1);$('#pPrev').onclick=()=>slide(-1);
 document.addEventListener('fullscreenchange',()=>{if(!document.fullscreenElement&&document.body.classList.contains('presenting'))exitPresent()});
+
+/* ============================== QR code (byte mode, ECC M then L) ============================== */
+// A compact QR encoder written for Canvy's share links: versions 1–40, mask chosen by penalty score.
+const QR=(()=>{
+  const ECC=[[-1,7,10,15,20,26,18,20,24,30,18,20,24,26,30,22,24,28,30,28,28,28,28,30,30,26,28,30,30,30,30,30,30,30,30,30,30,30,30,30,30],
+             [-1,10,16,26,18,24,16,18,22,22,26,30,22,22,24,24,28,28,26,26,26,26,28,28,28,28,28,28,28,28,28,28,28,28,28,28,28,28,28,28,28]];
+  const BLK=[[-1,1,1,1,1,1,2,2,2,2,4,4,4,4,4,6,6,6,6,7,8,8,9,9,10,12,12,12,13,14,15,16,17,18,19,19,20,21,22,24,25],
+             [-1,1,1,1,2,2,4,4,4,5,5,5,8,9,9,10,10,11,13,14,16,17,17,18,20,21,23,25,26,28,29,31,33,35,37,38,40,43,45,47,49]];
+  const FMT=[1,0]; // format bits for L, M
+  const rawModules=v=>{let r=(16*v+128)*v+64;if(v>=2){const n=Math.floor(v/7)+2;r-=(25*n-10)*n-55;if(v>=7)r-=36}return r};
+  const dataCw=(v,e)=>Math.floor(rawModules(v)/8)-ECC[e][v]*BLK[e][v];
+  const mul=(x,y)=>{let z=0;for(let i=7;i>=0;i--){z=(z<<1)^((z>>>7)*0x11D);z^=((y>>>i)&1)*x}return z&255};
+  const divisor=d=>{const r=new Array(d).fill(0);r[d-1]=1;let root=1;for(let i=0;i<d;i++){for(let j=0;j<d;j++){r[j]=mul(r[j],root);if(j+1<d)r[j]^=r[j+1]}root=mul(root,2)}return r};
+  const remainder=(data,div)=>{const r=new Array(div.length).fill(0);for(const b of data){const f=b^r.shift();r.push(0);div.forEach((c,i)=>{r[i]^=mul(c,f)})}return r};
+  function encode(text){
+    const bytes=[...new TextEncoder().encode(text)];
+    for(const e of[1,0])for(let v=1;v<=40;v++){
+      const ccBits=v<10?8:16,need=4+ccBits+bytes.length*8;if(need>dataCw(v,e)*8)continue;
+      return build(bytes,v,e,ccBits);
+    }
+    return null;
+  }
+  function build(bytes,ver,e,ccBits){
+    const bits=[];const put=(val,n)=>{for(let i=n-1;i>=0;i--)bits.push((val>>>i)&1)};
+    put(4,4);put(bytes.length,ccBits);bytes.forEach(b=>put(b,8));
+    const cap=dataCw(ver,e)*8;put(0,Math.min(4,cap-bits.length));put(0,(8-bits.length%8)%8);
+    const data=[];for(let i=0;i<bits.length;i+=8){let b=0;for(let j=0;j<8;j++)b=(b<<1)|bits[i+j];data.push(b)}
+    for(let pad=0xEC;data.length<dataCw(ver,e);pad^=0xEC^0x11)data.push(pad);
+    // error correction + interleave
+    const nb=BLK[e][ver],el=ECC[e][ver],raw=Math.floor(rawModules(ver)/8),nShort=nb-raw%nb,shortLen=Math.floor(raw/nb),div=divisor(el),blocks=[];
+    for(let i=0,k=0;i<nb;i++){const dl=shortLen-el+(i<nShort?0:1),d=data.slice(k,k+dl);k+=dl;const ecc=remainder(d,div);if(i<nShort)d.push(0);blocks.push(d.concat(ecc))}
+    const cw=[];for(let i=0;i<blocks[0].length;i++)blocks.forEach((b,j)=>{if(i!==shortLen-el||j>=nShort)cw.push(b[i])});
+    // modules
+    const size=ver*4+17,M=[...Array(size)].map(()=>new Array(size).fill(false)),F=[...Array(size)].map(()=>new Array(size).fill(false));
+    const set=(x,y,d)=>{M[y][x]=d;F[y][x]=true};
+    for(let i=0;i<size;i++){set(6,i,i%2===0);set(i,6,i%2===0)}
+    const finder=(cx,cy)=>{for(let dy=-4;dy<=4;dy++)for(let dx=-4;dx<=4;dx++){const x=cx+dx,y=cy+dy,d=Math.max(Math.abs(dx),Math.abs(dy));if(x>=0&&x<size&&y>=0&&y<size)set(x,y,d!==2&&d!==4)}};
+    finder(3,3);finder(size-4,3);finder(3,size-4);
+    if(ver>1){const n=Math.floor(ver/7)+2,step=ver===32?26:Math.ceil((ver*4+4)/(n*2-2))*2,pos=[6];for(let p=size-7;pos.length<n;p-=step)pos.splice(1,0,p);
+      for(let i=0;i<n;i++)for(let j=0;j<n;j++){if((i===0&&j===0)||(i===0&&j===n-1)||(i===n-1&&j===0))continue;
+        for(let dy=-2;dy<=2;dy++)for(let dx=-2;dx<=2;dx++)set(pos[i]+dx,pos[j]+dy,Math.max(Math.abs(dx),Math.abs(dy))!==1)}}
+    const fmt=mask=>{const d=FMT[e]<<3|mask;let r=d;for(let i=0;i<10;i++)r=(r<<1)^((r>>>9)*0x537);const b=((d<<10)|r)^0x5412,g=i=>((b>>>i)&1)===1;
+      for(let i=0;i<=5;i++)set(8,i,g(i));set(8,7,g(6));set(8,8,g(7));set(7,8,g(8));for(let i=9;i<15;i++)set(14-i,8,g(i));
+      for(let i=0;i<8;i++)set(size-1-i,8,g(i));for(let i=8;i<15;i++)set(8,size-15+i,g(i));set(8,size-8,true)};
+    fmt(0);
+    if(ver>=7){let r=ver;for(let i=0;i<12;i++)r=(r<<1)^((r>>>11)*0x1F25);const b=ver<<12|r;for(let i=0;i<18;i++){const d=((b>>>i)&1)===1,a=size-11+i%3,c=Math.floor(i/3);set(a,c,d);set(c,a,d)}}
+    let i=0;for(let right=size-1;right>=1;right-=2){if(right===6)right=5;for(let v=0;v<size;v++)for(let j=0;j<2;j++){const x=right-j,up=((right+1)&2)===0,y=up?size-1-v:v;
+      if(!F[y][x]&&i<cw.length*8){M[y][x]=((cw[i>>>3]>>>(7-(i&7)))&1)===1;i++}}}
+    const maskFn=[(x,y)=>(x+y)%2===0,(x,y)=>y%2===0,(x,y)=>x%3===0,(x,y)=>(x+y)%3===0,(x,y)=>(Math.floor(x/3)+Math.floor(y/2))%2===0,(x,y)=>x*y%2+x*y%3===0,(x,y)=>(x*y%2+x*y%3)%2===0,(x,y)=>((x+y)%2+x*y%3)%2===0];
+    const apply=m=>{for(let y=0;y<size;y++)for(let x=0;x<size;x++)if(!F[y][x]&&maskFn[m](x,y))M[y][x]=!M[y][x]};
+    const penalty=()=>{let p=0,dark=0;
+      for(let y=0;y<size;y++){let run=1;for(let x=1;x<size;x++){if(M[y][x]===M[y][x-1]){run++;if(run===5)p+=3;else if(run>5)p++}else run=1}}
+      for(let x=0;x<size;x++){let run=1;for(let y=1;y<size;y++){if(M[y][x]===M[y-1][x]){run++;if(run===5)p+=3;else if(run>5)p++}else run=1}}
+      for(let y=0;y<size-1;y++)for(let x=0;x<size-1;x++){const c=M[y][x];if(c===M[y][x+1]&&c===M[y+1][x]&&c===M[y+1][x+1])p+=3}
+      for(const row of M)for(const c of row)if(c)dark++;p+=Math.floor(Math.abs(dark*20-size*size*10)/(size*size))*10;return p};
+    let best=0,bestP=1e9;for(let m=0;m<8;m++){apply(m);fmt(m);const pp=penalty();if(pp<bestP){bestP=pp;best=m}apply(m)}
+    apply(best);fmt(best);
+    return M;
+  }
+  return{encode};
+})();
+
+/* ============================== PDF (one page per frame) ============================== */
+function pdfBytes(pages){
+  const enc=new TextEncoder(),chunks=[],offs=[];let len=0;
+  const add=x=>{const b=typeof x==='string'?enc.encode(x):x;chunks.push(b);len+=b.length};
+  const obj=(n,...parts)=>{offs[n]=len;add(`${n} 0 obj\n`);parts.forEach(add);add('\nendobj\n')};
+  add('%PDF-1.4\n%âãÏÓ\n');
+  const n=pages.length,kids=pages.map((_,i)=>`${3+3*i} 0 R`).join(' ');
+  obj(1,'<</Type/Catalog/Pages 2 0 R>>');obj(2,`<</Type/Pages/Kids[${kids}]/Count ${n}>>`);
+  pages.forEach((pg,i)=>{const W=842,H=Math.max(160,Math.round(842*pg.ih/pg.iw)),c=`q ${W} 0 0 ${H} 0 0 cm /Im0 Do Q`;
+    obj(3+3*i,`<</Type/Page/Parent 2 0 R/MediaBox[0 0 ${W} ${H}]/Resources<</XObject<</Im0 ${5+3*i} 0 R>>>>/Contents ${4+3*i} 0 R>>`);
+    obj(4+3*i,`<</Length ${c.length}>>stream\n${c}\nendstream`);
+    obj(5+3*i,`<</Type/XObject/Subtype/Image/Width ${pg.iw}/Height ${pg.ih}/ColorSpace/DeviceRGB/BitsPerComponent 8/Filter/DCTDecode/Length ${pg.jpg.length}>>stream\n`,pg.jpg,'\nendstream')});
+  const total=3+3*n,xref=len;let x=`xref\n0 ${total}\n0000000000 65535 f \n`;for(let i=1;i<total;i++)x+=String(offs[i]).padStart(10,'0')+' 00000 n \n';
+  add(x+`trailer\n<</Size ${total}/Root 1 0 R>>\nstartxref\n${xref}\n%%EOF`);
+  const out=new Uint8Array(len);let o=0;for(const c of chunks){out.set(c,o);o+=c.length}return out;
+}
+async function boxImage(box){
+  const s=S(),pad=24,W=Math.ceil(box.w+pad*2),H=Math.ceil(box.h+pad*2),prev=editing;editing=null;const inner=renderList(els);editing=prev;
+  let svg=`<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="${f1(box.x-pad)} ${f1(box.y-pad)} ${W} ${H}"><rect x="${f1(box.x-pad)}" y="${f1(box.y-pad)}" width="${W}" height="${H}" fill="${s.bg}"/>${inner}</svg>`;
+  try{svg=await inlineFonts(svg)}catch(_){}
+  const img=new Image();img.src='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(svg);await img.decode();
+  const k=Math.min(2,2400/W),c=document.createElement('canvas');c.width=Math.round(W*k);c.height=Math.round(H*k);const g=c.getContext('2d');g.fillStyle=s.bg;g.fillRect(0,0,c.width,c.height);g.drawImage(img,0,0,c.width,c.height);
+  const b=await new Promise(r=>c.toBlob(r,'image/jpeg',.9));return{jpg:new Uint8Array(await b.arrayBuffer()),iw:c.width,ih:c.height};
+}
+async function exportPdf(){
+  if(!els.length)return toast('Nothing to export yet');toast('Making the PDF…',1500);
+  const F=frames(),boxes=F.length?F.map(rectOf):[unionBox(els)],pages=[];for(const b of boxes)pages.push(await boxImage(b));
+  download(new Blob([pdfBytes(pages)],{type:'application/pdf'}),slug()+'.pdf');
+}
+
+/* ============================== view-only and embedded links ============================== */
+const QS=new URLSearchParams(location.search),MODE=QS.get('embed')==='1'?'embed':QS.get('view')==='1'?'view':null;
+let READONLY=false;
+let lastCode='';
+function shareBase(mode){return location.origin+location.pathname+(mode?`?${mode}=1`:'')}
+function shareUrl(){return shareBase($('#optView').checked?'view':null)+'#d='+lastCode}
+$('#optView').addEventListener('change',()=>{if(lastCode)$('#shareLink').value=shareUrl();$('#qrBox').classList.remove('show')});
+$('#copyEmbed').onclick=()=>{if(!lastCode)return;copyText(`<iframe src="${shareBase('embed')}#d=${lastCode}" width="800" height="500" style="border:0;border-radius:12px" title="${esc(doc.name)}" loading="lazy"></iframe>`,$('#copyEmbed'),T('Embed code copied'))};
+$('#btnQr').onclick=()=>{const url=$('#shareLink').value;if(!url.startsWith('http'))return;const M=QR.encode(url);if(!M){toast('This link is too long for a QR code. Share the link or a .canvy file instead.',4000);return}
+  const n=M.length,sc=Math.max(6,Math.floor(1000/(n+8))),c=$('#qrCanvas');c.width=c.height=(n+8)*sc;const g=c.getContext('2d');g.fillStyle='#fff';g.fillRect(0,0,c.width,c.height);g.fillStyle='#000';
+  M.forEach((r,y)=>r.forEach((d,x)=>{if(d)g.fillRect((x+4)*sc,(y+4)*sc,sc,sc)}));$('#qrBox').classList.add('show')};
+$('#dlQr').onclick=()=>$('#qrCanvas').toBlob(b=>download(b,slug()+'-qr.png'),'image/png');
+$('#exPdf').onclick=exportPdf;
+$('#editCopy').onclick=()=>{location.href=location.pathname+location.hash};
+function enterReadonly(){READONLY=true;document.body.classList.add('readonly');if(MODE==='embed'){document.body.classList.add('embed');$('#embedLink').href=location.pathname+location.hash}setTool('hand');$('#docName').readOnly=true}
+
+/* ============================== speaker notes + laser pointer ============================== */
+function editNotes(f){$('#notesFor').textContent=f.label||'Frame';$('#notesTa').value=f.notes||'';$('#notesScrim').classList.add('show');$('#notesSave').onclick=()=>{pushUndo();const v=$('#notesTa').value.trim();if(v)f.notes=v;else delete f.notes;$('#notesScrim').classList.remove('show');commit();toast('Notes saved')};setTimeout(()=>$('#notesTa').focus(),30)}
+$('#notesClose').onclick=()=>$('#notesScrim').classList.remove('show');
+function toggleNotes(){document.body.classList.toggle('notes-on');$('#pNotes').classList.toggle('on',document.body.classList.contains('notes-on'));showSlide()}
+$('#pNotes').onclick=toggleNotes;
+const trail=[];let laserRaf=0;
+function toggleLaser(){const on=document.body.classList.toggle('laser-on');$('#pLaser').classList.toggle('on',on);const c=$('#laser');c.width=innerWidth*devicePixelRatio;c.height=innerHeight*devicePixelRatio;if(on)laserLoop();else{cancelAnimationFrame(laserRaf);trail.length=0}}
+$('#pLaser').onclick=toggleLaser;
+addEventListener('pointermove',e=>{if(document.body.classList.contains('laser-on'))trail.push([e.clientX,e.clientY,performance.now()])});
+function laserLoop(){const c=$('#laser'),g=c.getContext('2d'),k=devicePixelRatio,now=performance.now();while(trail.length&&now-trail[0][2]>450)trail.shift();g.clearRect(0,0,c.width,c.height);
+  for(let i=1;i<trail.length;i++){const a=trail[i-1],b=trail[i],t=1-(now-b[2])/450;g.strokeStyle=`rgba(230,40,30,${t*.6})`;g.lineWidth=6*k*t+1;g.lineCap='round';g.beginPath();g.moveTo(a[0]*k,a[1]*k);g.lineTo(b[0]*k,b[1]*k);g.stroke()}
+  const l=trail.at(-1)||[mouse[0],mouse[1]];g.fillStyle='rgba(235,45,30,.95)';g.shadowColor='rgba(255,60,40,.9)';g.shadowBlur=14*k;g.beginPath();g.arc(l[0]*k,l[1]*k,6*k,0,7);g.fill();g.shadowBlur=0;
+  laserRaf=requestAnimationFrame(laserLoop)}
+
+/* ============================== Excalidraw import ============================== */
+function exFill(hex){
+  if(!hex||hex==='transparent')return'none';const m=String(hex).match(/^#?([0-9a-f]{6})/i);if(!m)return'blue';
+  const n=parseInt(m[1],16),r=(n>>16&255)/255,g=(n>>8&255)/255,b=(n&255)/255,mx=Math.max(r,g,b),mn=Math.min(r,g,b),d=mx-mn;if(d<.06)return'none';
+  let h=mx===r?((g-b)/d)%6:mx===g?(b-r)/d+2:(r-g)/d+4;h=(h*60+360)%360;
+  return h<20||h>=340?'peach':h<65?'butter':h<170?'green':h<250?'blue':'lilac';
+}
+function exStroke(hex){const f=exFill(hex);return f==='peach'||f==='butter'?'accent':f==='blue'||f==='lilac'?'blue':f==='green'?'green':'ink'}
+function excalidrawToCanvy(d){
+  const src=(d.elements||[]).filter(e=>e&&!e.isDeleted),out=[],byOld=new Map();
+  for(const e of src){const base={id:uid(),seed:seed(),stroke:exStroke(e.strokeColor),sw:e.strokeWidth>=4?3:e.strokeWidth<=1?1:2,fs:'m',label:''};let el=null;
+    const x=+e.x||0,y=+e.y||0,w=Math.abs(+e.width||0),h=Math.abs(+e.height||0);
+    if(e.type==='rectangle'||e.type==='ellipse'||e.type==='diamond')el=Object.assign(base,{type:e.type==='rectangle'?'rect':e.type,x,y,w:Math.max(w,16),h:Math.max(h,16),fill:exFill(e.backgroundColor)});
+    else if(e.type==='frame'||e.type==='magicframe')el=Object.assign(base,{type:'frame',x,y,w,h,fill:'none',label:e.name||'Frame'});
+    else if(e.type==='freedraw'&&Array.isArray(e.points))el=Object.assign(base,{type:'draw',points:e.points.map(p=>[f1(x+p[0]),f1(y+p[1])])});
+    else if((e.type==='arrow'||e.type==='line')&&Array.isArray(e.points)&&e.points.length>=2){const P=e.points.map(p=>[x+p[0],y+p[1]]);
+      el=Object.assign(base,{type:'arrow',points:[P[0],P.at(-1)],start:null,end:null,fs:'s',ends:e.type==='line'?'none':e.startArrowhead&&e.endArrowhead?'both':e.endArrowhead||e.startArrowhead?'end':'none',_s:e.startBinding?.elementId,_e:e.endBinding?.elementId});
+      if(P.length>2)el.bend=P[Math.floor(P.length/2)].map(f1);if(e.strokeStyle==='dashed'||e.strokeStyle==='dotted')el.dash=true}
+    else if(e.type==='text'){if(e.containerId){byOld.set('t:'+e.id,{c:e.containerId,text:e.text||e.originalText||''});continue}
+      const fs=(e.fontSize||20)<=16?'s':(e.fontSize||20)<=24?'m':'l';el=Object.assign(base,{type:'text',x,y,w:10,h:10,fill:'none',label:e.text||'',fs})}
+    if(!el)continue;if(e.angle&&el.type!=='arrow'&&el.type!=='draw'&&el.type!=='frame')el.rot=Math.round(e.angle*180/Math.PI*10)/10;
+    byOld.set(e.id,el);out.push(el)}
+  for(const[k,v]of byOld)if(k.startsWith('t:')){const c=byOld.get(v.c);if(c)c.label=v.text}
+  for(const a of out)if(a.type==='arrow'){const s=a._s&&byOld.get(a._s),t=a._e&&byOld.get(a._e);if(s&&!s.points)a.start=s.id;if(t&&!t.points)a.end=t.id;delete a._s;delete a._e}
+  return out;
+}
+
+/* ============================== templates that are built, not typed ============================== */
+function buildSwot(th){
+  const L=th?['จุดแข็ง (Strengths)','จุดอ่อน (Weaknesses)','โอกาส (Opportunities)','อุปสรรค (Threats)']:['Strengths','Weaknesses','Opportunities','Threats'],F=['green','peach','blue','lilac'],P=th?'• \n• ':'• \n• ',out=[];
+  const fr=makeShape('frame',0,0,620,440,{label:th?'วิเคราะห์ SWOT':'SWOT analysis'});out.push(fr);
+  L.forEach((t,i)=>{const c=makeShape('card',20+(i%2)*300,20+Math.floor(i/2)*210,280,190,{label:t+'\n'+P,fill:F[i],fs:'m',sw:2,stroke:'ink'});out.push(c)});return out;
+}
+function buildQuarters(th){
+  const Q=th?[['ไตรมาส 1','วางแผน\n• เก็บความต้องการ\n• ออกแบบ'],['ไตรมาส 2','พัฒนา\n• สร้างต้นแบบ\n• ทดสอบกับผู้ใช้'],['ไตรมาส 3','เปิดตัว\n• ปล่อยเวอร์ชันแรก\n• ทำการตลาด'],['ไตรมาส 4','ขยายผล\n• วัดผล\n• วางแผนปีหน้า']]
+    :[['Q1','Plan\n• Gather needs\n• Design'],['Q2','Build\n• Prototype\n• Test with users'],['Q3','Launch\n• Ship v1\n• Marketing'],['Q4','Grow\n• Measure\n• Plan next year']];
+  const out=[],F=['blue','butter','peach','green'];let prev=null;
+  Q.forEach(([t,b],i)=>{const c=makeShape('card',i*270,0,230,160,{label:t+' · '+b,fill:F[i],fs:'m',sw:2,stroke:'ink'});out.push(c);if(prev)out.push(makeArrow(center(prev),center(c),{start:prev.id,end:c.id,stroke:'ink',sw:2}));prev=c});
+  out.forEach(e=>{if(e.type==='card')fitText(e)});return out;
+}
+function insertBuilt(list){
+  pushUndo();const b=unionBox(list),content=unionBox(els);let dx,dy;
+  if(content){dx=content.x-b.x;dy=content.y+content.h+140-b.y}else{const[cx,cy]=toWorld(innerWidth/2,innerHeight/2);dx=cx-(b.x+b.w/2);dy=cy-(b.y+b.h/2)}
+  for(const e of list){if(e.type==='arrow'){e.points=e.points.map(p=>[p[0]+dx,p[1]+dy])}else{e.x+=dx;e.y+=dy}}
+  els.push(...list);sel=new Set(list.map(e=>e.id));setTool('select');commit();ensureVisible(unionBox(list));
+}
+
+/* ============================== command palette (Ctrl/⌘ K) ============================== */
+let palItems=[],palIdx=0;
+function paletteCommands(){
+  const mod=/Mac/.test(navigator.platform)?'⌘':'Ctrl ',C=[],add=(g,l,h,run)=>C.push({g,l:T(l),h:h||'',run});
+  for(const[t,n]of Object.entries(TOOL_NAMES))add('Tools',n,{select:'V',hand:'H',shape:'R',arrow:'A',line:'L',draw:'P',highlight:'M',text:'T',sticky:'N',frame:'F',eraser:'E'}[t],()=>setTool(t));
+  for(const[k,n]of KINDS)add('Shapes',n,'',()=>{props.kind=k;saveProps();syncShapeIcon();setTool('shape')});
+  add('Actions','Insert blocks…','I',()=>openLib());add('Actions','Tidy up','⇧T',()=>tidy(sel.size>=2));add('Actions','Present','⇧P',startPresent);add('Actions','Fit everything','0',fit);
+  add('Actions','Zoom in','+',()=>zoomAt(1.25));add('Actions','Zoom out','−',()=>zoomAt(1/1.25));add('Actions','Select all',mod+'A',()=>{sel=new Set(els.filter(x=>!x.locked).map(x=>x.id));render()});
+  add('Actions','Group',mod+'G',groupSel);add('Actions','Ungroup',mod+'⇧G',ungroupSel);add('Actions','Lock',mod+'⇧L',lockSel);add('Actions','Undo',mod+'Z',undo);add('Actions','Redo',mod+'⇧Z',redo);
+  add('Diagram','New diagram','',()=>$('#btnNew').click());add('Diagram','My diagrams','',()=>$('#btnDocs').click());add('Diagram','Open file…',mod+'O',openFile);add('Diagram','Save file…',mod+'⇧S',()=>saveFile(true));add('Diagram','Version history','',()=>$('#btnHist').click());
+  add('Share','Share','',()=>$('#btnShare').click());add('Share','PNG image','',()=>$('#exPng').click());add('Share','SVG','',()=>$('#exSvg').click());add('Share','PDF (one page per frame)','',exportPdf);add('Share','JSON backup','',()=>$('#exJson').click());add('Share','Copy as Mermaid','',()=>$('#exMermaid').click());
+  for(const k of Object.keys(STYLES))add('Look',STYLES[k].label,'',()=>{doc.style=k;delete doc.paper;delete doc.strokeMode;_sk='';syncLook();remeasureAll();commit();ensureFonts()});
+  add('Look',LANG==='th'?'Switch to English':'เปลี่ยนเป็นภาษาไทย','',()=>$('#langBtn').click());
+  TEMPLATES.forEach(t=>add('Templates',tn(t)[0],'',()=>runTemplate(t)));
+  for(const e of els)if(e.label&&(SHAPES.has(e.type)||e.type==='text'||e.type==='frame'))C.push({g:T('Go to'),l:e.label.split('\n')[0].slice(0,60),h:'',run:()=>{sel=new Set([e.id]);fitBox(e.type==='frame'?rectOf(e):bbox(e),1.4);render()}});
+  C.forEach(c=>c.g=T(c.g));return C;
+}
+function openPalette(){closeFloating();palItems=paletteCommands();palIdx=0;$('#palIn').value='';renderPalette();$('#palScrim').classList.add('show');setTimeout(()=>$('#palIn').focus(),20)}
+function palFiltered(){const q=$('#palIn').value.trim().toLowerCase().split(/\s+/).filter(Boolean);return q.length?palItems.filter(c=>q.every(w=>(c.l+' '+c.g).toLowerCase().includes(w))):palItems.filter(c=>c.g!==T('Go to'))}
+function renderPalette(){const L=$('#palList'),list=palFiltered().slice(0,60);palIdx=clamp(palIdx,0,Math.max(0,list.length-1));let g='',h='';
+  list.forEach((c,i)=>{if(c.g!==g){g=c.g;h+=`<div class="grp">${esc(g)}</div>`}h+=`<button data-i="${i}" class="${i===palIdx?'on':''}">${esc(c.l)}<small>${esc(c.h)}</small></button>`});
+  L.innerHTML=h||`<div class="note">${T('Nothing matches')}</div>`;L.querySelector('.on')?.scrollIntoView({block:'nearest'});L._list=list}
+function runPal(i){const c=$('#palList')._list?.[i];if(!c)return;$('#palScrim').classList.remove('show');c.run()}
+$('#palIn').addEventListener('input',()=>{palIdx=0;renderPalette()});
+$('#palIn').addEventListener('keydown',e=>{e.stopPropagation();if(e.key==='ArrowDown'){e.preventDefault();palIdx++;renderPalette()}else if(e.key==='ArrowUp'){e.preventDefault();palIdx--;renderPalette()}else if(e.key==='Enter'){e.preventDefault();runPal(palIdx)}else if(e.key==='Escape')$('#palScrim').classList.remove('show')});
+$('#palList').addEventListener('click',e=>{const b=e.target.closest('[data-i]');if(b)runPal(+b.dataset.i)});
+$('#palScrim').addEventListener('pointerdown',e=>{if(e.target.id==='palScrim')$('#palScrim').classList.remove('show')});
+function runTemplate(t){if(t.build)insertBuilt(t.build());else applyCommand(t.cmd,{dir:t.dir})}
 
 /* ============================== boot ============================== */
 function buildEmpty(){
@@ -2207,6 +2456,8 @@ addEventListener('visibilitychange',()=>{if(document.hidden){if(doc)save(true);S
 // open a share link (#d=…): on first load, and when a link is pasted into a tab that already has Canvy open
 async function importFromHash(){
   const h=location.hash;if(!h.startsWith('#d='))return false;
+  if(MODE){try{const d=await unpack(h.slice(3));const nd=newDoc(d.n||'Shared diagram');nd.style=STYLES[d.s]?d.s:'pencil';if(d.p)nd.paper=d.p;if(d.k)nd.strokeMode=d.k;nd.elements=sanitize(d.e||[]);
+    enterReadonly();doc=null;openDoc(nd);fit();return true}catch(_){toast('That share link looks broken or was cut short. Ask for the link again, or a JSON export.',5000);return false}}
   history.replaceState(null,'',location.pathname+location.search);
   try{const d=await unpack(h.slice(3));let name=(d.n||'Shared diagram').trim();
     if(indexList().some(x=>x.name===name))name+=' (shared copy)';
