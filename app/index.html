@@ -2491,8 +2491,10 @@ function analyzePhoto(src,lines){
     if(sameRow){const lf=a.x<b.x?a:b,rt=a.x<b.x?b:a,y0=Math.max(a.y,b.y)|0,y1=Math.min(a.y+a.h,b.y+b.h)|0;let wall=false;
       for(let x=Math.floor(lf.x+lf.w);x<=rt.x&&!wall;x++){let c=0;for(let y=y0;y<=y1;y++)c+=at(x,y)?1:0;if(y1>y0&&c/(y1-y0+1)>.6)wall=true}
       if(!wall)par[find(i)]=find(j);continue}
-    if(gap>.7*hm||ov<-.2*hm)continue;
-    let ruled=false;for(let y=Math.floor(top.y+top.h);y<=bot.y&&!ruled;y++)if(rowInk(y,Math.max(a.x,b.x),Math.min(a.x+a.w,b.x+b.w))>.6)ruled=true;
+    if(gap>.5*hm||ov<-.2*hm)continue;
+    // a line between them (even a rough or slightly tilted one, up to 3 px thick) keeps them apart
+    let ruled=false;const sx0=Math.max(0,Math.max(a.x,b.x)|0),sx1=Math.min(w-1,Math.min(a.x+a.w,b.x+b.w)|0);
+    for(let y=Math.floor(top.y+top.h)-1;y<=bot.y+1&&!ruled&&sx1>sx0;y++){let c=0;for(let x=sx0;x<=sx1;x++)if(at(x,y)||at(x,y+1)||at(x,y+2))c++;if(c/(sx1-sx0+1)>.7)ruled=true}
     if(!ruled)par[find(i)]=find(j)}
   const groups=new Map();L.forEach((l,i)=>{const r0=find(i);if(!groups.has(r0))groups.set(r0,[]);groups.get(r0).push(l)});
   const nodes=[...groups.values()].map(ls=>{ls.sort((a,b)=>a.y-b.y||a.x-b.x);const rows=[];for(const l of ls){const row=rows.find(rw=>Math.abs(rw.cy-(l.y+l.h/2))<.45*hm);if(row){row.ls.push(l)}else rows.push({cy:l.y+l.h/2,ls:[l]})}
@@ -2532,10 +2534,10 @@ function analyzePhoto(src,lines){
     while(sp){const i=stack[--sp];pts.push(i);const y=(i/w)|0,x=i-y*w;for(let dy=-1;dy<=1;dy++)for(let dx=-1;dx<=1;dx++){const nx=x+dx,ny=y+dy;if(nx<0||ny<0||nx>=w||ny>=h)continue;const j=ny*w+nx;if(rest[j]&&!lab[j]){lab[j]=C;stack[sp++]=j}}}
     if(pts.length>=Math.max(6,hm*.5))comps.push(pts)}
   const near=.7*hm,isLabel=n=>n.kind==='text'&&!n.text.includes('\n')&&n.text.length<=24;
-  const conns=comps.map(pts=>{const touch=new Map();for(const i of pts){const y=(i/w)|0,x=i-y*w;let best=-1,bd=near;nodes.forEach((n,ni)=>{const b=n.box,dx=Math.max(b.x-x,0,x-b.x-b.w),dy=Math.max(b.y-y,0,y-b.y-b.h),d=Math.hypot(dx,dy);if(d<=bd){bd=d;best=ni}});if(best>=0)touch.set(best,(touch.get(best)||0)+1)}
+  const conns=comps.map(pts=>{const touch=new Map(),dmin=new Map();for(const i of pts){const y=(i/w)|0,x=i-y*w;let best=-1,bd=near;nodes.forEach((n,ni)=>{const b=n.box,dx=Math.max(b.x-x,0,x-b.x-b.w),dy=Math.max(b.y-y,0,y-b.y-b.h),d=Math.hypot(dx,dy);if(d<=bd){bd=d;best=ni}});if(best>=0){touch.set(best,(touch.get(best)||0)+1);if(!(dmin.get(best)<=bd))dmin.set(best,bd)}}
     let ax=1e9,ay=1e9,bx=-1,by=-1;for(const i of pts){const y=(i/w)|0,x=i-y*w;if(x<ax)ax=x;if(x>bx)bx=x;if(y<ay)ay=y;if(y>by)by=y}const len=Math.hypot(bx-ax,by-ay);for(const[ni,v]of[...touch])if(v<Math.max(4,.04*pts.length))touch.delete(ni);
     let end=null;if(touch.size===1){const nb=nodes[[...touch.keys()][0]].box;let bd=-1;for(const i of pts){const y=(i/w)|0,x=i-y*w,d=Math.hypot(Math.max(nb.x-x,0,x-nb.x-nb.w),Math.max(nb.y-y,0,y-nb.y-nb.h));if(d>bd){bd=d;end=[x,y]}}}
-    return{touch,len,end,pts}}).filter(c=>c.touch.size>=2||(c.touch.size===1&&c.len>=hm*.8));
+    return{touch,dmin,len,end,pts}}).filter(c=>c.touch.size>=2||(c.touch.size===1&&c.len>=hm*.8));
   // an arrow cut in two by a label the reader skipped: join two loose pieces whose free ends face each other
   {const loose=conns.filter(c=>c.touch.size===1&&c.end);for(let i=0;i<loose.length;i++)for(let j=i+1;j<loose.length;j++){const a=loose[i],b=loose[j];if(!a.end||!b.end)continue;
     const na=[...a.touch.keys()][0],nb=[...b.touch.keys()][0];if(na===nb||Math.hypot(a.end[0]-b.end[0],a.end[1]-b.end[1])>3.5*hm)continue;
@@ -2546,23 +2548,31 @@ function analyzePhoto(src,lines){
   nodes.forEach((n,ni)=>{if(!isLabel(n))return;const cs=conns.map((c,ci)=>c.touch.has(ni)?ci:-1).filter(i=>i>=0);
     const real=new Set();cs.forEach(ci=>conns[ci].touch.forEach((_,o)=>{if(o!==ni&&!isLabel(nodes[o]))real.add(o)}));
     if(cs.length&&real.size>=2&&real.size<=3){for(let i=1;i<cs.length;i++)cpar[cf(cs[i])]=cf(cs[0]);labelOf.set(cf(cs[0]),ni);n.isLabel=true}});
-  const byRoot=new Map();conns.forEach((c,ci)=>{const r0=cf(ci);if(!byRoot.has(r0))byRoot.set(r0,{touch:new Map(),label:null,pts:[]});const m=byRoot.get(r0);m.pts.push(c.pts);c.touch.forEach((v,ni)=>m.touch.set(ni,(m.touch.get(ni)||0)+v))});
+  const byRoot=new Map();conns.forEach((c,ci)=>{const r0=cf(ci);if(!byRoot.has(r0))byRoot.set(r0,{touch:new Map(),dmin:new Map(),label:null,pts:[]});const m=byRoot.get(r0);m.pts.push(c.pts);c.dmin.forEach((v,ni)=>{if(!(m.dmin.get(ni)<=v))m.dmin.set(ni,v)});c.touch.forEach((v,ni)=>m.touch.set(ni,(m.touch.get(ni)||0)+v))});
   for(const[r0,m]of byRoot){const li=labelOf.get(r0);if(li!=null)m.label=li;
     for(const ni of[...m.touch.keys()])if(nodes[ni].isLabel)m.touch.delete(ni);merged.push(m)}
   const edges=[],seen=new Set();
-  for(const m of merged){for(const ni of[...m.touch.keys()])if(nodes[ni].weak&&nodes[ni].kind==='text')m.touch.delete(ni);const t=[...m.touch.entries()].sort((a,b)=>b[1]-a[1]);if(t.length<2)continue;
+  for(const m of merged){for(const ni of[...m.touch.keys()])if(nodes[ni].weak&&nodes[ni].kind==='text')m.touch.delete(ni);let t=[...m.touch.entries()].sort((a,b)=>b[1]-a[1]);
+    // a line that only passes by a box (never comes close to it) does not end there
+    if(t.length>2){const ends=t.filter(([ni])=>(m.dmin.get(ni)??0)<=.45*hm);if(ends.length>=2)t=ends}
+    if(t.length>2){const second=t[1][1];t=t.filter(([,v],i)=>i<2||v>=.25*second)}
+    if(t.length<2)continue;
     const label=m.label!=null?nodes[m.label].text:'';
     if(t.length===2){let[to,from]=[t[0][0],t[1][0]];
-      // the arrowhead is a solid triangle: more ink close to that tip than at the plain end
-      const tip=ni=>{const b=nodes[ni].box;let bd=1e9,bi=0;for(const P of m.pts)for(const i of P){const y=(i/w)|0,x=i-y*w,d=Math.hypot(Math.max(b.x-x,0,x-b.x-b.w),Math.max(b.y-y,0,y-b.y-b.h));if(d<bd){bd=d;bi=i}}
-        const ty=(bi/w)|0,tx=bi-ty*w,rr=.7*hm;let c=0;for(const P of m.pts)for(const i of P){const y=(i/w)|0,x=i-y*w;if((x-tx)**2+(y-ty)**2<=rr*rr)c++}return c};
-      const ha=tip(to),hb=tip(from);if(hb>1.3*ha)[to,from]=[from,to];
-      if(Math.max(ha,hb)<1.3*Math.min(ha,hb)){const A=nodes[from].box,B=nodes[to].box,dx=(B.x+B.w/2)-(A.x+A.w/2),dy=(B.y+B.h/2)-(A.y+A.h/2);if(Math.abs(dx)>=Math.abs(dy)?dx<0:dy<0)[from,to]=[to,from]}  // no clear arrowhead: read left-to-right, top-to-bottom
+      // the arrowhead is a solid triangle: near that tip the ink spreads wider across the line than at the plain end
+      const tipOf=ni=>{const b=nodes[ni].box;let bd=1e9,bi=0;for(const P of m.pts)for(const i of P){const y=(i/w)|0,x=i-y*w,d=Math.hypot(Math.max(b.x-x,0,x-b.x-b.w),Math.max(b.y-y,0,y-b.y-b.h));if(d<bd){bd=d;bi=i}}return[bi%w,(bi/w)|0]};
+      const TA=tipOf(to),TB=tipOf(from),L0=Math.hypot(TA[0]-TB[0],TA[1]-TB[1])||1,ux=(TA[0]-TB[0])/L0,uy=(TA[1]-TB[1])/L0;
+      const spread=T=>{const rr=Math.min(.9*hm,L0/3);let lo=1e9,hi=-1e9;for(const P of m.pts)for(const i of P){const y=(i/w)|0,x=i-y*w,dx=x-T[0],dy=y-T[1];if(dx*dx+dy*dy>rr*rr)continue;const q=-dx*uy+dy*ux;if(q<lo)lo=q;if(q>hi)hi=q}return hi-lo};
+      const mass=T=>{const rr=.7*hm;let c=0;for(const P of m.pts)for(const i of P){const y=(i/w)|0,x=i-y*w;if((x-T[0])**2+(y-T[1])**2<=rr*rr)c++}return c};
+      const vote=(a,b)=>a>1.3*b?1:b>1.3*a?-1:0,v=vote(spread(TA),spread(TB))+vote(mass(TA),mass(TB));
+      if(v<0)[to,from]=[from,to];
+      if(v===0){const A=nodes[from].box,B=nodes[to].box,dx=(B.x+B.w/2)-(A.x+A.w/2),dy=(B.y+B.h/2)-(A.y+A.h/2);if(Math.abs(dx)>=Math.abs(dy)?dx<0:dy<0)[from,to]=[to,from]}  // no clear arrowhead: read left-to-right, top-to-bottom
       const key=from+'>'+to;if(!seen.has(key)){seen.add(key);edges.push({from,to,label,sure:t[0][1]>=1.15*t[1][1]})}}
     else if(t[0][1]>=1.4*t[1][1])for(const[from]of t.slice(1)){const key=from+'>'+t[0][0];if(!seen.has(key)){seen.add(key);edges.push({from,to:t[0][0],label:'',sure:true})}}}
   // an unreadable scrap that is neither a shape nor an arrow label is left out
   nodes.forEach(n=>{if(n.weak&&n.kind==='text'&&!n.isLabel)n.isLabel=true,n.drop=true});
-  return{nodes:nodes.filter(n=>!n.isLabel),allNodes:nodes,edges,hm,k,w,h};
+  const debug=merged.map(m=>[...m.touch.entries()].map(([i,v])=>nodes[i].text+':'+v).join(' | '));
+  return{nodes:nodes.filter(n=>!n.isLabel),allNodes:nodes,edges,hm,k,w,h,debug};
 }
 function photoElements(res,mode){
   const z=FS.m*1.3/res.hm,out=[],ids=new Map();
