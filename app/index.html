@@ -1797,14 +1797,20 @@ function buildEmpty(){
 addEventListener('resize',()=>{renderView();renderOverlay()});
 addEventListener('beforeunload',()=>{if(doc)save(true)});
 addEventListener('storage',e=>{if(e.key===K.index&&$('#docsDrawer').classList.contains('show'))renderDocs()});
+// open a share link (#d=…): on first load, and when a link is pasted into a tab that already has Canvy open
+async function importFromHash(){
+  const h=location.hash;if(!h.startsWith('#d='))return false;
+  history.replaceState(null,'',location.pathname+location.search);
+  try{const d=await unpack(h.slice(3));let name=(d.n||'Shared diagram').trim();
+    if(indexList().some(x=>x.name===name))name+=' (shared copy)';
+    const nd=newDoc(name);nd.style=STYLES[d.s]?d.s:'pencil';if(d.p)nd.paper=d.p;if(d.k)nd.strokeMode=d.k;nd.elements=sanitize(d.e||[]);
+    closeFloating();openDoc(nd);fit();save(true);toast('Opened “'+name+'”. Your copy is saved in this browser.',4000);return true}
+  catch(_){toast('That share link looks broken or was cut short. Ask for the link again, or a JSON export.',5000);return false}
+}
+addEventListener('hashchange',()=>{if(location.hash.startsWith('#d='))importFromHash()});
 async function boot(){
   buildProps();buildShapeFly();buildDial();buildLook();buildEmpty();syncShapeIcon();syncDir();setTool('select');
-  const h=location.hash;
-  if(h.startsWith('#d=')){
-    try{const d=await unpack(h.slice(3));const nd=newDoc((d.n||'Shared diagram'));nd.style=STYLES[d.s]?d.s:'pencil';if(d.p)nd.paper=d.p;if(d.k)nd.strokeMode=d.k;nd.elements=sanitize(d.e||[]);
-      history.replaceState(null,'',location.pathname+location.search);openDoc(nd);fit();save(true);toast('Opened a shared diagram. Your copy is saved in this browser.',3800);return}
-    catch(_){history.replaceState(null,'',location.pathname+location.search);toast('That share link looks broken or incomplete',4000)}
-  }
+  if(await importFromHash())return;
   const last=LS.get(K.last,null),d=last&&LS.get(K.doc(last),null);
   if(d)openDoc(d);else{const first=indexList()[0],d2=first&&LS.get(K.doc(first.id),null);openDoc(d2||newDoc())}
 }
