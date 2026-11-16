@@ -8,11 +8,11 @@
 <link rel="icon" href="../favicon.svg" type="image/svg+xml">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Kalam:wght@400;700&family=Instrument+Sans:wght@400;500;600&family=Mali:wght@400;600;700&family=Sriracha&family=IBM+Plex+Sans+Thai:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Playpen+Sans+Thai:wght@400;500;600;700&family=Instrument+Sans:wght@400;500;600&family=IBM+Plex+Sans+Thai:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
 :root{
   --paper:#fffefb;--ink:#171717;--muted:#77736d;--line:#e9e5dd;--line-2:#d9d4ca;--accent:#d95b35;--accent-soft:#fbe6dc;
-  --hand:'Kalam','Mali','Comic Sans MS',cursive;--sans:'Instrument Sans','IBM Plex Sans Thai',ui-sans-serif,system-ui,sans-serif;--mono:ui-monospace,'SF Mono',Menlo,Consolas,'IBM Plex Sans Thai',monospace;
+  --hand:'Playpen Sans Thai','Comic Sans MS',cursive;--sans:'Instrument Sans','IBM Plex Sans Thai',ui-sans-serif,system-ui,sans-serif;--mono:ui-monospace,'SF Mono',Menlo,Consolas,'IBM Plex Sans Thai',monospace;
   --shadow:0 12px 30px -18px rgba(70,55,30,.38),0 1px 2px rgba(70,55,30,.05);
 }
 *{box-sizing:border-box}
@@ -46,7 +46,7 @@ svg{display:block}
 .top{top:12px;left:12px;right:12px;display:flex;align-items:center;gap:10px;pointer-events:none}
 .top>*{pointer-events:auto}
 .doc{display:flex;align-items:center;gap:4px;padding:4px 10px 4px 4px;min-width:0}
-.logo{display:flex;align-items:center;gap:6px;padding:4px 8px 4px 6px;border-radius:9px;font:700 20px/1 var(--hand)}
+.logo{display:flex;align-items:center;gap:6px;padding:4px 8px 4px 6px;border-radius:9px;font:700 18px/1 var(--hand)}
 .logo:hover{background:#f5f2ec}
 .sep{width:1px;height:22px;background:var(--line);margin:0 4px}
 #docName{border:0;background:transparent;font-weight:600;font-size:13.5px;width:190px;padding:6px 6px;border-radius:7px;min-width:60px}
@@ -87,7 +87,7 @@ svg{display:block}
 .kbd{font:11px var(--mono);color:var(--muted);border:1px solid var(--line);border-radius:6px;padding:2px 6px;background:#faf8f4}
 .help{position:fixed;z-index:12;left:50%;bottom:70px;transform:translateX(-50%);width:min(520px,calc(100% - 24px));padding:16px 18px;display:none;font-size:13px}
 .help.show{display:block}
-.help h4{margin:0 0 8px;font:700 19px var(--hand)}
+.help h4{margin:0 0 8px;font:600 17px var(--hand)}
 .help table{border-collapse:collapse;width:100%}
 .help td{padding:4px 0;vertical-align:top}
 .help td:first-child{font:12px var(--mono);width:52%;color:var(--ink)}
@@ -95,7 +95,7 @@ svg{display:block}
 
 .empty{position:fixed;inset:0;display:grid;place-items:center;pointer-events:none;z-index:5}
 .empty>div{text-align:center;pointer-events:auto;max-width:520px;padding:0 20px}
-.empty h2{font:700 40px/1.1 var(--hand);margin:0}
+.empty h2{font:600 34px/1.2 var(--hand);margin:0}
 .empty p{color:var(--muted);margin:10px 0 18px}
 .empty .ex{display:flex;flex-wrap:wrap;justify-content:center;gap:8px}
 .empty .ex button{border:1px solid var(--line-2);background:#fff;border-radius:999px;padding:7px 14px;font-size:13px;transition:border-color .15s,transform .15s}
@@ -107,7 +107,7 @@ svg{display:block}
 .drawer.show{display:flex}
 .drawer.left{left:12px}.drawer.rightd{right:12px}
 .drawer header{display:flex;align-items:center;justify-content:space-between;padding:14px 14px 10px 16px;border-bottom:1px solid var(--line)}
-.drawer header h3{margin:0;font:700 21px var(--hand)}
+.drawer header h3{margin:0;font:600 19px var(--hand)}
 .drawer .list{flex:1;overflow:auto;padding:8px}
 .drawer footer{padding:10px;border-top:1px solid var(--line);display:flex;gap:8px;flex-wrap:wrap}
 .item{display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:10px;cursor:pointer}
@@ -126,7 +126,7 @@ svg{display:block}
 .scrim{position:fixed;inset:0;z-index:30;background:rgba(23,23,23,.22);display:none;place-items:center;padding:16px}
 .scrim.show{display:grid}
 .modal{width:min(460px,100%);padding:20px}
-.modal h3{margin:0;font:700 26px var(--hand);display:flex;justify-content:space-between;align-items:center}
+.modal h3{margin:0;font:600 23px var(--hand);display:flex;justify-content:space-between;align-items:center}
 .modal p{color:var(--muted);font-size:13px;margin:6px 0 16px}
 .linkrow{display:flex;gap:8px}
 .linkrow input{flex:1;min-width:0;border:1px solid var(--line);border-radius:10px;padding:8px 10px;font:12px var(--mono);background:#faf8f4;color:#55514b}
@@ -327,9 +327,9 @@ const esc=s=>String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'
 const f1=n=>Math.round(n*10)/10;
 
 const STYLES={
-  pencil:{bg:'#fffefb',dot:'#e3dfd6',grid:'dots',stroke:'#171717',accent:'#d95b35',dark:false,font:"Kalam, Mali, 'Comic Sans MS', cursive",weight:700,thai:['Mali',700],latin:['Kalam',700],rough:1,passes:2,radius:12,fillOp:1,
+  pencil:{bg:'#fffefb',dot:'#e3dfd6',grid:'dots',stroke:'#171717',accent:'#d95b35',dark:false,font:"'Playpen Sans Thai', 'Comic Sans MS', cursive",weight:600,thai:['Playpen Sans Thai',600],latin:null,rough:1,passes:2,radius:12,fillOp:1,
     fills:{blue:'#dce8fb',green:'#dcefdd',lilac:'#e9e1f7',peach:'#fde3d4',butter:'#fbf1cb'}},
-  chalk:{bg:'#2b2f2c',dot:'#3b413c',grid:'dots',stroke:'#f1eee6',accent:'#ff9b78',dark:true,font:"Kalam, Sriracha, 'Comic Sans MS', cursive",weight:400,thai:['Sriracha',400],latin:['Kalam',400],rough:1.5,passes:2,radius:12,fillOp:.2,
+  chalk:{bg:'#2b2f2c',dot:'#3b413c',grid:'dots',stroke:'#f1eee6',accent:'#ff9b78',dark:true,font:"'Playpen Sans Thai', 'Comic Sans MS', cursive",weight:400,thai:['Playpen Sans Thai',400],latin:null,rough:1.5,passes:2,radius:12,fillOp:.2,
     fills:{blue:'#8fb4ea',green:'#9fd3a6',lilac:'#bfa9ea',peach:'#f6a987',butter:'#efd98a'}},
   blueprint:{bg:'#1f4e8c',dot:'#2d5f9f',grid:'lines',stroke:'#dbeaff',accent:'#ffd28a',dark:true,font:"ui-monospace, 'SF Mono', Menlo, Consolas, 'IBM Plex Sans Thai', monospace",weight:500,thai:['IBM Plex Sans Thai',500],latin:null,rough:0,passes:1,radius:3,fillOp:.16,
     fills:{blue:'#9cc3ff',green:'#a6e3c0',lilac:'#cdb8ff',peach:'#ffc49e',butter:'#ffe7a3'}},
@@ -1030,7 +1030,7 @@ function buildSvg(withFontImport){
   const list=sel.size?selected():els;const b=unionBox(list);if(!b)return null;const pad=36,s=S();
   const prev=editing;editing=null;let inner='';for(const el of list)inner+=renderEl(el);editing=prev;
   const W=Math.ceil(b.w+pad*2),H=Math.ceil(b.h+pad*2);
-  return{W,H,svg:`<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="${f1(b.x-pad)} ${f1(b.y-pad)} ${W} ${H}">${withFontImport?`<style>@import url('https://fonts.googleapis.com/css2?family=Kalam:wght@400;700&amp;family=Instrument+Sans:wght@600&amp;family=Mali:wght@700&amp;family=Sriracha&amp;family=IBM+Plex+Sans+Thai:wght@500;600&amp;display=swap');</style>`:''}<rect x="${f1(b.x-pad)}" y="${f1(b.y-pad)}" width="${W}" height="${H}" fill="${s.bg}"/>${inner}</svg>`};
+  return{W,H,svg:`<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="${f1(b.x-pad)} ${f1(b.y-pad)} ${W} ${H}">${withFontImport?`<style>@import url('https://fonts.googleapis.com/css2?family=Playpen+Sans+Thai:wght@400;600&amp;family=Instrument+Sans:wght@600&amp;family=IBM+Plex+Sans+Thai:wght@500;600&amp;display=swap');</style>`:''}<rect x="${f1(b.x-pad)}" y="${f1(b.y-pad)}" width="${W}" height="${H}" fill="${s.bg}"/>${inner}</svg>`};
 }
 $('#exSvg').onclick=()=>{const r=buildSvg(true);if(!r)return toast('Nothing to export yet');download(new Blob([r.svg],{type:'image/svg+xml'}),slug()+'.svg')};
 $('#exJson').onclick=()=>{download(new Blob([JSON.stringify({app:'canvy',v:1,name:doc.name,style:doc.style,elements:els},null,1)],{type:'application/json'}),slug()+'.json')};
@@ -1050,7 +1050,7 @@ async function inlineFonts(svg){
   for(const[name,w]of fams){
     const key=name+w+chars;
     if(!fontCache[key]){
-      const url='https://fonts.googleapis.com/css2?family='+encodeURIComponent(name).replace(/%20/g,'+')+(name==='Sriracha'?'':':wght@'+w)+'&text='+encodeURIComponent(chars);
+      const url='https://fonts.googleapis.com/css2?family='+encodeURIComponent(name).replace(/%20/g,'+')+':wght@'+w+'&text='+encodeURIComponent(chars);
       const txt=await (await fetch(url)).text();let out='';
       for(const block of txt.split('@font-face').slice(1)){const m=block.match(/url\((https:[^)]+)\)/);if(!m)continue;
         const buf=new Uint8Array(await (await fetch(m[1])).arrayBuffer());let bin='';for(let i=0;i<buf.length;i+=0x8000)bin+=String.fromCharCode.apply(null,buf.subarray(i,i+0x8000));

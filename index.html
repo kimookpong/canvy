@@ -8,13 +8,13 @@
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Kalam:wght@400;700&family=Instrument+Sans:wght@400;500;600&family=Mali:wght@400;600;700&family=Sriracha&family=IBM+Plex+Sans+Thai:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Playpen+Sans+Thai:wght@400;500;600;700&family=Instrument+Sans:wght@400;500;600&family=IBM+Plex+Sans+Thai:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
 :root{
   --paper:#fffefb;--dot:#e6e3dc;--ink:#171717;--muted:#77736d;--line:#e9e5dd;--line-2:#d9d4ca;
   --accent:#d95b35;--accent-soft:#fbe6dc;
   --blue:#dce8fb;--green:#dcefdd;--lilac:#e9e1f7;--peach:#fde3d4;--butter:#fbf1cb;
-  --hand:'Kalam','Mali','Comic Sans MS',cursive;--sans:'Instrument Sans','IBM Plex Sans Thai',ui-sans-serif,system-ui,sans-serif;
+  --hand:'Playpen Sans Thai','Comic Sans MS',cursive;--sans:'Instrument Sans','IBM Plex Sans Thai',ui-sans-serif,system-ui,sans-serif;
   --mono:ui-monospace,'SF Mono',Menlo,Consolas,monospace;
 }
 *{box-sizing:border-box}
@@ -42,7 +42,7 @@ svg{display:block}
 /* ---------- nav ---------- */
 header{position:sticky;top:0;z-index:30;background:rgba(255,254,251,.86);backdrop-filter:saturate(1.2) blur(10px);-webkit-backdrop-filter:saturate(1.2) blur(10px)}
 .nav{display:flex;align-items:center;justify-content:space-between;height:64px;gap:20px}
-.logo{display:flex;align-items:center;gap:9px;font:700 25px/1 var(--hand);letter-spacing:-.01em}
+.logo{display:flex;align-items:center;gap:9px;font:700 22px/1 var(--hand);letter-spacing:-.01em}
 .logo svg{flex:none}
 .navlinks{display:flex;gap:32px;font-size:14px;color:#55514b}
 .navlinks a{transition:color .15s}
@@ -63,7 +63,7 @@ header.open .mobile-menu{display:block}
           mask-image:radial-gradient(ellipse 70% 75% at 50% 35%,#000 30%,transparent 78%)}
 .pill{display:inline-flex;align-items:center;gap:10px;padding:6px 14px 6px 8px;border:1px solid var(--line);border-radius:999px;background:#fff;font-size:13px;color:var(--muted)}
 .pill .tag{background:var(--accent-soft);color:var(--accent);font-weight:600;padding:2px 9px;border-radius:999px;font-size:12px}
-h1{font:700 clamp(46px,7.6vw,96px)/1.02 var(--hand);letter-spacing:-.015em;margin:26px 0 0}
+h1{font:700 clamp(38px,6.4vw,82px)/1.08 var(--hand);letter-spacing:-.02em;margin:26px 0 0}
 h1 .l1{display:block;transform:rotate(-1.1deg)}
 h1 .l2{display:inline-block;position:relative;transform:rotate(.7deg) translateX(.12em);margin-top:.04em}
 .scribble{position:absolute;left:-3%;width:106%;height:.36em;bottom:-.16em;overflow:visible;pointer-events:none}
@@ -111,7 +111,7 @@ h1 .l2{display:inline-block;position:relative;transform:rotate(.7deg) translateX
 .features{padding-top:240px}
 .eyebrow{font:600 11.5px var(--sans);letter-spacing:.2em;text-transform:uppercase;color:var(--accent)}
 .sec-head{text-align:center;max-width:720px;margin:0 auto 56px}
-h2{font:700 clamp(36px,5vw,60px)/1.08 var(--hand);letter-spacing:-.01em;margin:14px 0 0}
+h2{font:700 clamp(32px,4.3vw,52px)/1.12 var(--hand);letter-spacing:-.015em;margin:14px 0 0}
 .sec-head p{color:var(--muted);margin:16px auto 0;max-width:500px;font-size:16px}
 .grid{display:grid;grid-template-columns:repeat(6,1fr);gap:20px}
 .card{grid-column:span 3;background:#fff;border:1px solid var(--line);border-radius:22px;overflow:hidden;
@@ -123,7 +123,7 @@ h2{font:700 clamp(36px,5vw,60px)/1.08 var(--hand);letter-spacing:-.01em;margin:1
 .ill.tall{height:320px}
 .ill>svg{width:100%;height:100%}
 .copy{padding:22px 26px 26px}
-.copy h3{font:700 26px/1.15 var(--hand);margin:0}
+.copy h3{font:600 22px/1.25 var(--hand);margin:0}
 .copy p{margin:8px 0 0;color:var(--muted);font-size:14.5px;line-height:1.6}
 .reveal{opacity:0;transform:translateY(14px);transition:opacity .7s ease,transform .7s cubic-bezier(.2,.7,.2,1)}
 .reveal.in{opacity:1;transform:none}
@@ -163,7 +163,7 @@ h2{font:700 clamp(36px,5vw,60px)/1.08 var(--hand);letter-spacing:-.01em;margin:1
 
 /* ---------- closing CTA ---------- */
 .cta{margin-top:150px;border-top:1px solid var(--line);border-bottom:1px solid var(--line);text-align:center;padding:130px 0 140px}
-.cta h2{font-size:clamp(44px,7vw,86px);line-height:1.04;margin:0}
+.cta h2{font-size:clamp(36px,6vw,74px);line-height:1.1;margin:0}
 .cta h2 .u{position:relative;display:inline-block;transform:rotate(-.8deg)}
 .cta h2 .u svg{position:absolute;left:-2%;width:104%;height:.34em;bottom:-.14em;overflow:visible}
 .cta h2 .u path{fill:none;stroke:var(--accent);stroke-linecap:round}
@@ -348,20 +348,20 @@ footer li a:hover{color:var(--accent)}
               <rect x="498" y="262" width="8" height="8" rx="2"/><rect x="696" y="262" width="8" height="8" rx="2"/>
             </g>
             <!-- labels -->
-            <g class="hand" font-family="Kalam, cursive" fill="#171717" text-anchor="middle">
-              <text x="134" y="208" font-size="22" font-weight="700">Browser</text>
-              <text x="356" y="208" font-size="22" font-weight="700">Edge cache</text>
-              <text x="601" y="192" font-size="25" font-weight="700">Checkout API</text>
-              <text x="874" y="138" font-size="22" font-weight="700">Postgres</text>
-              <text x="906" y="320" font-size="20" font-weight="700">orders</text>
-              <text x="640" y="394" font-size="21" font-weight="700">Receipt mailer</text>
-              <g font-size="15" fill="#77736d">
+            <g class="hand" font-family="'Playpen Sans Thai', cursive" fill="#171717" text-anchor="middle">
+              <text x="134" y="208" font-size="18.5" font-weight="600">Browser</text>
+              <text x="356" y="208" font-size="18.5" font-weight="600">Edge cache</text>
+              <text x="601" y="192" font-size="21" font-weight="600">Checkout API</text>
+              <text x="874" y="138" font-size="18.5" font-weight="600">Postgres</text>
+              <text x="906" y="320" font-size="16.8" font-weight="600">orders</text>
+              <text x="640" y="394" font-size="17.6" font-weight="600">Receipt mailer</text>
+              <g font-size="12.6" fill="#77736d">
                 <text x="243" y="186">GET /cart</text>
                 <text x="468" y="184">POST /pay</text>
                 <text x="742" y="128">write</text>
                 <text x="782" y="262" text-anchor="start">enqueue</text>
               </g>
-              <g transform="rotate(-2 180 360)" text-anchor="start" font-size="18" fill="#5c5233">
+              <g transform="rotate(-2 180 360)" text-anchor="start" font-size="15.1" fill="#5c5233">
                 <text x="108" y="350">todo: rate-limit</text>
                 <text x="108" y="376">/pay per user</text>
                 <text x="108" y="402">before launch ✓?</text>
@@ -407,10 +407,10 @@ footer li a:hover{color:var(--accent)}
               <path d="M172 180 C 188 178, 196 182, 210 180" fill="none" marker-end="url(#ah)"/>
               <path d="M348 180 C 364 178, 372 182, 386 180" fill="none" marker-end="url(#ah)"/>
             </g>
-            <g font-family="Kalam, cursive" font-weight="700" font-size="20" text-anchor="middle" fill="#171717">
+            <g font-family="'Playpen Sans Thai', cursive" font-weight="600" font-size="16.8" text-anchor="middle" fill="#171717">
               <text x="105" y="186">signup</text><text x="280" y="186">verify email</text><text x="455" y="186">onboarding</text>
             </g>
-            <text x="300" y="112" font-family="Kalam, cursive" font-size="15" fill="#d95b35">laid out for you</text>
+            <text x="300" y="112" font-family="'Playpen Sans Thai', cursive" font-size="12.6" fill="#d95b35">laid out for you</text>
           </svg>
         </div>
         <div class="copy">
@@ -430,7 +430,7 @@ footer li a:hover{color:var(--accent)}
               <path d="M436 92 v46 a46 11 0 0 0 92 0 v-46" fill="#dcefdd"/>
               <ellipse cx="482" cy="92" rx="46" ry="11" fill="#dcefdd"/>
             </g>
-            <g font-family="Kalam, cursive" font-weight="700" font-size="18" text-anchor="middle" fill="#171717">
+            <g font-family="'Playpen Sans Thai', cursive" font-weight="600" font-size="15.1" text-anchor="middle" fill="#171717">
               <text x="82" y="122">box</text><text x="216" y="122">ellipse</text><text x="346" y="122">ok?</text><text x="482" y="128">users</text>
             </g>
             <g font-family="ui-monospace, Menlo, monospace" font-size="12" text-anchor="middle" fill="#55514b">
@@ -506,7 +506,7 @@ footer li a:hover{color:var(--accent)}
               <rect x="214" y="86" width="78" height="42" rx="10"/>
               <path d="M148 107 C 170 104, 188 110, 208 107" marker-end="url(#ahw)"/>
             </g>
-            <g font-family="Kalam, cursive" font-size="16" text-anchor="middle" fill="#f1eee6"><text x="107" y="112">client</text><text x="253" y="112">server</text></g>
+            <g font-family="'Playpen Sans Thai', cursive" font-size="13.4" text-anchor="middle" fill="#f1eee6"><text x="107" y="112">client</text><text x="253" y="112">server</text></g>
             <rect x="262" y="38" width="48" height="20" rx="6" fill="#3b413c"/>
             <text x="286" y="52" text-anchor="middle" font-family="Instrument Sans" font-size="10.5" fill="#f1eee6">Esc</text>
             <path d="M28 40 v-22 h22 M310 18 h22 v22 M28 174 v22 h22 M310 196 h22 v-22" stroke="#d95b35" stroke-width="2" fill="none" stroke-linecap="round"/>
@@ -531,7 +531,7 @@ footer li a:hover{color:var(--accent)}
               <rect x="210" y="114" width="52" height="30" rx="8" fill="#dcefdd"/>
               <path d="M150 129 C 172 126, 186 132, 206 129" marker-end="url(#ah)"/>
             </g>
-            <text x="236" y="168" font-family="Kalam, cursive" font-size="11" fill="#a19b92">canvy.png</text>
+            <text x="236" y="168" font-family="'Playpen Sans Thai', cursive" font-size="9.2" fill="#a19b92">canvy.png</text>
             <g fill="#ece8e1"><rect x="82" y="186" width="180" height="6" rx="3"/><rect x="82" y="198" width="120" height="6" rx="3"/></g>
             <!-- export chips -->
             <g font-family="Instrument Sans" font-size="11.5" font-weight="600" text-anchor="middle">
@@ -584,7 +584,7 @@ footer li a:hover{color:var(--accent)}
                   <path d="M104 58 C 122 50, 132 42, 146 38" marker-end="url(#ah)"/>
                   <path d="M104 72 C 122 84, 132 104, 146 112" marker-end="url(#aha)" stroke="#d95b35"/>
                 </g>
-                <g font-family="Kalam, cursive" font-weight="700" font-size="14" text-anchor="middle" fill="#171717">
+                <g font-family="'Playpen Sans Thai', cursive" font-weight="600" font-size="11.8" text-anchor="middle" fill="#171717">
                   <text x="62" y="69">API</text><text x="192" y="42">db</text><text x="192" y="120">queue</text>
                 </g>
                 <rect x="172" y="140" width="48" height="18" rx="9" fill="#fbe6dc"/>
