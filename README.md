@@ -21,7 +21,10 @@ A hand-drawn diagram canvas that runs entirely in the browser. There is no accou
 - **Look (Shift L):** six skins (Pencil, Chalkboard, Whiteboard, Blueprint, Clean ink, Neon), four papers (Plain, Dots, Grid, Ruled) and three stroke modes (Sketch, Clean, Marker)
 - **Frames and presenting:** frames become slides in Present (Shift P). Keys 1–9 fly to a frame, 0 fits everything and Shift 2 zooms to the selection
 - **Thai support:** Playpen Sans Thai for the hand-drawn skins and IBM Plex Sans Thai for the clean ones
-- **Storage:** diagrams live in `localStorage` with autosave and up to 30 versions each
+- **Storage:** diagrams live in IndexedDB with autosave and up to 30 versions each. Older `localStorage` data moves over automatically, and open tabs stay in sync
+- **Files:** save and open `.canvy` files (Ctrl/⌘ Shift S, Ctrl/⌘ O), or drop one onto the canvas. Ctrl/⌘ S writes back to the same file once it has been saved
+- **Offline:** a service worker (`sw.js`) caches the app. Pages are fetched fresh when online, so a new deploy shows up right away
+- **SEO:** meta tags, Open Graph and Twitter cards, JSON-LD, `sitemap.xml`, and an `og-image.png` drawn by Canvy itself
 - **Sharing:** the whole diagram is compressed into the URL hash (`#d=…`) and never sent to a server
 - **Export:** PNG, SVG and JSON, plus JSON import
 
@@ -55,10 +58,19 @@ python3 -m http.server 8000
 
 All paths are relative, so the site also works from a project subpath or a custom domain. The empty `.nojekyll` file tells GitHub Pages to serve the files as they are.
 
+## Tests
+
+```sh
+pip install playwright && playwright install chromium
+python tests/smoke.py
+```
+
+The smoke tests serve the repo locally and drive the editor in headless Chromium: typed diagrams, drawing, Thai labels, undo, reload persistence, share links, the right-click menu, the Thai interface and Mermaid export.
+
 ## Storage notes
 
-- Diagrams belong to one browser on one device. Clearing site data deletes them, so use **Share → JSON backup** to keep a copy or to move diagrams to another device.
-- Browsers allow roughly 5 MB of `localStorage` per site. That holds thousands of shapes, and Canvy warns you when it runs out.
+- Diagrams belong to one browser on one device. Clearing site data deletes them, so save a `.canvy` file to keep a copy or move diagrams to another device.
+- IndexedDB allows far more space than `localStorage` (usually hundreds of MB), and Canvy asks the browser to keep it persistent.
 - Very large diagrams make long share links. Some chat apps cut links at a few thousand characters, so send a JSON export instead.
 
 Fonts load from Google Fonts: Kalam for the hand-drawn text and Instrument Sans for the interface.

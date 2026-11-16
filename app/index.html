@@ -229,6 +229,7 @@ svg{display:block}
 .pvnote{display:block;color:var(--muted);font-size:12px;margin-top:8px}
 
 #moveTip{position:fixed;z-index:45;display:none;pointer-events:none;background:var(--ink);color:#fff;font:11px var(--mono);padding:3px 7px;border-radius:6px}
+.updbar{position:fixed;z-index:60;top:68px;left:50%;transform:translateX(-50%);display:none;align-items:center;gap:12px;padding:8px 8px 8px 14px;font-size:13px}
 .toast{position:fixed;z-index:50;left:50%;bottom:76px;transform:translate(-50%,8px);background:var(--ink);color:#fff;padding:9px 14px;border-radius:10px;font-size:13px;opacity:0;pointer-events:none;transition:opacity .2s,transform .2s;max-width:calc(100% - 24px)}
 .toast.show{opacity:1;transform:translate(-50%,0)}
 
@@ -238,6 +239,19 @@ body.presenting .ui,body.presenting .drawer,body.presenting .help,body.presentin
 body.presenting .pbar{display:flex}
 .pbar span{padding:0 10px;color:var(--muted);white-space:nowrap}
 
+@media (max-width:1180px){
+  #saved{display:none}
+  #docName{width:150px}
+}
+@media (max-width:1000px){
+  .lookbtn{position:static;transform:none}
+  .lookbtn #lookName{display:none}
+}
+@media (max-height:720px){
+  .rail .ibtn{width:32px;height:30px}
+  .rail hr{margin:2px 6px}
+}
+.rail{max-height:calc(100vh - 150px);overflow-y:auto;scrollbar-width:none}
 @media (max-width:900px){
   #docName{width:120px}
   #saved,.hide-sm{display:none}
@@ -406,6 +420,7 @@ body.presenting .pbar{display:flex}
     <tr><td>Ctrl/⌘ Z · D · C · V · A</td><td>Undo · duplicate · copy · paste · all</td></tr>
     <tr><td>→ ← Space (presenting)</td><td>Next / previous frame</td></tr>
     <tr><td>/</td><td>Jump to the command bar</td></tr>
+    <tr><td>Ctrl/⌘ O · Ctrl/⌘ Shift S</td><td>Open a .canvy file · save to a file</td></tr>
   </table>
 </div>
 
@@ -423,11 +438,12 @@ body.presenting .pbar{display:flex}
 <div class="panel drawer left" id="docsDrawer">
   <header><h3>My diagrams</h3><button class="ibtn" data-close="docsDrawer" title="Close">✕</button></header>
   <div class="list" id="docList"></div>
-  <div class="note">Diagrams are saved in this browser only. Export a JSON backup to move them to another device.</div>
+  <div class="note">Diagrams are saved in this browser only. Save a .canvy file to keep a copy or move it to another device.</div>
   <footer>
     <button class="btn dark sm" id="btnNew">+ New diagram</button>
+    <button class="btn sm" id="btnSaveFile" title="Save to a .canvy file — Ctrl/⌘ Shift S">Save file…</button>
+    <button class="btn sm" id="btnImport" title="Open a .canvy or .json file — Ctrl/⌘ O">Open file…</button>
     <button class="btn sm" id="btnTplOpen">Templates</button>
-    <button class="btn sm" id="btnImport">Import JSON</button>
   </footer>
 </div>
 
@@ -475,8 +491,9 @@ body.presenting .pbar{display:flex}
   <button class="ibtn" id="pNext" title="Next — →"><svg width="14" height="14" viewBox="0 0 14 14"><path d="M5.5 3l4 4-4 4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
   <button class="btn sm" id="exitPresent">Exit · Esc</button>
 </div>
-<input type="file" id="fileIn" accept=".json,application/json" hidden>
+<input type="file" id="fileIn" accept=".canvy,.json,application/json" hidden>
 <div class="toast" id="toast"></div>
+<div class="panel updbar" id="updBar"><span>A new version of Canvy is ready</span><button class="btn sm dark">Reload</button></div>
 <div id="moveTip"></div>
 
 <script>
@@ -578,6 +595,36 @@ const LS={
 };
 let warnedFull=false;
 function storageFull(){if(!warnedFull){warnedFull=true;toast('Browser storage is full. Export a JSON backup and delete old diagrams.',5000)}}
+// Diagrams and history live in IndexedDB (hundreds of MB, survives better than localStorage).
+// Reads are synchronous from an in-memory mirror; writes go through to IndexedDB in the background.
+const BIG=k=>k===K.index||k.startsWith('canvy:doc:')||k.startsWith('canvy:hist:');
+const STORE={mem:new Map(),db:null,ok:false,bc:null,
+  async init(){
+    try{
+      this.db=await new Promise((res,rej)=>{const r=indexedDB.open('canvy',1);r.onupgradeneeded=()=>r.result.createObjectStore('kv');r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error)});
+      await new Promise((res,rej)=>{const tx=this.db.transaction('kv'),st=tx.objectStore('kv'),rq=st.openCursor();rq.onsuccess=()=>{const c=rq.result;if(c){this.mem.set(c.key,c.value);c.continue()}else res()};rq.onerror=()=>rej(rq.error)});
+      this.ok=true;
+      // one-time move of older localStorage data into IndexedDB
+      const moved=[];try{for(let i=0;i<localStorage.length;i++){const k=localStorage.key(i);if(k&&BIG(k)&&!this.mem.has(k)){this.put(k,localStorage.getItem(k));moved.push(k)}}}catch(_){}
+      if(moved.length){await this.flush();moved.forEach(k=>{try{localStorage.removeItem(k)}catch(_){}})}
+      try{navigator.storage&&navigator.storage.persist&&navigator.storage.persist()}catch(_){}
+      try{this.bc=new BroadcastChannel('canvy');this.bc.onmessage=e=>onRemoteChange(e.data)}catch(_){}
+    }catch(e){this.ok=false}
+  },
+  pending:new Map(),timer:null,
+  put(k,str){this.mem.set(k,str);this.pending.set(k,str);clearTimeout(this.timer);this.timer=setTimeout(()=>this.flush(),60)},
+  flush(){if(!this.db||!this.pending.size)return Promise.resolve();const items=[...this.pending];this.pending.clear();
+    return new Promise(res=>{const tx=this.db.transaction('kv','readwrite'),st=tx.objectStore('kv');for(const[k,v]of items){if(v===null)st.delete(k);else st.put(v,k)}tx.oncomplete=()=>res();tx.onerror=tx.onabort=()=>{storageFull();res()}})},
+  get(k,d){if(!this.ok)return LS.get(k,d);const v=this.mem.get(k);if(v==null)return d;try{return JSON.parse(v)}catch(_){return d}},
+  set(k,v){if(!this.ok)return LS.set(k,v);const str=JSON.stringify(v);this.put(k,str);try{this.bc&&this.bc.postMessage({k,v:str,from:TAB})}catch(_){}return true},
+  del(k){if(!this.ok)return LS.del(k);this.mem.delete(k);this.put(k,null);this.mem.delete(k);try{this.bc&&this.bc.postMessage({k,v:null,from:TAB})}catch(_){}}
+};
+const TAB=Math.random().toString(36).slice(2);
+function onRemoteChange(m){
+  if(!m||m.from===TAB)return;if(m.v===null)STORE.mem.delete(m.k);else STORE.mem.set(m.k,m.v);
+  if(m.k===K.index&&$('#docsDrawer').classList.contains('show'))renderDocs();
+  if(doc&&m.k===K.doc(doc.id)&&m.v&&!drag&&!editing){const d=JSON.parse(m.v);if(JSON.stringify(d.elements)!==JSON.stringify(els)){const v={...view};doc=d;els=doc.elements;_sk='';sel.clear();view=v;$('#docName').value=doc.name;syncLook();render();toast('Updated from another tab')}}
+}
 const K={index:'canvy:index',last:'canvy:last',doc:id=>'canvy:doc:'+id,hist:id=>'canvy:hist:'+id,props:'canvy:props'};
 
 /* ============================== language: English / ไทย ============================== */
@@ -596,9 +643,9 @@ const TH={
 'Zoom out — Ctrl/⌘ −':'ซูมออก — Ctrl/⌘ −','Reset to 100%':'กลับเป็น 100%','Zoom in — Ctrl/⌘ +':'ซูมเข้า — Ctrl/⌘ +','Fit everything — 0':'พอดีจอ — 0','Undo — Ctrl/⌘ Z':'เลิกทำ — Ctrl/⌘ Z','Redo — Ctrl/⌘ Shift Z':'ทำซ้ำ — Ctrl/⌘ Shift Z','Syntax and shortcuts — ?':'วิธีพิมพ์และคีย์ลัด — ?',
 'Text to diagram':'พิมพ์เป็นไดอะแกรม','Type:  user:Customer -> API -(SQL)-> db:Orders   ·  ## Heading  ·  or a name to find it':'พิมพ์:  user:ลูกค้า -> API -(SQL)-> db:คำสั่งซื้อ   ·  ## หัวข้อ  ·  หรือพิมพ์ชื่อเพื่อค้นหา','Layout direction for typed diagrams':'ทิศการจัดวางของไดอะแกรมที่พิมพ์',
 'Type a diagram':'พิมพ์ไดอะแกรม','Boxes joined by arrows':'กล่องเชื่อมด้วยลูกศร','Label on an arrow':'ข้อความบนลูกศร','Plain line · both ways · dashed':'เส้นธรรมดา · สองทาง · เส้นประ','Pick a shape by name':'เลือกรูปทรงด้วยชื่อ','Or by brackets':'หรือใช้วงเล็บ','Self-loop':'ลูกศรวนเข้าตัวเอง','A section title above what you add':'หัวข้อเหนือสิ่งที่เพิ่ม','A name that already exists: fly to it':'ชื่อที่มีอยู่แล้ว: พาไปที่รูปนั้น','Mermaid flowcharts work too (or paste them)':'ใช้ Mermaid ได้ (หรือวางลงมาเลย)','Separate chains':'แยกหลายสาย',', ; or new line':', ; หรือขึ้นบรรทัดใหม่',
-'Shortcuts':'คีย์ลัด','Right-click · long-press · tap Space':'คลิกขวา · กดค้าง · แตะ Space','Quick menu: tools, zoom, view':'เมนูด่วน: เครื่องมือ ซูม มุมมอง','Tools (R again switches shape)':'เครื่องมือ (กด R ซ้ำเพื่อเปลี่ยนรูปทรง)','Double-click · Enter':'ดับเบิลคลิก · Enter','Edit a label, or add text':'แก้ข้อความ หรือเพิ่มข้อความ','Space + drag · scroll':'Space + ลาก · เลื่อนล้อเมาส์','Ctrl/⌘ + scroll':'Ctrl/⌘ + เลื่อนล้อเมาส์','Zoom':'ซูม','Zoom · fit all · zoom to selection · fly to frame':'ซูม · พอดีจอ · ซูมไปที่ที่เลือก · ไปยังเฟรม','Make the selection bigger / smaller':'ขยาย / ย่อสิ่งที่เลือก','Drag · Shift-drag · Alt-drag':'ลาก · Shift-ลาก · Alt-ลาก','Move · move along one axis · move a copy':'ย้าย · ย้ายแนวเดียว · ลากสำเนา','Arrows · Shift · Alt':'ปุ่มลูกศร · Shift · Alt','Nudge 1 · 10 · 50 px':'ขยับ 1 · 10 · 50 px','Tidy · present · look':'จัดเรียง · นำเสนอ · รูปลักษณ์','Undo · duplicate · copy · paste · all':'เลิกทำ · สำเนา · คัดลอก · วาง · ทั้งหมด','Next / previous frame':'เฟรมถัดไป / ก่อนหน้า','Jump to the command bar':'ไปที่ช่องพิมพ์',
+'Shortcuts':'คีย์ลัด','Right-click · long-press · tap Space':'คลิกขวา · กดค้าง · แตะ Space','Quick menu: tools, zoom, view':'เมนูด่วน: เครื่องมือ ซูม มุมมอง','Tools (R again switches shape)':'เครื่องมือ (กด R ซ้ำเพื่อเปลี่ยนรูปทรง)','Double-click · Enter':'ดับเบิลคลิก · Enter','Edit a label, or add text':'แก้ข้อความ หรือเพิ่มข้อความ','Space + drag · scroll':'Space + ลาก · เลื่อนล้อเมาส์','Ctrl/⌘ + scroll':'Ctrl/⌘ + เลื่อนล้อเมาส์','Zoom':'ซูม','Zoom · fit all · zoom to selection · fly to frame':'ซูม · พอดีจอ · ซูมไปที่ที่เลือก · ไปยังเฟรม','Make the selection bigger / smaller':'ขยาย / ย่อสิ่งที่เลือก','Drag · Shift-drag · Alt-drag':'ลาก · Shift-ลาก · Alt-ลาก','Move · move along one axis · move a copy':'ย้าย · ย้ายแนวเดียว · ลากสำเนา','Arrows · Shift · Alt':'ปุ่มลูกศร · Shift · Alt','Nudge 1 · 10 · 50 px':'ขยับ 1 · 10 · 50 px','Tidy · present · look':'จัดเรียง · นำเสนอ · รูปลักษณ์','Undo · duplicate · copy · paste · all':'เลิกทำ · สำเนา · คัดลอก · วาง · ทั้งหมด','Next / previous frame':'เฟรมถัดไป / ก่อนหน้า','Jump to the command bar':'ไปที่ช่องพิมพ์','Open a .canvy file · save to a file':'เปิดไฟล์ .canvy · บันทึกเป็นไฟล์',
 'A blank page. Your move.':'หน้าว่างพร้อมแล้ว เริ่มเลย','Draw with the tools on the left, right-click for the quick menu, or type a line at the bottom.':'วาดด้วยเครื่องมือด้านซ้าย คลิกขวาเพื่อเปิดเมนูด่วน หรือพิมพ์ที่ช่องด้านล่าง','Templates…':'เทมเพลต…','Web app':'เว็บแอป','Login flow':'ขั้นตอนล็อกอิน',
-'Diagrams are saved in this browser only. Export a JSON backup to move them to another device.':'ไดอะแกรมถูกบันทึกในเบราว์เซอร์นี้เท่านั้น ถ้าจะย้ายไปเครื่องอื่นให้ export เป็น JSON','+ New diagram':'+ ไดอะแกรมใหม่','Templates':'เทมเพลต','Import JSON':'นำเข้า JSON','Close':'ปิด','Delete':'ลบ','Sure?':'แน่ใจ?',
+'Diagrams are saved in this browser only. Save a .canvy file to keep a copy or move it to another device.':'ไดอะแกรมถูกบันทึกในเบราว์เซอร์นี้เท่านั้น บันทึกเป็นไฟล์ .canvy เพื่อเก็บสำรองหรือย้ายไปเครื่องอื่น','Diagrams are saved in this browser only. Export a JSON backup to move them to another device.':'ไดอะแกรมถูกบันทึกในเบราว์เซอร์นี้เท่านั้น ถ้าจะย้ายไปเครื่องอื่นให้ export เป็น JSON','+ New diagram':'+ ไดอะแกรมใหม่','Templates':'เทมเพลต','Import JSON':'นำเข้า JSON','Close':'ปิด','Delete':'ลบ','Sure?':'แน่ใจ?',
 'Insert':'แทรก','Search all blocks: cache, queue, gear, ผู้ใช้…':'ค้นหาบล็อก: cache, queue, ผู้ใช้, ฐานข้อมูล…','Sections':'ส่วน','Systems':'ระบบ','Data & APIs':'ข้อมูลและ API','Notes':'โน้ต','Patterns':'แพตเทิร์น','Icons':'ไอคอน',
 'Canvy keeps a version every couple of minutes while you work, up to 30 per diagram.':'Canvy เก็บเวอร์ชันทุก 2–3 นาทีระหว่างทำงาน สูงสุด 30 เวอร์ชันต่อไดอะแกรม','Save a version now':'บันทึกเวอร์ชันตอนนี้','Restore':'กู้คืน','No versions yet. They appear here as you work.':'ยังไม่มีเวอร์ชัน จะแสดงที่นี่เมื่อเริ่มทำงาน',
 'The whole diagram is packed into this link. Nothing is uploaded: whoever opens it gets their own copy.':'ไดอะแกรมทั้งหมดถูกใส่ไว้ในลิงก์นี้ ไม่มีการอัปโหลด ใครเปิดลิงก์ก็ได้สำเนาของตัวเอง','Copy':'คัดลอก','Copied':'คัดลอกแล้ว','Export':'ส่งออก','PNG image':'รูป PNG','JSON backup':'สำรอง JSON','Copy as Mermaid':'คัดลอกเป็น Mermaid','Mermaid copied':'คัดลอก Mermaid แล้ว','Preparing link…':'กำลังสร้างลิงก์…','Draw something first':'วาดอะไรสักอย่างก่อน',
@@ -610,7 +657,7 @@ const TH={
 'Nothing matches. Try “db”, “queue” or “ผู้ใช้”.':'ไม่พบบล็อกที่ตรง ลองคำว่า “db”, “queue” หรือ “ผู้ใช้”',
 // toasts
 'Browser storage is full. Export a JSON backup and delete old diagrams.':'พื้นที่เก็บในเบราว์เซอร์เต็มแล้ว ให้ export เป็น JSON แล้วลบไดอะแกรมเก่า','That diagram could not be found':'ไม่พบไดอะแกรมนั้น','Diagram deleted':'ลบไดอะแกรมแล้ว','That file is not a Canvy JSON export':'ไฟล์นี้ไม่ใช่ไฟล์ JSON จาก Canvy','No changes since the last version':'ไม่มีอะไรเปลี่ยนจากเวอร์ชันล่าสุด','That version matches the canvas':'เวอร์ชันนี้เหมือนกับที่อยู่บนผืนผ้าใบ','Version restored. Undo is available.':'กู้คืนเวอร์ชันแล้ว กดเลิกทำได้',
-'Nothing to export yet':'ยังไม่มีอะไรให้ส่งออก','No shapes to export yet':'ยังไม่มีรูปให้ส่งออก','PNG export failed in this browser. Try SVG.':'ส่งออก PNG ไม่ได้ในเบราว์เซอร์นี้ ลองใช้ SVG','Select three or more to distribute':'เลือก 3 ชิ้นขึ้นไปเพื่อเว้นระยะ','Tidy arranges shapes that are connected by arrows':'การจัดเรียงใช้กับรูปที่เชื่อมกันด้วยลูกศร','Those shapes and arrows are already on the canvas':'รูปและลูกศรเหล่านั้นมีอยู่แล้ว','Nothing to draw yet. Try: user:Customer -> API -> db:Orders':'ยังไม่มีอะไรให้วาด ลองพิมพ์: user:ลูกค้า -> API -> db:คำสั่งซื้อ','That share link looks broken or was cut short. Ask for the link again, or a JSON export.':'ลิงก์แชร์นี้เสียหรือถูกตัดขาด ขอลิงก์ใหม่หรือขอไฟล์ JSON แทน','Saved in this browser.':'บันทึกในเบราว์เซอร์นี้แล้ว','New diagrams flow top to bottom':'ไดอะแกรมใหม่จะเรียงจากบนลงล่าง','New diagrams flow left to right':'ไดอะแกรมใหม่จะเรียงจากซ้ายไปขวา','Language: English':'ภาษา: English','Untitled diagram':'ไดอะแกรมไม่มีชื่อ','Preview':'ตัวอย่าง','Copy image':'คัดลอกรูป','Image copied':'คัดลอกรูปแล้ว','Download preview card':'ดาวน์โหลดภาพการ์ด','Paste the image next to the link so people see the diagram before they open it.':'วางรูปคู่กับลิงก์ คนรับจะเห็นไดอะแกรมก่อนเปิด','Switched to English':'Switched to English'
+'Nothing to export yet':'ยังไม่มีอะไรให้ส่งออก','No shapes to export yet':'ยังไม่มีรูปให้ส่งออก','PNG export failed in this browser. Try SVG.':'ส่งออก PNG ไม่ได้ในเบราว์เซอร์นี้ ลองใช้ SVG','Select three or more to distribute':'เลือก 3 ชิ้นขึ้นไปเพื่อเว้นระยะ','Tidy arranges shapes that are connected by arrows':'การจัดเรียงใช้กับรูปที่เชื่อมกันด้วยลูกศร','Those shapes and arrows are already on the canvas':'รูปและลูกศรเหล่านั้นมีอยู่แล้ว','Nothing to draw yet. Try: user:Customer -> API -> db:Orders':'ยังไม่มีอะไรให้วาด ลองพิมพ์: user:ลูกค้า -> API -> db:คำสั่งซื้อ','That share link looks broken or was cut short. Ask for the link again, or a JSON export.':'ลิงก์แชร์นี้เสียหรือถูกตัดขาด ขอลิงก์ใหม่หรือขอไฟล์ JSON แทน','Saved in this browser.':'บันทึกในเบราว์เซอร์นี้แล้ว','New diagrams flow top to bottom':'ไดอะแกรมใหม่จะเรียงจากบนลงล่าง','New diagrams flow left to right':'ไดอะแกรมใหม่จะเรียงจากซ้ายไปขวา','Language: English':'ภาษา: English','Save file…':'บันทึกไฟล์…','Open file…':'เปิดไฟล์…','Saved to':'บันทึกลง','Save to a .canvy file — Ctrl/⌘ Shift S':'บันทึกเป็นไฟล์ .canvy — Ctrl/⌘ Shift S','Open a .canvy or .json file — Ctrl/⌘ O':'เปิดไฟล์ .canvy หรือ .json — Ctrl/⌘ O','Updated from another tab':'อัปเดตจากอีกแท็บแล้ว','A new version of Canvy is ready':'Canvy มีเวอร์ชันใหม่แล้ว','Reload':'โหลดใหม่','Ready to work offline':'พร้อมใช้งานแบบออฟไลน์แล้ว','Untitled diagram':'ไดอะแกรมไม่มีชื่อ','Preview':'ตัวอย่าง','Copy image':'คัดลอกรูป','Image copied':'คัดลอกรูปแล้ว','Download preview card':'ดาวน์โหลดภาพการ์ด','Paste the image next to the link so people see the diagram before they open it.':'วางรูปคู่กับลิงก์ คนรับจะเห็นไดอะแกรมก่อนเปิด','Switched to English':'Switched to English'
 };
 let LANG=(()=>{try{const q=new URLSearchParams(location.search).get('lang');if(q==='th'||q==='en')return q}catch(_){}return null})()||LS.get('canvy:lang',null)||((navigator.language||'').toLowerCase().startsWith('th')?'th':'en');
 const T=s=>LANG==='th'&&TH[s]?TH[s]:s;
@@ -667,26 +714,26 @@ function fillCol(k){return S().fills[k]||'none'}
 const swOf=el=>SW[el.sw||2]*S().swMul*(el.bold?1.4:1);
 
 function newDoc(name){return{id:uid(),name:name||T('Untitled diagram'),style:'pencil',elements:[],created:Date.now(),updated:Date.now(),view:null}}
-function indexList(){return LS.get(K.index,[])}
-function writeIndex(){const idx=indexList().filter(d=>d.id!==doc.id);idx.unshift({id:doc.id,name:doc.name,updated:doc.updated,n:els.length});LS.set(K.index,idx)}
+function indexList(){return STORE.get(K.index,[])}
+function writeIndex(){const idx=indexList().filter(d=>d.id!==doc.id);idx.unshift({id:doc.id,name:doc.name,updated:doc.updated,n:els.length});STORE.set(K.index,idx)}
 
 let saveT=null;
 function save(now){
   clearTimeout(saveT);
   $('#saved').textContent='Saving…';
   const run=()=>{doc.updated=Date.now();doc.view={...view};
-    const ok=LS.set(K.doc(doc.id),doc);writeIndex();LS.set(K.last,doc.id);autoSnapshot();
+    const ok=STORE.set(K.doc(doc.id),doc);writeIndex();LS.set(K.last,doc.id);autoSnapshot();
     $('#saved').textContent=ok?'Saved in this browser':'Not saved';};
   if(now)run();else saveT=setTimeout(run,350);
 }
 function autoSnapshot(force,label){
-  const h=LS.get(K.hist(doc.id),[]);const data=JSON.stringify(els);const last=h[0];
+  const h=STORE.get(K.hist(doc.id),[]);const data=JSON.stringify(els);const last=h[0];
   if(!force&&last&&(last.data===data||Date.now()-last.t<120000))return;
   if(!force&&!els.length&&!last)return;
   if(last&&last.data===data&&force){toast('No changes since the last version');return}
   h.unshift({t:Date.now(),data,style:doc.style,n:els.length,label:label||''});
   if(h.length>30)h.length=30;
-  LS.set(K.hist(doc.id),h);
+  STORE.set(K.hist(doc.id),h);
   if($('#histDrawer').classList.contains('show'))renderHist();
 }
 function openDoc(d){
@@ -698,7 +745,7 @@ function openDoc(d){
   if(doc.view)view={...doc.view};else{view={x:innerWidth/2,y:innerHeight/2,z:1};if(els.length)fit()}
   remeasureAll();render();save(true);ensureFonts();
 }
-function loadDoc(id){const d=LS.get(K.doc(id),null);if(d)openDoc(d);else toast('That diagram could not be found')}
+function loadDoc(id){const d=STORE.get(K.doc(id),null);if(d)openDoc(d);else toast('That diagram could not be found')}
 
 /* ============================== geometry ============================== */
 function bbox(el){
@@ -993,6 +1040,7 @@ function renderOverlay(){
   overlay.innerHTML=o;
 }
 function corners(el){const pd=6/view.z;return[[el.x-pd,el.y-pd,'nw'],[el.x+el.w+pd,el.y-pd,'ne'],[el.x-pd,el.y+el.h+pd,'sw'],[el.x+el.w+pd,el.y+el.h+pd,'se']]}
+let rafPending=false;function scheduleRender(){if(rafPending)return;rafPending=true;requestAnimationFrame(()=>{rafPending=false;render()})}
 function render(){
   world.innerHTML=renderList(els);
   renderView();renderOverlay();renderProps();
@@ -1170,7 +1218,7 @@ function placeProps(){
   const b=unionBox(selected().map(e=>e.type==='frame'?Object.assign({},e,{type:'rect',y:e.y-30,h:e.h+30}):e));if(!b)return;
   const w=p.offsetWidth,h=p.offsetHeight,sx=b.x*view.z+view.x,sy=b.y*view.z+view.y,sw=b.w*view.z,sh=b.h*view.z;
   let top=sy-h-16;if(top<66)top=Math.min(innerHeight-h-80,sy+sh+16);if(top<66)top=66;
-  p.style.left=clamp(sx+sw/2-w/2,12,innerWidth-w-12)+'px';p.style.top=top+'px';
+  p.style.left=clamp(sx+sw/2-w/2,innerWidth>640?72:12,innerWidth-w-12)+'px';p.style.top=top+'px';
 }
 
 /* ============================== tools ============================== */
@@ -1330,10 +1378,10 @@ stage.addEventListener('pointermove',e=>{
     case'draw':{const P=drag.el.points,l=P[P.length-1];if(Math.hypot(p[0]-l[0],p[1]-l[1])*view.z>=2)P.push([f1(p[0]),f1(p[1])]);break}
     case'erase':eraseAt(p);break;
   }
-  render();
+  scheduleRender();
 });
 function endDrag(e){
-  clearTimeout(pressT);hideMoveTip();
+  clearTimeout(pressT);rafPending=false;hideMoveTip();
   if(!drag)return;const d=drag;drag=null;stage.classList.remove('c-grabbing');
   switch(d.kind){
     case'pan':saveViewSoon();break;
@@ -1711,7 +1759,8 @@ addEventListener('keydown',e=>{
   if(mod&&(k==='='||k==='+')){e.preventDefault();zoomAt(1.2);return}
   if(mod&&k==='-'){e.preventDefault();zoomAt(1/1.2);return}
   if(mod&&k==='0'){e.preventDefault();zoomAt(1/view.z);return}
-  if(mod&&k==='s'){e.preventDefault();save(true);toast('Saved in this browser');return}
+  if(mod&&k==='s'){e.preventDefault();if(e.shiftKey||fileHandles.has(doc.id))saveFile(e.shiftKey);else{save(true);toast('Saved in this browser.')}return}
+  if(mod&&k==='o'){e.preventDefault();openFile();return}
   if(mod)return;
   if(e.shiftKey&&e.code==='Digit1'){fit();return}
   if(e.shiftKey&&e.code==='Digit2'){zoomToSel();return}
@@ -1765,21 +1814,42 @@ function renderDocs(){
   }
 }
 function deleteDoc(id){
-  LS.del(K.doc(id));LS.del(K.hist(id));LS.set(K.index,indexList().filter(d=>d.id!==id));
-  if(id===doc.id){const next=indexList()[0];doc=null;if(next&&LS.get(K.doc(next.id)))openDoc(LS.get(K.doc(next.id)));else openDoc(newDoc())}
+  STORE.del(K.doc(id));STORE.del(K.hist(id));STORE.set(K.index,indexList().filter(d=>d.id!==id));
+  if(id===doc.id){const next=indexList()[0];doc=null;if(next&&STORE.get(K.doc(next.id)))openDoc(STORE.get(K.doc(next.id)));else openDoc(newDoc())}
   renderDocs();toast('Diagram deleted');
 }
 $('#btnDocs').onclick=()=>{const d=$('#docsDrawer');const s=!d.classList.contains('show');closeFloating();if(s){renderDocs();d.classList.add('show')}};
 $('#btnNew').onclick=()=>{openDoc(newDoc());$('#docsDrawer').classList.remove('show');setTimeout(()=>{$('#docName').focus();$('#docName').select()},50)};
 $('#btnTplOpen').onclick=()=>openLib('templates');
-$('#btnImport').onclick=()=>$('#fileIn').click();
-$('#fileIn').onchange=async e=>{const f=e.target.files[0];e.target.value='';if(!f)return;
+const FILE_TYPES=[{description:'Canvy diagram',accept:{'application/json':['.canvy','.json']}}];
+const fileHandles=new Map(); // doc id -> FileSystemFileHandle, so Ctrl+S writes back to the same file
+const docJson=()=>JSON.stringify({app:'canvy',v:2,name:doc.name,style:doc.style,paper:doc.paper,strokeMode:doc.strokeMode,elements:els},null,1);
+async function saveFile(saveAs){
+  save(true);const data=docJson();
+  if(window.showSaveFilePicker){
+    try{let h=!saveAs&&fileHandles.get(doc.id);if(!h){h=await showSaveFilePicker({suggestedName:slug()+'.canvy',types:FILE_TYPES});fileHandles.set(doc.id,h)}
+      const w=await h.createWritable();await w.write(data);await w.close();toast(T('Saved to')+' '+h.name);return}catch(e){if(e&&e.name==='AbortError')return}
+  }
+  download(new Blob([data],{type:'application/json'}),slug()+'.canvy');
+}
+async function importFileObj(f,handle){
   try{const d=JSON.parse(await f.text());const els2=Array.isArray(d)?d:d.elements;if(!Array.isArray(els2))throw 0;
-    const nd=newDoc(d.name||f.name.replace(/\.json$/i,''));nd.style=STYLES[d.style]?d.style:'pencil';if(d.paper)nd.paper=d.paper;if(d.strokeMode)nd.strokeMode=d.strokeMode;nd.elements=sanitize(els2);openDoc(nd);fit();save(true);closeFloating();toast('Imported '+nd.name)}
-  catch(_){toast('That file is not a Canvy JSON export')}};
+    const nd=newDoc(d.name||f.name.replace(/\.(canvy|json)$/i,''));nd.style=STYLES[d.style]?d.style:'pencil';if(d.paper)nd.paper=d.paper;if(d.strokeMode)nd.strokeMode=d.strokeMode;nd.elements=sanitize(els2);
+    if(handle)fileHandles.set(nd.id,handle);openDoc(nd);fit();save(true);closeFloating();toast('Imported '+nd.name)}
+  catch(_){toast('That file is not a Canvy JSON export')}
+}
+async function openFile(){
+  if(window.showOpenFilePicker){try{const[h]=await showOpenFilePicker({types:FILE_TYPES});await importFileObj(await h.getFile(),h);return}catch(e){if(e&&e.name==='AbortError')return}}
+  $('#fileIn').click();
+}
+$('#btnSaveFile').onclick=()=>saveFile(true);
+$('#btnImport').onclick=openFile;
+stage.addEventListener('dragover',e=>{if([...(e.dataTransfer?.items||[])].some(i=>i.kind==='file')){e.preventDefault();e.dataTransfer.dropEffect='copy'}});
+stage.addEventListener('drop',e=>{const f=[...(e.dataTransfer?.files||[])].find(f=>/\.(canvy|json)$/i.test(f.name));if(f){e.preventDefault();importFileObj(f)}});
+$('#fileIn').onchange=e=>{const f=e.target.files[0];e.target.value='';if(f)importFileObj(f)};
 
 function renderHist(){
-  const L=$('#histList'),h=LS.get(K.hist(doc.id),[]);L.innerHTML='';
+  const L=$('#histList'),h=STORE.get(K.hist(doc.id),[]);L.innerHTML='';
   if(!h.length){L.innerHTML='<div class="note">No versions yet. They appear here as you work.</div>';return}
   h.forEach((v,i)=>{const it=document.createElement('div');it.className='item'+(i===0?' on':'');
     it.innerHTML=`<span class="dot"></span><span class="meta"><b>${v.label?esc(v.label):new Date(v.t).toLocaleString(undefined,{weekday:'short',hour:'2-digit',minute:'2-digit'})}</b><small>${TX(ago(v.t))} · ${v.n} ${LANG==='th'?'ชิ้น':'item'+(v.n===1?'':'s')}</small></span><button class="btn sm">Restore</button>`;
@@ -1908,8 +1978,9 @@ function buildEmpty(){
   $('#emptyEx').onclick=e=>{const b=e.target.closest('[data-i]');if(!b)return;const c=ex[+b.dataset.i][1];if(!c){openLib('templates');return}applyCommand(c);fit()};
 }
 addEventListener('resize',()=>{renderView();renderOverlay()});
-addEventListener('beforeunload',()=>{if(doc)save(true)});
-addEventListener('storage',e=>{if(e.key===K.index&&$('#docsDrawer').classList.contains('show'))renderDocs()});
+addEventListener('beforeunload',()=>{if(doc)save(true);STORE.flush()});
+addEventListener('visibilitychange',()=>{if(document.hidden){if(doc)save(true);STORE.flush()}});
+
 // open a share link (#d=…): on first load, and when a link is pasted into a tab that already has Canvy open
 async function importFromHash(){
   const h=location.hash;if(!h.startsWith('#d='))return false;
@@ -1924,9 +1995,10 @@ addEventListener('hashchange',()=>{if(location.hash.startsWith('#d='))importFrom
 async function boot(){
   i18nObs.observe(document.body,{childList:true,subtree:true});$('#langBtn').onclick=()=>{setLang(LANG==='th'?'en':'th');toast(LANG==='th'?'เปลี่ยนเป็นภาษาไทยแล้ว':'Switched to English')};
   buildProps();buildShapeFly();buildDial();buildLook();buildEmpty();syncShapeIcon();syncDir();setTool('select');setLang(LANG);
+  await STORE.init();
   if(await importFromHash())return;
-  const last=LS.get(K.last,null),d=last&&LS.get(K.doc(last),null);
-  if(d)openDoc(d);else{const first=indexList()[0],d2=first&&LS.get(K.doc(first.id),null);openDoc(d2||newDoc())}
+  const last=LS.get(K.last,null),d=last&&STORE.get(K.doc(last),null);
+  if(d)openDoc(d);else{const first=indexList()[0],d2=first&&STORE.get(K.doc(first.id),null);openDoc(d2||newDoc())}
 }
 function showMoveTip(x,y,dx,dy){const t=$('#moveTip');t.textContent=`${dx>=0?'+':''}${Math.round(dx)}, ${dy>=0?'+':''}${Math.round(dy)}`;t.style.left=(x+16)+'px';t.style.top=(y+18)+'px';t.style.display='block'}
 function hideMoveTip(){$('#moveTip').style.display='none'}
@@ -1937,6 +2009,16 @@ async function ensureFonts(){
   for(const f of[st.latin,st.thai])if(f)jobs.push(document.fonts.load(`${f[1]} 20px "${f[0]}"`,'Aaกิ่ง'));
   try{await Promise.all(jobs)}catch(_){}
   remeasureAll();for(const el of els)if(SHAPES.has(el.type)&&el.label)fitText(el);render();
+}
+// offline support: the service worker caches the app; a new version shows a reload prompt
+if('serviceWorker' in navigator&&location.protocol==='https:'){
+  navigator.serviceWorker.register('../sw.js',{scope:'../'}).then(reg=>{
+    const ask=w=>{const b=$('#updBar');b.querySelector('span').textContent=T('A new version of Canvy is ready');b.style.display='flex';b.querySelector('button').onclick=()=>{w.postMessage('skip');}};
+    if(reg.waiting&&navigator.serviceWorker.controller)ask(reg.waiting);
+    reg.addEventListener('updatefound',()=>{const w=reg.installing;w&&w.addEventListener('statechange',()=>{if(w.state==='installed'){if(navigator.serviceWorker.controller)ask(w);else toast('Ready to work offline')}})});
+    setInterval(()=>reg.update().catch(()=>{}),30*60*1000);
+  }).catch(()=>{});
+  let reloaded=false;navigator.serviceWorker.addEventListener('controllerchange',()=>{if(reloaded)return;reloaded=true;if(doc)save(true);STORE.flush().then(()=>location.reload())});
 }
 boot();
 if(document.fonts&&document.fonts.ready)document.fonts.ready.then(ensureFonts);

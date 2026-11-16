@@ -715,6 +715,7 @@ footer li a:hover{color:var(--accent)}
   var lang=pick();apply(lang);
   btn.addEventListener('click',function(){lang=lang==='th'?'en':'th';try{localStorage.setItem('canvy:lang',JSON.stringify(lang))}catch(e){}apply(lang)});
 })();
+if('serviceWorker' in navigator&&location.protocol==='https:')navigator.serviceWorker.register('sw.js').catch(function(){});
 </script>
 </body>
 </html>
