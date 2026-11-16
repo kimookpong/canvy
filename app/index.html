@@ -349,6 +349,10 @@ body.presenting .pbar{display:flex}
     <button class="chipb acc" data-act="hatch" title="Pencil shading"><svg width="16" height="16" viewBox="0 0 16 16"><rect x="2.5" y="2.5" width="11" height="11" rx="2" fill="none" stroke="currentColor" stroke-width="1.3"/><path d="M4 9.5 9.5 4M4 13 13 4M7.5 13 13 7.5" stroke="currentColor" stroke-width="1"/></svg></button>
     <button class="chipb acc" data-act="stack" title="Draw as a stack (×2, ×3)">×1</button>
   </div>
+  <div class="grp" id="gTable">
+    <button class="chipb" data-tbl="+row" title="Add a row">+ row</button><button class="chipb" data-tbl="-row" title="Remove the last row">− row</button>
+    <button class="chipb" data-tbl="+col" title="Add a column">+ col</button><button class="chipb" data-tbl="-col" title="Remove the last column">− col</button>
+  </div>
   <div class="grp" id="gArrow">
     <button class="chipb acc" data-act="ends" title="Arrow ends (click to cycle)">→</button>
     <button class="chipb acc" data-act="dash" title="Dashed"><svg width="18" height="10" viewBox="0 0 18 10"><path d="M1 5h4M7 5h4M13 5h4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg></button>
@@ -428,6 +432,8 @@ body.presenting .pbar{display:flex}
     <tr><td>Ctrl/⌘ G · Ctrl/⌘ Shift G · Ctrl/⌘ Shift L</td><td>Group · ungroup · lock</td></tr>
     <tr><td>Hover a shape → drag or click a +</td><td>Connect a new shape</td></tr>
     <tr><td>Hold Ctrl/⌘ while dragging</td><td>Move without snapping</td></tr>
+    <tr><td>Drag the ◇ on an arrow · the ○ above a shape</td><td>Bend the arrow · rotate (Shift: 15° steps)</td></tr>
+    <tr><td>| Name | Owner | Status |</td><td>Type a table; Tab moves between cells</td></tr>
     <tr><td>Paste or drop a picture</td><td>Add an image</td></tr>
     <tr><td>Ctrl/⌘ O · Ctrl/⌘ Shift S</td><td>Open a .canvy file · save to a file</td></tr>
   </table>
@@ -536,11 +542,11 @@ const STROKES=['ink','accent','blue','green'];
 const SW={1:1.2,2:1.8,3:3.2};
 const FS={s:16,m:20,l:28};
 const LH=1.35; // line height; roomy enough for Thai marks above and below the line
-const KINDS=[['rect','Box'],['pill','Pill'],['ellipse','Ellipse'],['diamond','Decision'],['cylinder','Database'],['hexagon','Hexagon'],['io','In / out'],['document','Document'],['cloud','Cloud'],['sticky','Sticky'],['person','Person']];
+const KINDS=[['rect','Box'],['card','Card'],['pill','Pill'],['ellipse','Ellipse'],['diamond','Decision'],['cylinder','Database'],['hexagon','Hexagon'],['io','In / out'],['document','Document'],['cloud','Cloud'],['sticky','Sticky'],['person','Person']];
 const SHAPES=new Set([...KINDS.map(k=>k[0]),'icon']);
 const LABEL_BELOW=new Set(['person','icon']);
 const RESIZABLE=t=>SHAPES.has(t)||t==='frame'||t==='image';
-const DEF_SIZE={rect:[150,76],pill:[150,60],ellipse:[150,84],diamond:[150,100],cylinder:[120,100],hexagon:[150,80],io:[160,72],document:[150,88],cloud:[170,104],sticky:[170,150],person:[60,96],icon:[64,64],frame:[440,300]};
+const DEF_SIZE={rect:[150,76],card:[220,140],table:[300,120],pill:[150,60],ellipse:[150,84],diamond:[150,100],cylinder:[120,100],hexagon:[150,80],io:[160,72],document:[150,88],cloud:[170,104],sticky:[170,150],person:[60,96],icon:[64,64],frame:[440,300]};
 const KIND_ICON={
   rect:'<rect x="3" y="4.5" width="12" height="9" rx="2"/>',
   pill:'<rect x="2" y="5.5" width="14" height="7" rx="3.5"/>',
@@ -552,6 +558,8 @@ const KIND_ICON={
   document:'<path d="M3 3.5h12v9.5c-3-1.8-6 1.8-12 0z"/>',
   cloud:'<path d="M5 13.5h8a3 3 0 0 0 .4-6 4.2 4.2 0 0 0-8-1A3.2 3.2 0 0 0 5 13.5z"/>',
   sticky:'<path d="M3.5 3.5h11v7l-4 4h-7z M10.5 14.5v-4h4"/>',
+  card:'<rect x="2.5" y="3" width="13" height="12" rx="2"/><path d="M5 6.5h8M2.5 8.5h13M5 11h5M5 13h6"/>',
+  table:'<rect x="2.5" y="3.5" width="13" height="11" rx="1.5"/><path d="M2.5 7h13M2.5 10.5h13M7 3.5v11M11 3.5v11"/>',
   person:'<circle cx="9" cy="4.5" r="2.3"/><path d="M9 7v4.5M5.5 9h7M9 11.5l-3 4M9 11.5l3 4"/>'
 };
 // original hand-drawn icon set on a 24-unit grid: f = filled with the element's fill, s = stroke only
@@ -652,7 +660,7 @@ const TH={
 'Zoom out — Ctrl/⌘ −':'ซูมออก — Ctrl/⌘ −','Reset to 100%':'กลับเป็น 100%','Zoom in — Ctrl/⌘ +':'ซูมเข้า — Ctrl/⌘ +','Fit everything — 0':'พอดีจอ — 0','Undo — Ctrl/⌘ Z':'เลิกทำ — Ctrl/⌘ Z','Redo — Ctrl/⌘ Shift Z':'ทำซ้ำ — Ctrl/⌘ Shift Z','Syntax and shortcuts — ?':'วิธีพิมพ์และคีย์ลัด — ?',
 'Text to diagram':'พิมพ์เป็นไดอะแกรม','Type:  user:Customer -> API -(SQL)-> db:Orders   ·  ## Heading  ·  or a name to find it':'พิมพ์:  user:ลูกค้า -> API -(SQL)-> db:คำสั่งซื้อ   ·  ## หัวข้อ  ·  หรือพิมพ์ชื่อเพื่อค้นหา','Layout direction for typed diagrams':'ทิศการจัดวางของไดอะแกรมที่พิมพ์',
 'Type a diagram':'พิมพ์ไดอะแกรม','Boxes joined by arrows':'กล่องเชื่อมด้วยลูกศร','Label on an arrow':'ข้อความบนลูกศร','Plain line · both ways · dashed':'เส้นธรรมดา · สองทาง · เส้นประ','Pick a shape by name':'เลือกรูปทรงด้วยชื่อ','Or by brackets':'หรือใช้วงเล็บ','Self-loop':'ลูกศรวนเข้าตัวเอง','A section title above what you add':'หัวข้อเหนือสิ่งที่เพิ่ม','A name that already exists: fly to it':'ชื่อที่มีอยู่แล้ว: พาไปที่รูปนั้น','Mermaid flowcharts work too (or paste them)':'ใช้ Mermaid ได้ (หรือวางลงมาเลย)','Separate chains':'แยกหลายสาย',', ; or new line':', ; หรือขึ้นบรรทัดใหม่',
-'Shortcuts':'คีย์ลัด','Right-click · long-press · tap Space':'คลิกขวา · กดค้าง · แตะ Space','Quick menu: tools, zoom, view':'เมนูด่วน: เครื่องมือ ซูม มุมมอง','Tools (R again switches shape)':'เครื่องมือ (กด R ซ้ำเพื่อเปลี่ยนรูปทรง)','Double-click · Enter':'ดับเบิลคลิก · Enter','Edit a label, or add text':'แก้ข้อความ หรือเพิ่มข้อความ','Space + drag · scroll':'Space + ลาก · เลื่อนล้อเมาส์','Ctrl/⌘ + scroll':'Ctrl/⌘ + เลื่อนล้อเมาส์','Zoom':'ซูม','Zoom · fit all · zoom to selection · fly to frame':'ซูม · พอดีจอ · ซูมไปที่ที่เลือก · ไปยังเฟรม','Make the selection bigger / smaller':'ขยาย / ย่อสิ่งที่เลือก','Drag · Shift-drag · Alt-drag':'ลาก · Shift-ลาก · Alt-ลาก','Move · move along one axis · move a copy':'ย้าย · ย้ายแนวเดียว · ลากสำเนา','Arrows · Shift · Alt':'ปุ่มลูกศร · Shift · Alt','Nudge 1 · 10 · 50 px':'ขยับ 1 · 10 · 50 px','Tidy · present · look':'จัดเรียง · นำเสนอ · รูปลักษณ์','Undo · duplicate · copy · paste · all':'เลิกทำ · สำเนา · คัดลอก · วาง · ทั้งหมด','Next / previous frame':'เฟรมถัดไป / ก่อนหน้า','Jump to the command bar':'ไปที่ช่องพิมพ์','Find a shape by name':'ค้นหารูปจากชื่อ','Group · ungroup · lock':'จัดกลุ่ม · ยกเลิกกลุ่ม · ล็อก','Hover a shape → drag or click a +':'ชี้ที่รูป แล้วลากหรือคลิกปุ่ม +','Connect a new shape':'เพิ่มรูปใหม่ที่เชื่อมกัน','Hold Ctrl/⌘ while dragging':'กด Ctrl/⌘ ค้างขณะลาก','Move without snapping':'ย้ายโดยไม่ดูดติด','Paste or drop a picture':'วางหรือลากรูปภาพมาใส่','Add an image':'เพิ่มรูปภาพ','Open a .canvy file · save to a file':'เปิดไฟล์ .canvy · บันทึกเป็นไฟล์',
+'Shortcuts':'คีย์ลัด','Right-click · long-press · tap Space':'คลิกขวา · กดค้าง · แตะ Space','Quick menu: tools, zoom, view':'เมนูด่วน: เครื่องมือ ซูม มุมมอง','Tools (R again switches shape)':'เครื่องมือ (กด R ซ้ำเพื่อเปลี่ยนรูปทรง)','Double-click · Enter':'ดับเบิลคลิก · Enter','Edit a label, or add text':'แก้ข้อความ หรือเพิ่มข้อความ','Space + drag · scroll':'Space + ลาก · เลื่อนล้อเมาส์','Ctrl/⌘ + scroll':'Ctrl/⌘ + เลื่อนล้อเมาส์','Zoom':'ซูม','Zoom · fit all · zoom to selection · fly to frame':'ซูม · พอดีจอ · ซูมไปที่ที่เลือก · ไปยังเฟรม','Make the selection bigger / smaller':'ขยาย / ย่อสิ่งที่เลือก','Drag · Shift-drag · Alt-drag':'ลาก · Shift-ลาก · Alt-ลาก','Move · move along one axis · move a copy':'ย้าย · ย้ายแนวเดียว · ลากสำเนา','Arrows · Shift · Alt':'ปุ่มลูกศร · Shift · Alt','Nudge 1 · 10 · 50 px':'ขยับ 1 · 10 · 50 px','Tidy · present · look':'จัดเรียง · นำเสนอ · รูปลักษณ์','Undo · duplicate · copy · paste · all':'เลิกทำ · สำเนา · คัดลอก · วาง · ทั้งหมด','Next / previous frame':'เฟรมถัดไป / ก่อนหน้า','Jump to the command bar':'ไปที่ช่องพิมพ์','Find a shape by name':'ค้นหารูปจากชื่อ','Group · ungroup · lock':'จัดกลุ่ม · ยกเลิกกลุ่ม · ล็อก','Hover a shape → drag or click a +':'ชี้ที่รูป แล้วลากหรือคลิกปุ่ม +','Connect a new shape':'เพิ่มรูปใหม่ที่เชื่อมกัน','Hold Ctrl/⌘ while dragging':'กด Ctrl/⌘ ค้างขณะลาก','Move without snapping':'ย้ายโดยไม่ดูดติด','Paste or drop a picture':'วางหรือลากรูปภาพมาใส่','Drag the ◇ on an arrow · the ○ above a shape':'ลาก ◇ บนลูกศร · ลาก ○ เหนือรูป','Bend the arrow · rotate (Shift: 15° steps)':'ดัดลูกศร · หมุนรูป (Shift: ทีละ 15°)','Type a table; Tab moves between cells':'พิมพ์เป็นตาราง กด Tab เพื่อไปช่องถัดไป','Add an image':'เพิ่มรูปภาพ','Open a .canvy file · save to a file':'เปิดไฟล์ .canvy · บันทึกเป็นไฟล์',
 'A blank page. Your move.':'หน้าว่างพร้อมแล้ว เริ่มเลย','Draw with the tools on the left, right-click for the quick menu, or type a line at the bottom.':'วาดด้วยเครื่องมือด้านซ้าย คลิกขวาเพื่อเปิดเมนูด่วน หรือพิมพ์ที่ช่องด้านล่าง','Templates…':'เทมเพลต…','Web app':'เว็บแอป','Login flow':'ขั้นตอนล็อกอิน',
 'Diagrams are saved in this browser only. Save a .canvy file to keep a copy or move it to another device.':'ไดอะแกรมถูกบันทึกในเบราว์เซอร์นี้เท่านั้น บันทึกเป็นไฟล์ .canvy เพื่อเก็บสำรองหรือย้ายไปเครื่องอื่น','Diagrams are saved in this browser only. Export a JSON backup to move them to another device.':'ไดอะแกรมถูกบันทึกในเบราว์เซอร์นี้เท่านั้น ถ้าจะย้ายไปเครื่องอื่นให้ export เป็น JSON','+ New diagram':'+ ไดอะแกรมใหม่','Templates':'เทมเพลต','Import JSON':'นำเข้า JSON','Close':'ปิด','Delete':'ลบ','Sure?':'แน่ใจ?',
 'Insert':'แทรก','Search all blocks: cache, queue, gear, ผู้ใช้…':'ค้นหาบล็อก: cache, queue, ผู้ใช้, ฐานข้อมูล…','Sections':'ส่วน','Systems':'ระบบ','Data & APIs':'ข้อมูลและ API','Notes':'โน้ต','Patterns':'แพตเทิร์น','Icons':'ไอคอน',
@@ -666,7 +674,7 @@ const TH={
 'Nothing matches. Try “db”, “queue” or “ผู้ใช้”.':'ไม่พบบล็อกที่ตรง ลองคำว่า “db”, “queue” หรือ “ผู้ใช้”',
 // toasts
 'Browser storage is full. Export a JSON backup and delete old diagrams.':'พื้นที่เก็บในเบราว์เซอร์เต็มแล้ว ให้ export เป็น JSON แล้วลบไดอะแกรมเก่า','That diagram could not be found':'ไม่พบไดอะแกรมนั้น','Diagram deleted':'ลบไดอะแกรมแล้ว','That file is not a Canvy JSON export':'ไฟล์นี้ไม่ใช่ไฟล์ JSON จาก Canvy','No changes since the last version':'ไม่มีอะไรเปลี่ยนจากเวอร์ชันล่าสุด','That version matches the canvas':'เวอร์ชันนี้เหมือนกับที่อยู่บนผืนผ้าใบ','Version restored. Undo is available.':'กู้คืนเวอร์ชันแล้ว กดเลิกทำได้',
-'Nothing to export yet':'ยังไม่มีอะไรให้ส่งออก','No shapes to export yet':'ยังไม่มีรูปให้ส่งออก','PNG export failed in this browser. Try SVG.':'ส่งออก PNG ไม่ได้ในเบราว์เซอร์นี้ ลองใช้ SVG','Select three or more to distribute':'เลือก 3 ชิ้นขึ้นไปเพื่อเว้นระยะ','Tidy arranges shapes that are connected by arrows':'การจัดเรียงใช้กับรูปที่เชื่อมกันด้วยลูกศร','Those shapes and arrows are already on the canvas':'รูปและลูกศรเหล่านั้นมีอยู่แล้ว','Nothing to draw yet. Try: user:Customer -> API -> db:Orders':'ยังไม่มีอะไรให้วาด ลองพิมพ์: user:ลูกค้า -> API -> db:คำสั่งซื้อ','That share link looks broken or was cut short. Ask for the link again, or a JSON export.':'ลิงก์แชร์นี้เสียหรือถูกตัดขาด ขอลิงก์ใหม่หรือขอไฟล์ JSON แทน','Saved in this browser.':'บันทึกในเบราว์เซอร์นี้แล้ว','New diagrams flow top to bottom':'ไดอะแกรมใหม่จะเรียงจากบนลงล่าง','New diagrams flow left to right':'ไดอะแกรมใหม่จะเรียงจากซ้ายไปขวา','Language: English':'ภาษา: English','Group':'จัดกลุ่ม','Ungroup':'ยกเลิกกลุ่ม','Lock':'ล็อก','Unlock':'ปลดล็อก','Grouped':'จัดกลุ่มแล้ว','Ungrouped':'ยกเลิกกลุ่มแล้ว','Locked. Right-click it to unlock.':'ล็อกแล้ว คลิกขวาที่รูปเพื่อปลดล็อก','Unlocked':'ปลดล็อกแล้ว','Select two or more to group':'เลือก 2 ชิ้นขึ้นไปเพื่อจัดกลุ่ม','Type a name to find it':'พิมพ์ชื่อเพื่อค้นหา','Overview — click to jump':'ภาพรวม — คลิกเพื่อไปยังจุดนั้น','Images are left out of links. Save a .canvy file to share pictures too.':'ลิงก์จะไม่รวมรูปภาพ ถ้าจะแชร์รูปด้วยให้บันทึกเป็นไฟล์ .canvy','Save file…':'บันทึกไฟล์…','Open file…':'เปิดไฟล์…','Saved to':'บันทึกลง','Save to a .canvy file — Ctrl/⌘ Shift S':'บันทึกเป็นไฟล์ .canvy — Ctrl/⌘ Shift S','Open a .canvy or .json file — Ctrl/⌘ O':'เปิดไฟล์ .canvy หรือ .json — Ctrl/⌘ O','Updated from another tab':'อัปเดตจากอีกแท็บแล้ว','A new version of Canvy is ready':'Canvy มีเวอร์ชันใหม่แล้ว','Reload':'โหลดใหม่','Ready to work offline':'พร้อมใช้งานแบบออฟไลน์แล้ว','Untitled diagram':'ไดอะแกรมไม่มีชื่อ','Preview':'ตัวอย่าง','Copy image':'คัดลอกรูป','Image copied':'คัดลอกรูปแล้ว','Download preview card':'ดาวน์โหลดภาพการ์ด','Paste the image next to the link so people see the diagram before they open it.':'วางรูปคู่กับลิงก์ คนรับจะเห็นไดอะแกรมก่อนเปิด','Switched to English':'Switched to English'
+'Nothing to export yet':'ยังไม่มีอะไรให้ส่งออก','No shapes to export yet':'ยังไม่มีรูปให้ส่งออก','PNG export failed in this browser. Try SVG.':'ส่งออก PNG ไม่ได้ในเบราว์เซอร์นี้ ลองใช้ SVG','Select three or more to distribute':'เลือก 3 ชิ้นขึ้นไปเพื่อเว้นระยะ','Tidy arranges shapes that are connected by arrows':'การจัดเรียงใช้กับรูปที่เชื่อมกันด้วยลูกศร','Those shapes and arrows are already on the canvas':'รูปและลูกศรเหล่านั้นมีอยู่แล้ว','Nothing to draw yet. Try: user:Customer -> API -> db:Orders':'ยังไม่มีอะไรให้วาด ลองพิมพ์: user:ลูกค้า -> API -> db:คำสั่งซื้อ','That share link looks broken or was cut short. Ask for the link again, or a JSON export.':'ลิงก์แชร์นี้เสียหรือถูกตัดขาด ขอลิงก์ใหม่หรือขอไฟล์ JSON แทน','Saved in this browser.':'บันทึกในเบราว์เซอร์นี้แล้ว','New diagrams flow top to bottom':'ไดอะแกรมใหม่จะเรียงจากบนลงล่าง','New diagrams flow left to right':'ไดอะแกรมใหม่จะเรียงจากซ้ายไปขวา','Language: English':'ภาษา: English','Card':'การ์ด','Table':'ตาราง','Straighten arrow':'ดัดลูกศรให้ตรง','Reset rotation':'ยกเลิกการหมุน','Added a table':'เพิ่มตารางแล้ว','Add a row':'เพิ่มแถว','Remove the last row':'ลบแถวสุดท้าย','Add a column':'เพิ่มคอลัมน์','Remove the last column':'ลบคอลัมน์สุดท้าย','+ row':'+ แถว','− row':'− แถว','+ col':'+ คอลัมน์','− col':'− คอลัมน์','Group':'จัดกลุ่ม','Ungroup':'ยกเลิกกลุ่ม','Lock':'ล็อก','Unlock':'ปลดล็อก','Grouped':'จัดกลุ่มแล้ว','Ungrouped':'ยกเลิกกลุ่มแล้ว','Locked. Right-click it to unlock.':'ล็อกแล้ว คลิกขวาที่รูปเพื่อปลดล็อก','Unlocked':'ปลดล็อกแล้ว','Select two or more to group':'เลือก 2 ชิ้นขึ้นไปเพื่อจัดกลุ่ม','Type a name to find it':'พิมพ์ชื่อเพื่อค้นหา','Overview — click to jump':'ภาพรวม — คลิกเพื่อไปยังจุดนั้น','Images are left out of links. Save a .canvy file to share pictures too.':'ลิงก์จะไม่รวมรูปภาพ ถ้าจะแชร์รูปด้วยให้บันทึกเป็นไฟล์ .canvy','Save file…':'บันทึกไฟล์…','Open file…':'เปิดไฟล์…','Saved to':'บันทึกลง','Save to a .canvy file — Ctrl/⌘ Shift S':'บันทึกเป็นไฟล์ .canvy — Ctrl/⌘ Shift S','Open a .canvy or .json file — Ctrl/⌘ O':'เปิดไฟล์ .canvy หรือ .json — Ctrl/⌘ O','Updated from another tab':'อัปเดตจากอีกแท็บแล้ว','A new version of Canvy is ready':'Canvy มีเวอร์ชันใหม่แล้ว','Reload':'โหลดใหม่','Ready to work offline':'พร้อมใช้งานแบบออฟไลน์แล้ว','Untitled diagram':'ไดอะแกรมไม่มีชื่อ','Preview':'ตัวอย่าง','Copy image':'คัดลอกรูป','Image copied':'คัดลอกรูปแล้ว','Download preview card':'ดาวน์โหลดภาพการ์ด','Paste the image next to the link so people see the diagram before they open it.':'วางรูปคู่กับลิงก์ คนรับจะเห็นไดอะแกรมก่อนเปิด','Switched to English':'Switched to English'
 };
 let LANG=(()=>{try{const q=new URLSearchParams(location.search).get('lang');if(q==='th'||q==='en')return q}catch(_){}return null})()||LS.get('canvy:lang',null)||((navigator.language||'').toLowerCase().startsWith('th')?'th':'en');
 const T=s=>LANG==='th'&&TH[s]?TH[s]:s;
@@ -757,7 +765,15 @@ function openDoc(d){
 function loadDoc(id){const d=STORE.get(K.doc(id),null);if(d)openDoc(d);else toast('That diagram could not be found')}
 
 /* ============================== geometry ============================== */
+const ROT=t=>SHAPES.has(t)||t==='text'||t==='image';
+function rotPt(p,c,deg){const a=deg*Math.PI/180,cs=Math.cos(a),sn=Math.sin(a),dx=p[0]-c[0],dy=p[1]-c[1];return[c[0]+dx*cs-dy*sn,c[1]+dx*sn+dy*cs]}
+const rotOf=el=>el.rot&&ROT(el.type)?el.rot:0;
 function bbox(el){
+  const b=baseBox(el),r=rotOf(el);if(!r)return b;
+  const c=center(el),P=[[b.x,b.y],[b.x+b.w,b.y],[b.x,b.y+b.h],[b.x+b.w,b.y+b.h]].map(q=>rotPt(q,c,r));
+  const xs=P.map(q=>q[0]),ys=P.map(q=>q[1]),x0=Math.min(...xs),y0=Math.min(...ys);return{x:x0,y:y0,w:Math.max(...xs)-x0,h:Math.max(...ys)-y0};
+}
+function baseBox(el){
   if(el.type==='arrow'){const g=arrowGeom(el);let x0=1e9,y0=1e9,x1=-1e9,y1=-1e9;for(const[x,y]of g.poly){x0=Math.min(x0,x);y0=Math.min(y0,y);x1=Math.max(x1,x);y1=Math.max(y1,y)}return{x:x0,y:y0,w:x1-x0,h:y1-y0}}
   if(el.type==='draw'){let x0=1e9,y0=1e9,x1=-1e9,y1=-1e9;for(const[x,y]of el.points){x0=Math.min(x0,x);y0=Math.min(y0,y);x1=Math.max(x1,x);y1=Math.max(y1,y)}return{x:x0,y:y0,w:x1-x0,h:y1-y0}}
   if(LABEL_BELOW.has(el.type)&&el.label){const m=measure(el.label,FS[el.fs||'m']);const w=Math.max(el.w,m.w);return{x:el.x+el.w/2-w/2,y:el.y,w,h:el.h+m.h+6}}
@@ -767,7 +783,8 @@ function bbox(el){
 const rectOf=el=>({x:el.x,y:el.y,w:el.w,h:el.h});
 function unionBox(list){if(!list.length)return null;let x0=1e9,y0=1e9,x1=-1e9,y1=-1e9;for(const e of list){const b=bbox(e);x0=Math.min(x0,b.x);y0=Math.min(y0,b.y);x1=Math.max(x1,b.x+b.w);y1=Math.max(y1,b.y+b.h)}return{x:x0,y:y0,w:x1-x0,h:y1-y0}}
 const center=el=>[el.x+el.w/2,el.y+el.h/2];
-function edgePoint(el,to){
+function edgePoint(el,to){const r=rotOf(el);if(r){const c=center(el);return rotPt(edgePointRaw(el,rotPt(to,c,-r)),c,r)}return edgePointRaw(el,to)}
+function edgePointRaw(el,to){
   const [cx,cy]=center(el),dx=to[0]-cx,dy=to[1]-cy;if(!dx&&!dy)return[cx,cy];
   const g=7,hw=el.w/2+g,hh=el.h/2+g;let t;
   if(el.type==='ellipse'||el.type==='cloud')t=1/Math.sqrt((dx/hw)**2+(dy/hh)**2);
@@ -775,7 +792,8 @@ function edgePoint(el,to){
   else t=1/Math.max(Math.abs(dx)/hw,Math.abs(dy)/hh);
   t=Math.min(t,1);return[cx+dx*t,cy+dy*t];
 }
-function sidePoint(el,to,horiz){const[cx,cy]=center(el),g=7;return horiz?[to[0]>=cx?el.x+el.w+g:el.x-g,cy]:[cx,to[1]>=cy?el.y+el.h+g:el.y-g]}
+function sidePoint(el,to,horiz){const r=rotOf(el);if(r){const c=center(el);return rotPt(sidePointRaw(el,rotPt(to,c,-r),horiz),c,r)}return sidePointRaw(el,to,horiz)}
+function sidePointRaw(el,to,horiz){const[cx,cy]=center(el),g=7;return horiz?[to[0]>=cx?el.x+el.w+g:el.x-g,cy]:[cx,to[1]>=cy?el.y+el.h+g:el.y-g]}
 // arrow geometry: straight (gently bowed when drawn), elbow, or self-loop
 function arrowGeom(a){
   const s=a.start&&byId(a.start),e=a.end&&byId(a.end);
@@ -794,6 +812,9 @@ function arrowGeom(a){
     let sd=dir(poly[1],poly[0]);if(!Math.hypot(poly[1][0]-poly[0][0],poly[1][1]-poly[0][1]))sd=dir(poly[2],poly[0]);
     return{kind:'elbow',p1,p2,poly,mid:[(poly[1][0]+poly[2][0])/2,(poly[1][1]+poly[2][1])/2],endDir:ed,startDir:sd};
   }
+  if(a.bend){const B=a.bend;if(s)p1=edgePoint(s,B);if(e)p2=edgePoint(e,B);const C=[2*B[0]-(p1[0]+p2[0])/2,2*B[1]-(p1[1]+p2[1])/2],poly=[];
+    for(let i=0;i<=20;i++){const t=i/20,u=1-t;poly.push([u*u*p1[0]+2*u*t*C[0]+t*t*p2[0],u*u*p1[1]+2*u*t*C[1]+t*t*p2[1]])}
+    const nz=(x,y)=>{const L=Math.hypot(x,y)||1;return[x/L,y/L]};return{kind:'curve',p1,p2,c:C,poly,mid:B,endDir:nz(p2[0]-C[0],p2[1]-C[1]),startDir:nz(p1[0]-C[0],p1[1]-C[1])}}
   if(s)p1=edgePoint(s,c2);if(e)p2=edgePoint(e,c1);
   const L=Math.hypot(p2[0]-p1[0],p2[1]-p1[1])||1,d=[(p2[0]-p1[0])/L,(p2[1]-p1[1])/L];
   return{kind:'line',p1,p2,poly:[p1,p2],mid:[(p1[0]+p2[0])/2,(p1[1]+p2[1])/2],endDir:d,startDir:[-d[0],-d[1]]};
@@ -810,12 +831,12 @@ function hitTest(p,opts={}){
   const tol=7/view.z;
   for(let i=els.length-1;i>=0;i--){const el=els[i];
     if(el.type==='frame')continue;
-    if(opts.shapesOnly&&!(SHAPES.has(el.type)||el.type==='text'||el.type==='image'))continue;
+    if(opts.shapesOnly&&!(SHAPES.has(el.type)||el.type==='text'||el.type==='image'||el.type==='table'))continue;
     if(el.locked&&!opts.withLocked)continue;
     if(opts.exclude&&el.id===opts.exclude)continue;
     if(el.type==='arrow'){if(distPoly(p,arrowGeom(el).poly)<tol+2)return el}
     else if(el.type==='draw'){const pts=el.points,w=el.hl?9:SW[el.sw||2];for(let j=1;j<pts.length;j++)if(distSeg(p,pts[j-1],pts[j])<tol+w)return el;if(pts.length===1&&Math.hypot(p[0]-pts[0][0],p[1]-pts[0][1])<tol+w)return el}
-    else{const b=bbox(el);if(p[0]>=b.x-tol&&p[0]<=b.x+b.w+tol&&p[1]>=b.y-tol&&p[1]<=b.y+b.h+tol)return el}
+    else{const q=rotOf(el)?rotPt(p,center(el),-el.rot):p,b=baseBox(el);if(q[0]>=b.x-tol&&q[0]<=b.x+b.w+tol&&q[1]>=b.y-tol&&q[1]<=b.y+b.h+tol)return el}
   }
   if(!opts.shapesOnly)for(let i=els.length-1;i>=0;i--){const el=els[i];if(el.type==='frame'&&(!el.locked||opts.withLocked)&&hitFrame(el,p,tol))return el}
   return null;
@@ -855,8 +876,47 @@ function wrapText(text,size,bold,maxW){
   }
   return out.join('\n');
 }
-const shownLabel=el=>SHAPES.has(el.type)&&!LABEL_BELOW.has(el.type)&&el.type!=='icon'?wrapText(el.label,FS[el.fs||'m'],el.bold,innerW(el)):el.label;
+const shownLabel=el=>SHAPES.has(el.type)&&!LABEL_BELOW.has(el.type)&&el.type!=='icon'&&el.type!=='card'?wrapText(el.label,FS[el.fs||'m'],el.bold,innerW(el)):el.label;
+// tables: rows of cells; column widths and row heights follow the text
+function layoutTable(el){
+  const size=FS[el.fs||'s'],R=el.rows||[[' ']],nc=Math.max(...R.map(r=>r.length));for(const r of R)while(r.length<nc)r.push('');
+  const cw=[];for(let j=0;j<nc;j++){let w=56;for(let i=0;i<R.length;i++)w=Math.max(w,Math.min(300,measure(R[i][j]||' ',size,i===0).w+26));cw.push(Math.ceil(w))}
+  const rh=R.map((r,i)=>Math.max(...r.map((c,j)=>wrapText(c||' ',size,i===0,cw[j]-24).split('\n').length))*size*LH+16);
+  el.colW=cw;el.rowH=rh.map(Math.ceil);el.w=cw.reduce((a,b)=>a+b,0);el.h=el.rowH.reduce((a,b)=>a+b,0);
+}
+function tableSvg(el,sc){
+  const s=S(),size=FS[el.fs||'s'],R=el.rows,cw=el.colW,rh=el.rowH;if(!cw||!rh)return'';let o='';
+  const d=smooth(roundRect(el.x,el.y,el.w,el.h,8),true);
+  if(el.fill&&el.fill!=='none')o+=`<path d="M${f1(el.x)} ${f1(el.y+rh[0])}V${f1(el.y+8)}Q${f1(el.x)} ${f1(el.y)} ${f1(el.x+8)} ${f1(el.y)}H${f1(el.x+el.w-8)}Q${f1(el.x+el.w)} ${f1(el.y)} ${f1(el.x+el.w)} ${f1(el.y+8)}V${f1(el.y+rh[0])}Z" fill="${fillCol(el.fill)}" fill-opacity="${s.fillOp}"/>`;
+  o+=`<path d="${d}" fill="none" stroke="${sc}" stroke-width="${swOf(el)}"/>`;
+  let y=el.y;for(let i=0;i<rh.length-1;i++){y+=rh[i];o+=`<path d="M${f1(el.x)} ${f1(y)}H${f1(el.x+el.w)}" stroke="${sc}" stroke-opacity="${i===0?.8:.3}" stroke-width="${i===0?1.4:1}"/>`}
+  let x=el.x;for(let j=0;j<cw.length-1;j++){x+=cw[j];o+=`<path d="M${f1(x)} ${f1(el.y)}V${f1(el.y+el.h)}" stroke="${sc}" stroke-opacity=".3" stroke-width="1"/>`}
+  y=el.y;R.forEach((r,i)=>{let x=el.x;r.forEach((c,j)=>{if(c&&!(editing===el.id&&editCell&&editCell.r===i&&editCell.c===j)){const t=wrapText(c,size,i===0,cw[j]-24).split('\n'),y0=y+(rh[i]-t.length*size*LH)/2;
+    o+=`<text font-family="${esc(s.font)}" font-weight="${i===0?Math.min(800,s.weight+200):s.weight}" font-size="${size}" fill="${sc}">`;t.forEach((l,k)=>{o+=`<tspan x="${f1(x+12)}" y="${f1(y0+size*1.0+k*size*LH)}">${esc(l)||' '}</tspan>`});o+='</text>'}x+=cw[j]});y+=rh[i]});
+  return o;
+}
+function cellAt(el,p){if(!el.colW)return null;let x=el.x,c=-1,y=el.y,r=-1;for(let j=0;j<el.colW.length;j++){if(p[0]>=x&&p[0]<x+el.colW[j]){c=j;break}x+=el.colW[j]}for(let i=0;i<el.rowH.length;i++){if(p[1]>=y&&p[1]<y+el.rowH[i]){r=i;break}y+=el.rowH[i]}return r<0||c<0?null:{r,c}}
+function cellRect(el,cell){let x=el.x,y=el.y;for(let j=0;j<cell.c;j++)x+=el.colW[j];for(let i=0;i<cell.r;i++)y+=el.rowH[i];return{x,y,w:el.colW[cell.c],h:el.rowH[cell.r]}}
+function makeTable(rows,at){const el={id:uid(),type:'table',x:0,y:0,w:10,h:10,rows,fill:'blue',stroke:'ink',sw:1,fs:'s',seed:seed()};layoutTable(el);el.x=at[0]-el.w/2;el.y=at[1]-el.h/2;return el}
+function tableEdit(op){const el=selected().find(e=>e.type==='table');if(!el)return;pushUndo();const R=el.rows;
+  if(op==='+row')R.push(R[0].map(()=>''));if(op==='-row'&&R.length>1)R.pop();if(op==='+col')R.forEach((r,i)=>r.push(i?'':'Column'));if(op==='-col'&&R[0].length>1)R.forEach(r=>r.pop());
+  layoutTable(el);commit()}
+function cardLayout(el){
+  const size=FS[el.fs||'m'],bs=Math.max(13,size-4),[title,...body]=String(el.label||'').split('\n'),iw=el.w-32;
+  const t=wrapText(title||' ',size,true,iw),b=body.length?wrapText(body.join('\n'),bs,false,iw):'';
+  const th=t.split('\n').length*size*LH,bh=b?b.split('\n').length*bs*LH:0;
+  return{size,bs,t,b,th,bh,h:Math.ceil(16+th+(b?14+bh:0)+16)};
+}
+function cardSvg(el,sc){
+  const s=S(),L=cardLayout(el),x=el.x+16;let o='',y=el.y+16;const wt=Math.min(800,s.weight+200);
+  o+=`<text font-family="${esc(s.font)}" font-weight="${wt}" font-size="${L.size}" fill="${sc}">`;L.t.split('\n').forEach((l,i)=>{o+=`<tspan x="${f1(x)}" y="${f1(y+L.size*.95+i*L.size*LH)}">${esc(l)||' '}</tspan>`});o+='</text>';
+  if(L.b){y+=L.th+6;o+=`<path d="M${f1(el.x+12)} ${f1(y)}H${f1(el.x+el.w-12)}" stroke="${sc}" stroke-opacity=".3" stroke-width="1"/>`;y+=8;
+    o+=`<text font-family="${esc(s.font)}" font-weight="${Math.max(400,s.weight-200)}" font-size="${L.bs}" fill="${sc}" fill-opacity=".85">`;L.b.split('\n').forEach((l,i)=>{o+=`<tspan x="${f1(x)}" y="${f1(y+L.bs*.95+i*L.bs*LH)}">${esc(l)||' '}</tspan>`});o+='</text>'}
+  return o;
+}
 function fitText(el){
+  if(el.type==='card'){const L=cardLayout(el);if(L.h>el.h)el.h=L.h;return}
+  if(el.type==='table'){layoutTable(el);return}
   if(el.type==='text'){const m=measure(el.label,FS[el.fs||'m'],el.bold);el.w=Math.max(8,m.w);el.h=m.h;return}
   if(!SHAPES.has(el.type)||!el.label||LABEL_BELOW.has(el.type))return;
   const size=FS[el.fs||'m'],m=measure(el.label,size,el.bold),[px,py]=padFor(el.type,m);
@@ -866,7 +926,7 @@ function fitText(el){
   const mh=measure(shownLabel(el),size,el.bold),nh=Math.ceil(mh.h+py);
   if(nh>el.h){el.y-=(nh-el.h)/2;el.h=nh}
 }
-function remeasureAll(){for(const el of els)if(el.type==='text')fitText(el)}
+function remeasureAll(){for(const el of els)if(el.type==='text'||el.type==='table')fitText(el)}
 
 /* ============================== hand-drawn rendering ============================== */
 function rng(seed){let a=(seed>>>0)||1;return()=>{a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
@@ -882,7 +942,7 @@ function roundRect(x,y,w,h,r){const P=Math.PI,o=[];r=Math.max(1,Math.min(r,w/2,h
 function outline(el){
   const s=S(),{x,y,w,h}=el,P=Math.PI,cx=x+w/2,cy=y+h/2;
   switch(el.type){
-    case'rect':return{closed:roundRect(x,y,w,h,s.radius)};
+    case'rect':case'card':return{closed:roundRect(x,y,w,h,s.radius)};
     case'frame':return{closed:roundRect(x,y,w,h,14)};
     case'sticky':return{closed:roundRect(x,y,w,h,3)};
     case'pill':return{closed:roundRect(x,y,w,h,h/2)};
@@ -971,6 +1031,9 @@ function renderArrow(el){
       d+='L'+pt(u(b,a,rr))+'Q'+pt(b)+' '+pt(u(b,c,rr))}
     d+='L'+pt(P[P.length-1]);
     o+=`<path d="${d}" fill="none" stroke="${sc}" stroke-width="${sw}"${op}${dash} stroke-linecap="round" stroke-linejoin="round"/>`;
+  }else if(g.kind==='curve'){
+    for(let p=0;p<s.passes;p++){const c=[g.c[0]+J(r,s.rough*2),g.c[1]+J(r,s.rough*2)];
+      o+=`<path d="M${pt(g.p1)}Q${pt(c)} ${pt(g.p2)}" fill="none" stroke="${sc}" stroke-width="${p?sw*.7:sw}"${op}${dash} stroke-linecap="round"${p?' opacity=".75"':''}/>`}
   }else{
     const[p1,p2]=[g.p1,g.p2],dx=p2[0]-p1[0],dy=p2[1]-p1[1],L=Math.hypot(dx,dy);if(L<1)return'';
     const nx=-dy/L,ny=dx/L;
@@ -990,7 +1053,7 @@ function renderArrow(el){
 function hlCol(k){const s=S();return k==='accent'?(s.dark?'#ff7aa8':'#ff8fa3'):k==='blue'?'#7cc4ff':k==='green'?'#8be08b':'#ffd54a'}
 function renderEl(el,frameIdx){
   const s=S(),sc=strokeCol(el.stroke,el),sw=swOf(el),op=s.dark?' stroke-opacity=".92"':'';
-  let o=`<g data-id="${el.id}">`;
+  const rr=rotOf(el);let o=`<g data-id="${el.id}"${rr?` transform="rotate(${f1(rr)} ${pt(center(el))})"`:''}>`;
   if(el.type==='frame'){
     const d=smooth(outline(el).closed,true);
     o+=`<path d="${d}" fill="${s.dark?'#ffffff':'#000000'}" fill-opacity="${s.dark?.035:.018}" stroke="${s.stroke}" stroke-opacity=".5" stroke-width="1.4" stroke-dasharray="8 6"/>`;
@@ -1005,7 +1068,8 @@ function renderEl(el,frameIdx){
       for(let k=-el.h;k<el.w;k+=7)o+=`<path d="M${f1(el.x+k)} ${f1(el.y+el.h)}L${f1(el.x+k+el.h)} ${f1(el.y)}"/>`;o+='</g>'}
     if(el.type==='sticky'){o+=`<path d="M${f1(el.x+el.w-18)} ${f1(el.y+el.h)}L${f1(el.x+el.w)} ${f1(el.y+el.h-18)}" stroke="${sc}" stroke-opacity=".35" stroke-width="1.2"/>`}
     if(el.label&&editing!==el.id){
-      if(LABEL_BELOW.has(el.type)){const size=FS[el.fs||'m'],m=measure(el.label,size,el.bold);o+=labelSvg(el.label,el.x+el.w/2,el.y+el.h+6+m.h/2,size,sc,'middle',el.bold)}
+      if(el.type==='card'){o+=cardSvg(el,sc)}
+      else if(LABEL_BELOW.has(el.type)){const size=FS[el.fs||'m'],m=measure(el.label,size,el.bold);o+=labelSvg(el.label,el.x+el.w/2,el.y+el.h+6+m.h/2,size,sc,'middle',el.bold)}
       else{const cyOff=el.type==='cylinder'?Math.min(16,el.h*.18)/2:el.type==='document'?-Math.min(10,el.h*.12)/2:0;o+=labelSvg(shownLabel(el),el.x+el.w/2,el.y+el.h/2+cyOff,FS[el.fs||'m'],sc,'middle',el.bold)}
     }
     if(n>1)o+=`<g><rect x="${f1(el.x+el.w+7*(n-1)-14)}" y="${f1(el.y-7*(n-1)-9)}" width="24" height="16" rx="8" fill="${s.dark?'#f1eee6':'#171717'}"/><text x="${f1(el.x+el.w+7*(n-1)-2)}" y="${f1(el.y-7*(n-1)-1)}" text-anchor="middle" dominant-baseline="central" font-family="${esc(CLEAN)}" font-weight="700" font-size="10" fill="${s.dark?'#171717':'#fff'}">×${n}</text></g>`;
@@ -1015,6 +1079,7 @@ function renderEl(el,frameIdx){
       else if(el.mark==='no')o+=`<circle cx="${mx}" cy="${my}" r="11" fill="#c8432b"/><path d="M${mx-4.5} ${my-4.5}l9 9M${mx+4.5} ${my-4.5}l-9 9" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/>`;
       else o+=`<path d="M${mx} ${my-12}L${mx+12} ${my+9}H${mx-12}Z" fill="#e4a11b" stroke-linejoin="round"/><path d="M${mx} ${my-4}v6" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/><circle cx="${mx}" cy="${my+5.5}" r="1.3" fill="#fff"/>`;
     }
+  }else if(el.type==='table'){o+=tableSvg(el,sc)
   }else if(el.type==='image'){
     o+=`<image href="${esc(el.src||'')}" x="${f1(el.x)}" y="${f1(el.y)}" width="${f1(el.w)}" height="${f1(el.h)}" preserveAspectRatio="none"/>`;
     if(el.border)o+=`<rect x="${f1(el.x)}" y="${f1(el.y)}" width="${f1(el.w)}" height="${f1(el.h)}" rx="4" fill="none" stroke="${sc}" stroke-width="${sw}"/>`;
@@ -1078,7 +1143,9 @@ function renderOverlay(){
     if(el.type==='arrow'){const g=arrowGeom(el);
       o+=`<path d="M${g.poly.map(pt).join('L')}" stroke="${ac}" stroke-width="${lw}" stroke-dasharray="${4/z} ${4/z}" fill="none"/>`;
       if(list.length===1&&g.kind!=='loop')for(const p of[g.p1,g.p2])o+=`<circle cx="${f1(p[0])}" cy="${f1(p[1])}" r="${5/z}" fill="#fff" stroke="${ac}" stroke-width="${lw}"/>`;
-    }else{const b=el.type==='frame'?rectOf(el):bbox(el),pd=6/z;o+=`<rect x="${b.x-pd}" y="${b.y-pd}" width="${b.w+2*pd}" height="${b.h+2*pd}" rx="${4/z}" fill="none" stroke="${ac}" stroke-width="${lw}" stroke-dasharray="${5/z} ${4/z}"/>`;
+      if(list.length===1&&(g.kind==='line'||g.kind==='curve')){const m=g.mid,d=5.5/z;o+=`<path d="M${f1(m[0])} ${f1(m[1]-d)}L${f1(m[0]+d)} ${f1(m[1])}L${f1(m[0])} ${f1(m[1]+d)}L${f1(m[0]-d)} ${f1(m[1])}Z" fill="${el.bend?ac:'#fff'}" stroke="${ac}" stroke-width="${lw}"/>`}
+    }else{const r=rotOf(el),b=el.type==='frame'?rectOf(el):r?baseBox(el):bbox(el),pd=6/z;o+=`<rect x="${b.x-pd}" y="${b.y-pd}" width="${b.w+2*pd}" height="${b.h+2*pd}" rx="${4/z}" fill="none" stroke="${ac}" stroke-width="${lw}" stroke-dasharray="${5/z} ${4/z}"${r?` transform="rotate(${f1(r)} ${pt(center(el))})"`:''}/>`;
+      if(list.length===1&&ROT(el.type)){const h=rotHandle(el),t=rotPt([el.x+el.w/2,el.y-pd],center(el),r);o+=`<path d="M${pt(t)}L${pt(h)}" stroke="${ac}" stroke-width="${lw}"/><circle cx="${f1(h[0])}" cy="${f1(h[1])}" r="${6/z}" fill="#fff" stroke="${ac}" stroke-width="${lw}"/>`}
       if(list.length===1&&RESIZABLE(el.type))for(const[hx,hy]of corners(el))o+=`<rect x="${hx-hs/2}" y="${hy-hs/2}" width="${hs}" height="${hs}" rx="${2/z}" fill="#fff" stroke="${ac}" stroke-width="${lw}"/>`}
   }
   if(guides.length){const[vx0,vy0]=toWorld(0,0),[vx1,vy1]=toWorld(innerWidth,innerHeight);for(const g of guides){if(g.x!=null)o+=`<path d="M${f1(g.x)} ${f1(vy0)}V${f1(vy1)}" stroke="${ac}" stroke-width="${lw}" stroke-dasharray="${3/z} ${3/z}" opacity=".8"/>`;else o+=`<path d="M${f1(vx0)} ${f1(g.y)}H${f1(vx1)}" stroke="${ac}" stroke-width="${lw}" stroke-dasharray="${3/z} ${3/z}" opacity=".8"/>`}}
@@ -1087,7 +1154,8 @@ function renderOverlay(){
   if(drag&&(drag.kind==='arrow'||drag.kind==='arrowEnd')&&drag.target){const t=byId(drag.target);if(t){const b=bbox(t),pd=8/z;o+=`<rect x="${b.x-pd}" y="${b.y-pd}" width="${b.w+2*pd}" height="${b.h+2*pd}" rx="${10/z}" fill="${ac}" fill-opacity=".07" stroke="${ac}" stroke-width="${lw}"/>`}}
   overlay.innerHTML=o;
 }
-function corners(el){const pd=6/view.z;return[[el.x-pd,el.y-pd,'nw'],[el.x+el.w+pd,el.y-pd,'ne'],[el.x-pd,el.y+el.h+pd,'sw'],[el.x+el.w+pd,el.y+el.h+pd,'se']]}
+function corners(el){const pd=6/view.z,C=[[el.x-pd,el.y-pd,'nw'],[el.x+el.w+pd,el.y-pd,'ne'],[el.x-pd,el.y+el.h+pd,'sw'],[el.x+el.w+pd,el.y+el.h+pd,'se']],r=rotOf(el);if(!r)return C;const c=center(el);return C.map(([x,y,k])=>{const q=rotPt([x,y],c,r);return[q[0],q[1],k]})}
+function rotHandle(el){return rotPt([el.x+el.w/2,el.y-46/view.z],center(el),rotOf(el))}
 let rafPending=false;function scheduleRender(){if(rafPending)return;rafPending=true;requestAnimationFrame(()=>{rafPending=false;render()})}
 function render(){
   world.innerHTML=renderList(els);
@@ -1146,13 +1214,13 @@ function cloneSet(list,dx,dy){
     if(c.type==='arrow'){const g=byId(src.id)?arrowGeom(src):{p1:src.points[0],p2:src.points[1]};
       if(c.start&&map.has(c.start))c.start=map.get(c.start);else{c.points[0]=[g.p1[0]+dx,g.p1[1]+dy];c.start=null}
       if(c.end&&map.has(c.end))c.end=map.get(c.end);else{c.points[1]=[g.p2[0]+dx,g.p2[1]+dy];c.end=null}
-      if(c.start)c.points[0]=[c.points[0][0]+dx,c.points[0][1]+dy];if(c.end)c.points[1]=[c.points[1][0]+dx,c.points[1][1]+dy];
+      if(c.start)c.points[0]=[c.points[0][0]+dx,c.points[0][1]+dy];if(c.end)c.points[1]=[c.points[1][0]+dx,c.points[1][1]+dy];if(c.bend)c.bend=[c.bend[0]+dx,c.bend[1]+dy];
     }else if(c.type==='draw')c.points=c.points.map(([x,y])=>[x+dx,y+dy]);
     else{c.x+=dx;c.y+=dy}});
   return out;
 }
 function moveEl(el,dx,dy,set){
-  if(el.type==='arrow'){
+  if(el.type==='arrow'){if(el.bend)el.bend=[el.bend[0]+dx,el.bend[1]+dy];
     if(!el.start||!set.has(el.start))el.points[0]=[el.points[0][0]+dx,el.points[0][1]+dy];
     if(!el.end||!set.has(el.end))el.points[1]=[el.points[1][0]+dx,el.points[1][1]+dy];
     if(el.start&&!set.has(el.start)){el.points[0]=arrowGeom(el).p1;el.start=null}
@@ -1179,7 +1247,8 @@ function scaleSel(f){
   const sp=([x,y])=>[cx+(x-cx)*f,cy+(y-cy)*f];
   for(const e of list){
     if(e.type==='draw')e.points=e.points.map(p=>sp(p).map(f1));
-    else if(e.type==='arrow'){if(!e.start||!set.has(e.start))e.points[0]=sp(e.points[0]);if(!e.end||!set.has(e.end))e.points[1]=sp(e.points[1])}
+    else if(e.type==='arrow'){if(!e.start||!set.has(e.start))e.points[0]=sp(e.points[0]);if(!e.end||!set.has(e.end))e.points[1]=sp(e.points[1]);if(e.bend)e.bend=sp(e.bend)}
+    else if(e.type==='table'){const order=['s','m','l'],i=order.indexOf(e.fs||'s'),ni=clamp(i+(f>1?1:-1),0,2);e.fs=order[ni];layoutTable(e)}
     else if(e.type==='text'){const order=['s','m','l'],i=order.indexOf(e.fs||'m'),ni=clamp(i+(f>1?1:-1),0,2);const c=sp([e.x,e.y]);e.x=c[0];e.y=c[1];e.fs=order[ni];fitText(e)}
     else{const c=sp(center(e)),w=Math.max(16,e.w*f),h=Math.max(16,e.h*f);e.w=w;e.h=h;e.x=c[0]-w/2;e.y=c[1]-h/2;fitText(e)}
   }
@@ -1216,11 +1285,12 @@ function buildProps(){
   P.addEventListener('click',e=>{
     const b=e.target.closest('button');if(!b)return;
     if(b.dataset.align){alignSel(b.dataset.align);return}
+    if(b.dataset.tbl){tableEdit(b.dataset.tbl);return}
     if(b.dataset.act){emph(b.dataset.act);return}
     const key=['fill','stroke','sw','fs'].find(k=>b.dataset[k]!=null);if(!key)return;
     let v=b.dataset[key];if(key==='sw')v=+v;props[key]=v;saveProps();
     const list=selected();if(!list.length)return;pushUndo();
-    for(const el of list){if(key==='fill'&&!SHAPES.has(el.type))continue;if(key==='fs'&&!(SHAPES.has(el.type)||el.type==='text'||el.type==='arrow'))continue;el[key]=v;if(key==='fs')fitText(el)}
+    for(const el of list){if(key==='fill'&&!(SHAPES.has(el.type)||el.type==='table'))continue;if(key==='fs'&&!(SHAPES.has(el.type)||el.type==='text'||el.type==='arrow'||el.type==='table'))continue;el[key]=v;if(key==='fs')fitText(el)}
     commit();
   });
   $('#pDup').onclick=duplicate;$('#pSmaller').onclick=()=>scaleSel(1/1.2);$('#pBigger').onclick=()=>scaleSel(1.2);$('#pFront').onclick=()=>reorder(true);$('#pDel').onclick=deleteSel;
@@ -1249,8 +1319,9 @@ function renderProps(){
   p.classList.add('show');
   const s=S(),shapes=list.filter(e=>SHAPES.has(e.type)),arrows=list.filter(e=>e.type==='arrow'),hasText=list.some(e=>SHAPES.has(e.type)||e.type==='text'),onlyFrames=list.every(e=>e.type==='frame');
   const show=(id,v)=>{$(id).style.display=v?'flex':'none'};
-  show('#gShape',shapes.length&&shapes.length===list.length&&!shapes.some(e=>e.type==='icon'));show('#gIcon',shapes.length&&shapes.every(e=>e.type==='icon'));if(shapes[0]&&shapes[0].type==='icon')$('#pIcon').value=shapes[0].icon;show('#gFill',shapes.length);show('#gStroke',!onlyFrames);show('#gWidth',!onlyFrames&&list.some(e=>e.type!=='text'));
+  show('#gTable',list.length===1&&list[0].type==='table');show('#gShape',shapes.length&&shapes.length===list.length&&!shapes.some(e=>e.type==='icon'));show('#gIcon',shapes.length&&shapes.every(e=>e.type==='icon'));if(shapes[0]&&shapes[0].type==='icon')$('#pIcon').value=shapes[0].icon;show('#gFill',shapes.length);show('#gStroke',!onlyFrames);show('#gWidth',!onlyFrames&&list.some(e=>e.type!=='text'));
   show('#gSize',hasText);show('#gEmph',shapes.length||list.some(e=>e.type==='text'));show('#gArrow',arrows.length);show('#gScale',true);show('#gAlign',list.filter(e=>e.type!=='arrow').length>=2);
+  if(list.some(e=>e.type==='table')){$('#gFill').style.display='flex';$('#gSize').style.display='flex'}
   $$('#gEmph [data-act]').forEach(b=>{const a=b.dataset.act,need=a!=='bold';b.style.display=need&&!shapes.length?'none':''});
   if(shapes.length)$('#pShape').value=shapes[0].type;
   $$('#gFill .sw').forEach(b=>{const k=b.dataset.fill;if(k!=='none')b.style.background=s.fills[k];b.classList.toggle('on',shapes.every(e=>e.fill===k))});
@@ -1269,7 +1340,8 @@ function placeProps(){
   const p=$('#props');if(!p.classList.contains('show')||innerWidth<=640)return;
   const b=unionBox(selected().map(e=>e.type==='frame'?Object.assign({},e,{type:'rect',y:e.y-30,h:e.h+30}):e));if(!b)return;
   const w=p.offsetWidth,h=p.offsetHeight,sx=b.x*view.z+view.x,sy=b.y*view.z+view.y,sw=b.w*view.z,sh=b.h*view.z;
-  let top=sy-h-16;if(top<66)top=Math.min(innerHeight-h-80,sy+sh+16);if(top<66)top=66;
+  const one=selected().length===1?selected()[0]:null,gap=one&&ROT(one.type)?58:16;
+  let top=sy-h-gap;if(top<66)top=Math.min(innerHeight-h-80,sy+sh+16);if(top<66)top=66;
   p.style.left=clamp(sx+sw/2-w/2,innerWidth>640?72:12,innerWidth-w-12)+'px';p.style.top=top+'px';
 }
 
@@ -1342,6 +1414,8 @@ function openCtx(x,y,el){
   items.push(['dup','Duplicate',mod+'D'],['copy','Copy',mod+'C']);if(clip)items.push(['paste','Paste',mod+'V']);
   items.push('-',['bigger','Make bigger','⇧+'],['smaller','Make smaller','⇧−'],['front','Bring to front',']'],['back','Send to back','['],['zoom','Zoom to selection','⇧2']);
   if(sel.size>=2)items.push(['tidy','Tidy selection','⇧T']);
+  if(el.type==='arrow'&&el.bend)items.push(['straight','Straighten arrow','']);
+  if(rotOf(el))items.push(['unrot','Reset rotation','']);
   const anyG=selected().some(x=>x.group),locked=selected().every(x=>x.locked);
   if(sel.size>=2&&!selected().every(x=>x.group&&x.group===selected()[0].group))items.push(['group','Group',mod+'G']);
   if(anyG)items.push(['ungroup','Ungroup',mod+'⇧G']);
@@ -1350,7 +1424,7 @@ function openCtx(x,y,el){
   C.innerHTML=items.map(i=>i==='-'?'<hr>':`<button data-c="${i[0]}" class="${i[0]==='del'?'danger':''}">${i[1]}<kbd>${i[2]}</kbd></button>`).join('');
   C.classList.add('show');const w=C.offsetWidth,h=C.offsetHeight;C.style.left=clamp(x,8,innerWidth-w-8)+'px';C.style.top=clamp(y,8,innerHeight-h-8)+'px';
   C.onclick=e=>{const b=e.target.closest('[data-c]');if(!b)return;C.classList.remove('show');
-    ({edit:()=>{const one=selected()[0];if(one)startEdit(one)},dup:duplicate,copy:copySel,paste,front:()=>reorder(true),back:()=>reorder(false),zoom:zoomToSel,bigger:()=>scaleSel(1.2),smaller:()=>scaleSel(1/1.2),tidy:()=>tidy(true),del:deleteSel,group:groupSel,ungroup:ungroupSel,lock:lockSel,unlock:lockSel})[b.dataset.c]()};
+    ({edit:()=>{const one=selected()[0];if(one)startEdit(one)},dup:duplicate,copy:copySel,paste,front:()=>reorder(true),back:()=>reorder(false),zoom:zoomToSel,bigger:()=>scaleSel(1.2),smaller:()=>scaleSel(1/1.2),tidy:()=>tidy(true),del:deleteSel,group:groupSel,ungroup:ungroupSel,lock:lockSel,unlock:lockSel,straight:()=>{pushUndo();delete el.bend;commit()},unrot:()=>{pushUndo();delete el.rot;commit()}})[b.dataset.c]()};
 }
 // right-click / long-press / tap Space on empty canvas: a plain menu at the cursor (no dial)
 function openCanvasMenu(x,y){closeFloating();dialState={x,y,flick:false,hot:null,menuOnly:true};showDialMenu(x,y,toWorld(x,y))}
@@ -1368,7 +1442,9 @@ function quickHandles(el){const g=20/view.z,b=rectOf(el);return[{dir:'e',x:b.x+b
 function hitQuick(p){const el=quickHover&&byId(quickHover);if(!el||!SHAPES.has(el.type)||el.locked)return null;const r=11/view.z;for(const q of quickHandles(el))if(Math.hypot(p[0]-q.x,p[1]-q.y)<r)return{el,dir:q.dir};return null}
 function hitHandle(p){
   const list=selected();if(list.length!==1)return null;const el=list[0],r=9/view.z;
-  if(el.type==='arrow'){const g=arrowGeom(el);if(g.kind==='loop')return null;for(const[i,q]of[[0,g.p1],[1,g.p2]])if(Math.hypot(p[0]-q[0],p[1]-q[1])<r)return{kind:'arrowEnd',el,i};return null}
+  if(el.type==='arrow'){const g=arrowGeom(el);if(g.kind==='loop')return null;for(const[i,q]of[[0,g.p1],[1,g.p2]])if(Math.hypot(p[0]-q[0],p[1]-q[1])<r)return{kind:'arrowEnd',el,i};
+    if((g.kind==='line'||g.kind==='curve')&&Math.hypot(p[0]-g.mid[0],p[1]-g.mid[1])<r)return{kind:'bend',el};return null}
+  if(ROT(el.type)&&!el.locked){const h=rotHandle(el);if(Math.hypot(p[0]-h[0],p[1]-h[1])<r)return{kind:'rotate',el}}
   if(!RESIZABLE(el.type))return null;
   for(const[hx,hy,c]of corners(el))if(Math.abs(p[0]-hx)<r&&Math.abs(p[1]-hy)<r)return{kind:'resize',el,c};
   return null;
@@ -1402,10 +1478,10 @@ stage.addEventListener('pointerdown',e=>{
   const s0=snap();
   switch(tool){
     case'select':{
-      const qh=hitQuick(p);
-      if(qh){const a=makeArrow(center(qh.el),[p[0],p[1]],{start:qh.el.id});els.push(a);drag={kind:'quick',el:a,src:qh.el,dir:qh.dir,snap:s0,start:p,far:0};break}
       const h=hitHandle(p);
-      if(h){drag=h.kind==='resize'?{kind:'resize',el:h.el,c:h.c,o:{x:h.el.x,y:h.el.y,w:h.el.w,h:h.el.h},start:p,snap:s0,moved:false}:{kind:'arrowEnd',el:h.el,i:h.i,snap:s0,moved:false};break}
+      const qh=h?null:hitQuick(p);
+      if(qh){const a=makeArrow(center(qh.el),[p[0],p[1]],{start:qh.el.id});els.push(a);drag={kind:'quick',el:a,src:qh.el,dir:qh.dir,snap:s0,start:p,far:0};break}
+      if(h){drag=h.kind==='resize'?{kind:'resize',el:h.el,c:h.c,o:{x:h.el.x,y:h.el.y,w:h.el.w,h:h.el.h},start:p,snap:s0,moved:false}:h.kind==='rotate'?{kind:'rotate',el:h.el,c:center(h.el),snap:s0,moved:false}:h.kind==='bend'?{kind:'bend',el:h.el,snap:s0,moved:false}:{kind:'arrowEnd',el:h.el,i:h.i,snap:s0,moved:false};break}
       const el=hitTest(p);
       if(el){const gids=groupOf(el);if(e.shiftKey){if(sel.has(el.id))gids.forEach(i=>sel.delete(i));else gids.forEach(i=>sel.add(i))}else if(!sel.has(el.id))sel=new Set(gids);
         if(e.altKey){const c=cloneSet(selected(),0,0);pushUndo(s0);els.push(...c);sel=new Set(c.map(x=>x.id));drag={kind:'move',last:p,start:p,applied:[0,0],snap:null,moved:true,set:withContents([...sel])}}
@@ -1449,12 +1525,21 @@ stage.addEventListener('pointermove',e=>{
     case'create':{const el=drag.el;let w=p[0]-drag.start[0],h=p[1]-drag.start[1];if(e.shiftKey){const m=Math.max(Math.abs(w),Math.abs(h));w=Math.sign(w||1)*m;h=Math.sign(h||1)*m}
       el.x=w<0?drag.start[0]+w:drag.start[0];el.y=h<0?drag.start[1]+h:drag.start[1];el.w=Math.abs(w);el.h=Math.abs(h);break}
     case'resize':{const{o,c,el}=drag;if(!drag.moved){drag.moved=true;pushUndo(drag.snap)}
-      let x0=o.x,y0=o.y,x1=o.x+o.w,y1=o.y+o.h;if(c.includes('w'))x0=p[0];if(c.includes('e'))x1=p[0];if(c.includes('n'))y0=p[1];if(c.includes('s'))y1=p[1];
-      guides=[];if(!(e.ctrlKey||e.metaKey)){drag.snapT=drag.snapT||snapTargets(new Set([el.id]));const tol=6/view.z;
+      const rd=rotOf(el),c0=[o.x+o.w/2,o.y+o.h/2],pp=rd?rotPt(p,c0,-rd):p;
+      let x0=o.x,y0=o.y,x1=o.x+o.w,y1=o.y+o.h;if(c.includes('w'))x0=pp[0];if(c.includes('e'))x1=pp[0];if(c.includes('n'))y0=pp[1];if(c.includes('s'))y1=pp[1];
+      guides=[];if(!rd&&!(e.ctrlKey||e.metaKey)){drag.snapT=drag.snapT||snapTargets(new Set([el.id]));const tol=6/view.z;
         const ex=c.includes('w')?'x0':'x1',ey=c.includes('n')?'y0':'y1',sx=snapAxis([ex==='x0'?x0:x1],drag.snapT.xs,tol),sy=snapAxis([ey==='y0'?y0:y1],drag.snapT.ys,tol);
         if(sx){if(ex==='x0')x0+=sx.d;else x1+=sx.d;guides.push({x:sx.at})}if(sy){if(ey==='y0')y0+=sy.d;else y1+=sy.d;guides.push({y:sy.at})}}
       if(e.shiftKey){const s=Math.max(Math.abs(x1-x0),Math.abs(y1-y0));if(c.includes('w'))x0=x1-s;else x1=x0+s;if(c.includes('n'))y0=y1-s;else y1=y0+s}
-      el.x=Math.min(x0,x1);el.y=Math.min(y0,y1);el.w=Math.max(16,Math.abs(x1-x0));el.h=Math.max(16,Math.abs(y1-y0));break}
+      el.x=Math.min(x0,x1);el.y=Math.min(y0,y1);el.w=Math.max(16,Math.abs(x1-x0));el.h=Math.max(16,Math.abs(y1-y0));
+      if(rd){const nc=rotPt([el.x+el.w/2,el.y+el.h/2],c0,rd);el.x=nc[0]-el.w/2;el.y=nc[1]-el.h/2}break}
+    case'rotate':{const el=drag.el;if(!drag.moved){drag.moved=true;pushUndo(drag.snap)}
+      let a=Math.atan2(p[1]-drag.c[1],p[0]-drag.c[0])*180/Math.PI+90;a=((a%360)+360)%360;
+      if(e.shiftKey)a=Math.round(a/15)*15;else for(const k of[0,90,180,270,360])if(Math.abs(a-k)<4)a=k;a%=360;
+      if(a)el.rot=Math.round(a*10)/10;else delete el.rot;showMoveTip(e.clientX,e.clientY,Math.round(a),0);$('#moveTip').textContent=Math.round(a)+'°';break}
+    case'bend':{const el=drag.el;if(!drag.moved){drag.moved=true;pushUndo(drag.snap)}
+      const keep=el.bend;delete el.bend;const g=arrowGeom(el);
+      if(distSeg(p,g.p1,g.p2)<8/view.z)delete el.bend;else el.bend=[f1(p[0]),f1(p[1])];void keep;break}
     case'quick':case'arrow':{const el=drag.el;el.points[1]=[p[0],p[1]];drag.far=Math.max(drag.far,Math.hypot(p[0]-drag.start[0],p[1]-drag.start[1])*view.z);
       let t=hitTest(p,{shapesOnly:true});if(t&&t.id===el.start&&drag.far<70)t=null;drag.target=t?t.id:null;break}
     case'arrowEnd':{const el=drag.el;if(!drag.moved){drag.moved=true;pushUndo(drag.snap);const g=arrowGeom(el);el.points=[g.p1,g.p2]}
@@ -1490,6 +1575,7 @@ function endDrag(e){
       pushUndo(d.snap);sel=new Set([a.id]);commit();break}
     case'arrowEnd':{const el=d.el;if(d.target){if(d.i===0)el.start=d.target;else el.end=d.target}if(d.moved)commit();else render();break}
     case'resize':if(d.moved){fitText(d.el);commit()}break;
+    case'rotate':case'bend':if(d.moved)commit();else render();break;
     case'draw':{const el=d.el;el.points=simplify(el.points);pushUndo(d.snap);commit();break}
     case'erase':if(d.hit){pushUndo(d.snap);commit()}break;
     case'marquee':render();break;
@@ -1498,17 +1584,18 @@ function endDrag(e){
 stage.addEventListener('pointerup',endDrag);stage.addEventListener('pointercancel',endDrag);
 function hoverCursor(p){
   if(tool!=='select'||spaceDown)return;
-  const q=hitQuick(p);if(q){stage.className='c-cross';return}
+  const q=hitHandle(p)?null:hitQuick(p);if(q){stage.className='c-cross';return}
   const under=hitTest(p,{shapesOnly:true}),nh=under&&SHAPES.has(under.type)&&!under.locked?under.id:null;
   if(nh!==quickHover){quickHover=nh;renderOverlay()}
   const h=hitHandle(p);
-  let c='';if(h)c=h.kind==='arrowEnd'?'c-move':(h.c==='nw'||h.c==='se')?'c-nwse':'c-nesw';else if(hitTest(p))c='c-move';
+  let c='';if(h)c=h.kind==='arrowEnd'||h.kind==='bend'?'c-move':h.kind==='rotate'?'c-cross':(h.c==='nw'||h.c==='se')?'c-nwse':'c-nesw';else if(hitTest(p))c='c-move';
   stage.className=c;
 }
 function eraseAt(p){const el=hitTest(p);if(el){deleteIds([el.id]);drag.hit=true}}
 function simplify(P){if(P.length<3)return P;const o=[P[0]];for(let i=1;i<P.length-1;i++){const l=o[o.length-1];if(Math.hypot(P[i][0]-l[0],P[i][1]-l[1])>1.5)o.push(P[i])}o.push(P[P.length-1]);return o}
 function onDouble(e){
   const p=toWorld(e.clientX,e.clientY);const el=hitTest(p);
+  if(el&&el.type==='table'){const c=cellAt(el,p);if(c){editCell=c;startEdit(el);return}}
   if(el&&el.type!=='draw')startEdit(el);
   else if(!el&&(tool==='select'||tool==='text'))createText(p);
 }
@@ -1519,17 +1606,18 @@ stage.addEventListener('wheel',e=>{
 },{passive:false});
 
 /* ============================== text editing ============================== */
-let editSnap=null;
+let editSnap=null,editCell=null;
 function createText(p){
   const size=FS[props.fs];const el=makeShape('text',p[0],p[1]-size*.65,10,size*LH);el.label='';
   editSnap=snap();els.push(el);setTool('select');startEdit(el,true);
 }
-function editSize(el){return el.type==='arrow'?FS.s:el.type==='frame'?15:FS[el.fs||'m']}
+function editSize(el){return el.type==='arrow'?FS.s:el.type==='frame'?15:el.type==='table'?FS[el.fs||'s']:FS[el.fs||'m']}
 function startEdit(el,isNew){
+  if(el.type==='table'&&!editCell)editCell={r:0,c:0};if(el.type!=='table')editCell=null;
   if(!isNew)editSnap=snap();editing=el.id;sel=new Set([el.id]);
   const s=S();
-  Object.assign(editor.style,{display:'block',fontFamily:s.font,fontWeight:el.bold?Math.min(800,s.weight+200):s.weight,color:el.type==='arrow'&&!s.dark?'#6d6963':el.type==='frame'?s.stroke:strokeCol(el.stroke,el),textAlign:el.type==='text'||el.type==='frame'?'left':'center'});
-  editor.value=el.label||'';render();placeEditor();editor.focus();editor.select();
+  Object.assign(editor.style,{display:'block',fontFamily:s.font,fontWeight:el.bold?Math.min(800,s.weight+200):s.weight,color:el.type==='arrow'&&!s.dark?'#6d6963':el.type==='frame'?s.stroke:strokeCol(el.stroke,el),textAlign:el.type==='text'||el.type==='frame'||el.type==='card'||el.type==='table'?'left':'center'});
+  editor.value=el.type==='table'?(el.rows[editCell.r][editCell.c]||''):el.label||'';render();placeEditor();editor.focus();editor.select();
 }
 function placeEditor(){
   const el=byId(editing);if(!el){editor.style.display='none';return}
@@ -1538,17 +1626,23 @@ function placeEditor(){
   editor.style.fontSize=size+'px';editor.style.width=w+'px';editor.style.height=(h+pv*2)+'px';editor.style.padding=pv+'px 0';
   let sx,sy;
   if(el.type==='text'){sx=el.x*view.z+view.x;sy=el.y*view.z+view.y}
+  else if(el.type==='table'&&editCell){const r=cellRect(el,editCell);sx=(r.x+12)*view.z+view.x;sy=(r.y+8)*view.z+view.y}
+  else if(el.type==='card'){sx=(el.x+16)*view.z+view.x;sy=(el.y+16)*view.z+view.y}
   else if(el.type==='frame'){sx=(el.x+4)*view.z+view.x;sy=(el.y-26)*view.z+view.y}
   else{let c;if(el.type==='arrow')c=arrowGeom(el).mid;else if(LABEL_BELOW.has(el.type))c=[el.x+el.w/2,el.y+el.h+6+m.h/2];else c=center(el);sx=c[0]*view.z+view.x-w/2;sy=c[1]*view.z+view.y-h/2}
   editor.style.left=sx+'px';editor.style.top=(sy-pv)+'px';
 }
 function commitEdit(){
   if(!editing)return;const el=byId(editing);const v=editor.value.replace(/\s+$/,'');editing=null;editor.style.display='none';editor.blur();
-  if(el){el.label=v;if(el.type==='text'&&!v){setEls(els.filter(x=>x!==el));sel.clear()}else fitText(el)}
+  if(el&&el.type==='table'&&editCell){el.rows[editCell.r][editCell.c]=v;layoutTable(el)}
+  else if(el){el.label=v;if(el.type==='text'&&!v){setEls(els.filter(x=>x!==el));sel.clear()}else fitText(el)}
   if(editSnap&&editSnap!==snap())pushUndo(editSnap);editSnap=null;commit();
 }
 editor.addEventListener('input',placeEditor);
-editor.addEventListener('keydown',e=>{e.stopPropagation();const t=byId(editing)?.type;if(e.key==='Escape'||(e.key==='Enter'&&(e.metaKey||e.ctrlKey))||(e.key==='Enter'&&!e.shiftKey&&t!=='text'&&t!=='sticky')){e.preventDefault();commitEdit()}});
+editor.addEventListener('keydown',e=>{e.stopPropagation();const t=byId(editing)?.type;
+  if(t==='table'&&e.key==='Tab'){e.preventDefault();const el=byId(editing),R=el.rows,nc=R[0].length;let{r,c}=editCell;
+    if(e.shiftKey){c--;if(c<0){c=nc-1;r=Math.max(0,r-1)}}else{c++;if(c>=nc){c=0;r++}}
+    const keep=editSnap;commitEdit();editSnap=keep;if(r>=R.length){R.push(R[0].map(()=>''));layoutTable(el)}editCell={r,c};editing=null;startEdit(el,true);return}if(e.key==='Escape'||(e.key==='Enter'&&(e.metaKey||e.ctrlKey))||(e.key==='Enter'&&!e.shiftKey&&t!=='text'&&t!=='sticky'&&t!=='card')){e.preventDefault();commitEdit()}});
 editor.addEventListener('blur',()=>{if(editing)commitEdit()});
 
 /* ============================== layout ============================== */
@@ -1600,7 +1694,7 @@ function tidy(selectionOnly){
 
 /* ============================== text to diagram ============================== */
 function splitTop(src){const out=[];let depth=0,cur='';for(const ch of src){if('[({'.includes(ch))depth++;if('])}'.includes(ch))depth=Math.max(0,depth-1);if(depth===0&&(ch===','||ch===';'||ch==='\n')){out.push(cur);cur=''}else cur+=ch}out.push(cur);return out.map(s=>s.trim()).filter(Boolean)}
-const PREFIX={db:['cylinder','green'],database:['cylinder','green'],store:['cylinder','green'],queue:['pill','lilac'],q:['pill','lilac'],topic:['pill','lilac'],user:['person','none'],person:['person','none'],actor:['person','none'],note:['sticky','butter'],sticky:['sticky','butter'],cloud:['cloud','blue'],doc:['document','blue'],document:['document','blue'],io:['io','peach'],hex:['hexagon','lilac'],fn:['hexagon','butter'],pill:['pill','blue'],start:['pill','green'],end:['pill','peach'],box:['rect',null],decision:['diamond','butter'],if:['diamond','butter'],circle:['ellipse','lilac']};
+const PREFIX={card:['card','blue'],db:['cylinder','green'],database:['cylinder','green'],store:['cylinder','green'],queue:['pill','lilac'],q:['pill','lilac'],topic:['pill','lilac'],user:['person','none'],person:['person','none'],actor:['person','none'],note:['sticky','butter'],sticky:['sticky','butter'],cloud:['cloud','blue'],doc:['document','blue'],document:['document','blue'],io:['io','peach'],hex:['hexagon','lilac'],fn:['hexagon','butter'],pill:['pill','blue'],start:['pill','green'],end:['pill','peach'],box:['rect',null],decision:['diamond','butter'],if:['diamond','butter'],circle:['ellipse','lilac']};
 function parseNode(tok){
   tok=tok.trim();if(!tok)return null;let shape='rect',label=tok,m,explicit=false,fill=null;
   if((m=tok.match(/^([a-z]+)\s*:\s*(.+)$/i))&&PREFIX[m[1].toLowerCase()]){[shape,fill]=PREFIX[m[1].toLowerCase()];label=m[2];explicit=true}
@@ -1669,6 +1763,7 @@ function parseMermaid(src){
 function overlaps(b,pad){for(const el of els){if(el.type==='arrow'||el.type==='draw'||el.type==='frame')continue;const c=bbox(el);if(b.x<c.x+c.w+pad&&b.x+b.w+pad>c.x&&b.y<c.y+c.h+pad&&b.y+b.h+pad>c.y)return true}return false}
 function nodeSize(n){
   if(n.shape==='person')return[60,96];
+  if(n.shape==='card'){const L=cardLayout({label:n.label,w:220,fs:'m'});return[220,Math.max(90,L.h)]}
   const m=measure(n.label,FS.m),d=DEF_SIZE[n.shape]||[120,64],[px,py]=padFor(n.shape,m);
   const minW=n.shape==='rect'?120:Math.min(d[0],140),minH=n.shape==='sticky'?110:n.shape==='rect'?64:Math.min(d[1],n.shape==='cylinder'?92:76);
   const w=Math.max(minW,Math.ceil(Math.min(m.w,MAXW)+px)),mh=measure(wrapText(n.label,FS.m,false,innerW({type:n.shape,w})),FS.m);
@@ -1677,6 +1772,8 @@ function nodeSize(n){
 function findByName(q){q=q.toLowerCase();return els.find(e=>(e.label||'').toLowerCase()===q)||els.find(e=>(e.label||'').toLowerCase().includes(q))}
 function applyCommand(src,opts={}){
   src=src.trim();if(!src)return false;
+  if(/^\|/.test(src)){const rows=src.split(/\n|;/).map(l=>l.trim()).filter(l=>l.startsWith('|')&&!/^\|[\s:|-]+\|?$/.test(l)).map(l=>l.replace(/^\||\|$/g,'').split('|').map(c=>c.trim()));
+    if(!rows.length)return false;if(rows.length===1)rows.push(rows[0].map(()=>''));pushUndo();const el=makeTable(rows,toWorld(innerWidth/2,innerHeight/2));els.push(el);sel=new Set([el.id]);setTool('select');commit();toast('Added a table');return true}
   // search & go: a bare name that already exists
   if(!/->|→|=>|--|<->|\.\.>|^#|^\s*(graph|flowchart)\b|[\[\({]|:/i.test(src)){const hit=findByName(src);if(hit){sel=new Set([hit.id]);setTool('select');fitBox(bbox(hit),1.4);render();toast('Found “'+(hit.label||src)+'”');return true}}
   const parsed=parseCommand(src),{nodes,edges,headings}=parsed;
@@ -1753,12 +1850,12 @@ function toMermaid(){
 // block = {n:name, k:kind, f:fill, i:icon, st:stack, l:label, fs, bold, w, h}
 const B=(n,k,f,x)=>Object.assign({n,k,f},x||{});
 const BLOCKS={
-  sections:{name:'Sections',items:[B('Section','frame','none',{l:'Section'}),B('Wide section','frame','none',{l:'Overview',w:720,h:320}),B('Heading','text','none',{l:'Heading',fs:'l',bold:true}),B('Subheading','text','none',{l:'Subheading',fs:'m',bold:true}),B('Caption','text','none',{l:'A short caption',fs:'s'}),B('Column','frame','none',{l:'Column',w:260,h:420})]},
+  sections:{name:'Sections',items:[B('Table','table','blue',{rows:[['Item','Owner','Status'],['','',''],['','','']]}),B('Section','frame','none',{l:'Section'}),B('Wide section','frame','none',{l:'Overview',w:720,h:320}),B('Heading','text','none',{l:'Heading',fs:'l',bold:true}),B('Subheading','text','none',{l:'Subheading',fs:'m',bold:true}),B('Caption','text','none',{l:'A short caption',fs:'s'}),B('Column','frame','none',{l:'Column',w:260,h:420})]},
   systems:{name:'Systems',items:[B('Client','icon','peach',{i:'user'}),B('Person','person','none'),B('Team','icon','lilac',{i:'users'}),B('Web app','icon','blue',{i:'browser'}),B('Mobile app','icon','blue',{i:'phone'}),B('Internet','cloud','blue'),B('CDN','icon','blue',{i:'cloud'}),B('Load balancer','diamond','lilac'),B('API gateway','hexagon','lilac'),B('Service','rect','blue'),B('Replicated','rect','blue',{l:'Service',st:3}),B('Function','hexagon','peach',{l:'λ function'}),B('Worker','icon','none',{i:'gear'}),B('Auth','icon','green',{i:'shield'}),B('Container','icon','butter',{i:'package'}),B('Server','icon','blue',{i:'server'}),B('Third-party API','cloud','peach'),B('Region','frame','none',{l:'Region'})]},
   data:{name:'Data & APIs',items:[B('Database','cylinder','green'),B('Cache','rect','peach',{l:'Cache'}),B('Queue','pill','butter'),B('Event topic','rect','butter',{st:2}),B('Object storage','icon','butter',{i:'folder'}),B('Warehouse','cylinder','butter'),B('Search index','icon','blue',{i:'search'}),B('Vector DB','cylinder','lilac'),B('LLM','icon','lilac',{i:'robot'}),B('Stream','io','peach'),B('REST API','hexagon','blue'),B('Webhook','icon','butter',{i:'bolt'}),B('Email','icon','blue',{i:'mail'}),B('Notifications','icon','peach',{i:'bell'}),B('Payments','icon','green',{i:'card'}),B('Analytics','icon','lilac',{i:'chart'}),B('Scheduler','icon','butter',{i:'clock'}),B('Secrets','icon','green',{i:'key'})]},
-  notes:{name:'Notes & flow',items:[B('Yellow note','sticky','butter',{l:'Note'}),B('Pink note','sticky','peach',{l:'Note'}),B('Blue note','sticky','blue',{l:'Note'}),B('Green note','sticky','green',{l:'Note'}),B('Lilac note','sticky','lilac',{l:'Note'}),B('Checklist','sticky','butter',{l:'☐ First task\n☐ Second task\n☑ Done'}),B('Bullets','sticky','blue',{l:'• Point one\n• Point two\n• Point three'}),B('Pros / cons','sticky','green',{l:'+ Fast to build\n+ Cheap\n− Hard to scale'}),B('Start','pill','green'),B('Step','rect','blue'),B('Decision?','diamond','butter'),B('Input / output','io','peach'),B('Document','document','blue'),B('End','pill','peach'),B('Done ✓','rect','green',{l:'Shipped',mark:'ok'}),B('Risk ⚠','rect','peach',{l:'Risk',mark:'warn'})]},
+  notes:{name:'Notes & flow',items:[B('Card','card','blue',{l:'Title\n• Point one\n• Point two'}),B('Lilac card','card','lilac',{l:'Goal\n• What success looks like\n• Who it is for'}),B('Yellow note','sticky','butter',{l:'Note'}),B('Pink note','sticky','peach',{l:'Note'}),B('Blue note','sticky','blue',{l:'Note'}),B('Green note','sticky','green',{l:'Note'}),B('Lilac note','sticky','lilac',{l:'Note'}),B('Checklist','sticky','butter',{l:'☐ First task\n☐ Second task\n☑ Done'}),B('Bullets','sticky','blue',{l:'• Point one\n• Point two\n• Point three'}),B('Pros / cons','sticky','green',{l:'+ Fast to build\n+ Cheap\n− Hard to scale'}),B('Start','pill','green'),B('Step','rect','blue'),B('Decision?','diamond','butter'),B('Input / output','io','peach'),B('Document','document','blue'),B('End','pill','peach'),B('Done ✓','rect','green',{l:'Shipped',mark:'ok'}),B('Risk ⚠','rect','peach',{l:'Risk',mark:'warn'})]},
   icons:{name:'Icons',items:Object.entries(ICONS).map(([k,v])=>B(v.n,'icon','blue',{i:k}))},
-  thai:{name:'ภาษาไทย',items:[B('ผู้ใช้','icon','peach',{i:'user'}),B('ทีมงาน','icon','lilac',{i:'users'}),B('เว็บไซต์','icon','blue',{i:'browser'}),B('แอปมือถือ','icon','blue',{i:'phone'}),B('ระบบหลังบ้าน','rect','peach'),B('ฐานข้อมูล','cylinder','green'),B('คิวงาน','pill','butter'),B('ตัดสินใจ?','diamond','butter'),B('เอกสาร','document','blue'),B('ชำระเงิน','icon','green',{i:'card'}),B('แจ้งเตือน','icon','peach',{i:'bell'}),B('บันทึก','sticky','butter',{l:'บันทึก'}),B('สิ่งที่ต้องทำ','sticky','green',{l:'☐ งานแรก\n☐ งานที่สอง\n☑ เสร็จแล้ว'}),B('หัวข้อ','text','none',{l:'หัวข้อ',fs:'l',bold:true})]}
+  thai:{name:'ภาษาไทย',items:[B('การ์ด','card','peach',{l:'หัวข้อ\n• ประเด็นแรก\n• ประเด็นที่สอง'}),B('ตาราง','table','green',{rows:[['งาน','ผู้รับผิดชอบ','สถานะ'],['','',''],['','','']]}),B('ผู้ใช้','icon','peach',{i:'user'}),B('ทีมงาน','icon','lilac',{i:'users'}),B('เว็บไซต์','icon','blue',{i:'browser'}),B('แอปมือถือ','icon','blue',{i:'phone'}),B('ระบบหลังบ้าน','rect','peach'),B('ฐานข้อมูล','cylinder','green'),B('คิวงาน','pill','butter'),B('ตัดสินใจ?','diamond','butter'),B('เอกสาร','document','blue'),B('ชำระเงิน','icon','green',{i:'card'}),B('แจ้งเตือน','icon','peach',{i:'bell'}),B('บันทึก','sticky','butter',{l:'บันทึก'}),B('สิ่งที่ต้องทำ','sticky','green',{l:'☐ งานแรก\n☐ งานที่สอง\n☑ เสร็จแล้ว'}),B('หัวข้อ','text','none',{l:'หัวข้อ',fs:'l',bold:true})]}
 };
 const PATTERNS=[
   {name:'Load-balanced service',desc:'One entry point, three replicas',dir:'LR',cmd:'user:Users -> {Load balancer}, {Load balancer} -> Service A, {Load balancer} -> Service B, {Load balancer} -> Service C'},
@@ -1772,6 +1869,8 @@ const PATTERNS=[
 ];
 function blockEls(b){
   if(b.k==='frame')return[makeShape('frame',0,0,b.w||440,b.h||300,{label:b.l||b.n})];
+  if(b.k==='table'){const t=makeTable(JSON.parse(JSON.stringify(b.rows)),[0,0]);t.fill=b.f;return[t]}
+  if(b.k==='card'){const c=makeShape('card',0,0,220,100,{label:b.l||b.n,fill:b.f,fs:'m',sw:2,stroke:'ink'});fitText(c);return[c]}
   if(b.k==='text'){const t=makeShape('text',0,0,10,10,{label:b.l||b.n,fs:b.fs||'m',bold:!!b.bold,fill:'none',stroke:'ink',sw:2});fitText(t);return[t]}
   const label=b.l!==undefined?b.l:b.n;let w,h;
   if(b.k==='icon'){w=64;h=64}else[w,h]=nodeSize({label,shape:b.k});
@@ -1992,9 +2091,11 @@ async function unpack(s){
   return JSON.parse(new TextDecoder().decode(bytes));
 }
 function sanitize(list){
-  const ok=new Set([...SHAPES,'text','arrow','draw','frame','image']);const out=[];
+  const ok=new Set([...SHAPES,'text','arrow','draw','frame','image','table']);const out=[];
   for(const e of list){if(!e||!ok.has(e.type))continue;const c={...e,id:String(e.id||uid()),seed:Number.isFinite(e.seed)?e.seed:seed(),label:String(e.label||'')};
     if(c.type==='icon'&&!ICONS[c.icon])c.icon='gear';
+    if(c.type==='table'){if(!Array.isArray(c.rows)||!c.rows.length)continue;c.rows=c.rows.slice(0,60).map(r=>(Array.isArray(r)?r:[]).slice(0,20).map(x=>String(x??'')));delete c.colW;delete c.rowH}
+    if(c.bend&&!(Array.isArray(c.bend)&&c.bend.length===2&&c.bend.every(Number.isFinite)))delete c.bend;if(c.rot&&!Number.isFinite(c.rot))delete c.rot;
     if(c.type==='image'&&!/^data:image\/(png|jpe?g|webp|gif);base64,/.test(c.src||''))continue;
     if(c.type==='arrow'){if(!Array.isArray(c.points)||c.points.length<2)continue;c.points=c.points.slice(0,2).map(p=>[+p[0]||0,+p[1]||0]);if(!ENDS.includes(c.ends))c.ends='end';if(c.route!=='elbow')delete c.route}
     else if(c.type==='draw'){if(!Array.isArray(c.points)||!c.points.length)continue;c.points=c.points.map(p=>[+p[0]||0,+p[1]||0])}
@@ -2002,6 +2103,7 @@ function sanitize(list){
     if(!FILLS.includes(c.fill))c.fill='none';if(!STROKES.includes(c.stroke))c.stroke='ink';if(!SW[c.sw])c.sw=2;if(!FS[c.fs])c.fs='m';
     if(c.mark&&!MARKS.includes(c.mark))delete c.mark;if(c.badge)c.badge=Math.max(1,Math.min(99,c.badge|0));if(c.stack)c.stack=clamp(c.stack|0,1,4);
     out.push(c)}
+  for(const t of out)if(t.type==='table')layoutTable(t);
   const ids=new Set(out.map(e=>e.id));for(const a of out)if(a.type==='arrow'){if(a.start&&!ids.has(a.start))a.start=null;if(a.end&&!ids.has(a.end))a.end=null}
   return out;
 }
