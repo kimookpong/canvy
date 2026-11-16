@@ -1217,8 +1217,23 @@ function renderOverlay(){
 function corners(el){const pd=6/view.z,C=[[el.x-pd,el.y-pd,'nw'],[el.x+el.w+pd,el.y-pd,'ne'],[el.x-pd,el.y+el.h+pd,'sw'],[el.x+el.w+pd,el.y+el.h+pd,'se']],r=rotOf(el);if(!r)return C;const c=center(el);return C.map(([x,y,k])=>{const q=rotPt([x,y],c,r);return[q[0],q[1],k]})}
 function rotHandle(el){return rotPt([el.x+el.w/2,el.y-46/view.z],center(el),rotOf(el))}
 let rafPending=false;function scheduleRender(){if(rafPending)return;rafPending=true;requestAnimationFrame(()=>{rafPending=false;render()})}
+/* per-element render cache: only elements whose data (or, for arrows, whose end boxes) changed are rebuilt */
+const elCache=new Map();let renderGK='',fontEpoch=0;
+if(document.fonts)document.fonts.addEventListener('loadingdone',()=>{fontEpoch++});
+const keyRep=(k,v)=>k==='src'&&typeof v==='string'?v.length+':'+v.slice(-40):v;
+function elKey(el,fi){let k=JSON.stringify(el,keyRep);
+  if(el.type==='arrow')for(const id of[el.start,el.end]){const o=id&&byId(id);k+=o?'|'+o.x+','+o.y+','+o.w+','+o.h+','+(o.rot||0)+','+o.type:'|-'}
+  if(editing===el.id)k+='|E'+JSON.stringify(editCell);if(fi)k+='|F'+fi;return k}
 function render(){
-  world.innerHTML=renderList(els);
+  const gk=(doc.style||'')+'|'+(doc.paper||'')+'|'+(doc.strokeMode||'')+'|'+fontEpoch;if(gk!==renderGK){elCache.clear();renderGK=gk}
+  const F=frames(),idx=new Map(F.map((f,i)=>[f.id,i+1])),order=els.filter(e=>e.type==='frame').concat(els.filter(e=>e.type!=='frame'));
+  const nodes=new Array(order.length),todo=[];
+  order.forEach((el,i)=>{const fi=idx.get(el.id),k=elKey(el,fi),c=elCache.get(el.id);if(c&&c.k===k)nodes[i]=c.n;else todo.push([el,fi,k,i])});
+  if(todo.length){const g=document.createElementNS('http://www.w3.org/2000/svg','g');g.innerHTML=todo.map(t=>renderEl(t[0],t[1])).join('');const kids=[...g.children];
+    todo.forEach((t,j)=>{elCache.set(t[0].id,{k:t[2],n:kids[j]});nodes[t[3]]=kids[j]})}
+  if(elCache.size>order.length+64){const live=new Set(order.map(e=>e.id));for(const id of[...elCache.keys()])if(!live.has(id))elCache.delete(id)}
+  const cur=world.children;let same=cur.length===nodes.length;if(same)for(let i=0;i<nodes.length;i++)if(cur[i]!==nodes[i]){same=false;break}
+  if(!same)world.replaceChildren(...nodes);
   renderView();renderOverlay();renderProps();
   $('#empty').style.display=els.length||editing?'none':'grid';
   $('#empty').classList.toggle('dark',S().dark);

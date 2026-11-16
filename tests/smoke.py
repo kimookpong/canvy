@@ -119,6 +119,11 @@ with sync_playwright() as p:
     check('add a table row', pg.evaluate("els.at(-1).rows.length") == 3)
     pg.evaluate("applyCommand('card:Launch plan')")
     check('card shape', pg.evaluate("els.some(e=>e.type==='card'&&e.label==='Launch plan')"))
+    # ---- speed: 500 elements must re-render well inside one 60 fps frame ----
+    ms = pg.evaluate("""()=>{openDoc(newDoc('perf'));const L=[];for(let i=0;i<300;i++)L.push(makeShape(['rect','ellipse','diamond','cylinder','card'][i%5],(i%25)*170,Math.floor(i/25)*130,120,64,{label:'Node '+i}));
+      for(let i=1;i<=200;i++)L.push(makeArrow(center(L[i-1]),center(L[i]),{start:L[i-1].id,end:L[i].id}));els=L;render();
+      const t=[];for(let i=0;i<9;i++){L[i].x+=5;const a=performance.now();render();document.body.offsetHeight;t.push(performance.now()-a)}t.sort((a,b)=>a-b);return t[4]}""")
+    check(f'500 elements: re-render after a move is fast ({ms:.1f} ms)', ms < 16)
     # ---- phase 3 ----
     pg.evaluate("openDoc(newDoc('Phase 3'));view={x:640,y:400,z:1};render()")
     pg.evaluate("runTemplate(TEMPLATES.find(t=>t.name==='วิเคราะห์ SWOT'))")
