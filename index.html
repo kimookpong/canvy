@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Canvy — Hand-drawn diagrams from a single line</title>
-<meta name="description" content="Free hand-drawn diagram canvas. Draw, or type a line like web -> api -> db and watch it draw itself. Thai supported. No sign-up; everything stays in your browser.">
+<meta name="description" content="Free hand-drawn diagram canvas in Thai and English. Draw, type a line like web -> api -> db, or snap a photo of a printed diagram and edit it. No sign-up; everything stays in your browser.">
 <link rel="canonical" href="https://kimookpong.github.io/canvy/">
 <link rel="alternate" hreflang="en" href="https://kimookpong.github.io/canvy/">
 <link rel="alternate" hreflang="th" href="https://kimookpong.github.io/canvy/?lang=th">
@@ -18,7 +18,7 @@
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Canvy">
 <meta property="og:title" content="Canvy — Hand-drawn diagrams from a single line">
-<meta property="og:description" content="Free hand-drawn diagram canvas. Draw, or type a line like web -> api -> db and watch it draw itself. Thai supported. No sign-up; everything stays in your browser.">
+<meta property="og:description" content="Free hand-drawn diagram canvas in Thai and English. Draw, type a line like web -> api -> db, or snap a photo of a printed diagram and edit it. No sign-up; everything stays in your browser.">
 <meta property="og:url" content="https://kimookpong.github.io/canvy/">
 <meta property="og:image" content="https://kimookpong.github.io/canvy/og-image.png">
 <meta property="og:image:width" content="1200">
@@ -28,9 +28,9 @@
 <meta property="og:locale:alternate" content="th_TH">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="Canvy — Hand-drawn diagrams from a single line">
-<meta name="twitter:description" content="Free hand-drawn diagram canvas. Draw, or type a line like web -> api -> db and watch it draw itself. Thai supported. No sign-up; everything stays in your browser.">
+<meta name="twitter:description" content="Free hand-drawn diagram canvas in Thai and English. Draw, type a line like web -> api -> db, or snap a photo of a printed diagram and edit it. No sign-up; everything stays in your browser.">
 <meta name="twitter:image" content="https://kimookpong.github.io/canvy/og-image.png">
-<script type="application/ld+json">{"@context": "https://schema.org", "@type": "SoftwareApplication", "name": "Canvy", "url": "https://kimookpong.github.io/canvy/", "applicationCategory": "DesignApplication", "operatingSystem": "Web browser", "description": "A free, no-sign-up canvas for hand-drawn diagrams. Draw freely or type a line like web -> api -> db. Everything stays in your browser.", "inLanguage": ["en", "th"], "offers": {"@type": "Offer", "price": "0", "priceCurrency": "USD"}, "image": "https://kimookpong.github.io/canvy/og-image.png", "featureList": ["Text to diagram", "Hand-drawn styles", "Thai language support", "Share by link", "Export PNG, SVG, JSON and Mermaid", "Works offline in the browser"]}</script>
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "SoftwareApplication", "name": "Canvy", "url": "https://kimookpong.github.io/canvy/", "applicationCategory": "DesignApplication", "operatingSystem": "Web browser", "description": "A free, no-sign-up canvas for hand-drawn diagrams in Thai and English. Draw freely, type a line like web -> api -> db, or turn a photo of a printed diagram into an editable one. Everything stays in your browser.", "inLanguage": ["en", "th"], "offers": {"@type": "Offer", "price": "0", "priceCurrency": "USD"}, "image": "https://kimookpong.github.io/canvy/og-image.png", "featureList": ["Text to diagram", "Photo to diagram (Thai and English OCR, on device)", "Six hand-drawn styles", "Thai and English interface", "Share by link, view-only links, embeds and QR codes", "Present with speaker notes and a laser pointer", "Export PNG, SVG, PDF, JSON and Mermaid", "Import Excalidraw and Mermaid", "Thai business templates", "Works offline in the browser"]}</script>
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -147,6 +147,14 @@ h2{font:700 clamp(32px,4.3vw,52px)/1.12 var(--hand);letter-spacing:-.015em;margi
 .ill{position:relative;height:270px;border-bottom:1px solid var(--line);overflow:hidden;display:grid;place-items:center}
 .card.n .ill{height:230px}
 .ill.tall{height:320px}
+.faq{padding:24px 0 90px}
+.qa{max-width:760px;margin:0 auto;display:flex;flex-direction:column;gap:10px}
+.qa details{background:#fff;border:1px solid var(--line);border-radius:16px;padding:16px 20px}
+.qa summary{cursor:pointer;font-weight:600;list-style:none;display:flex;justify-content:space-between;gap:12px}
+.qa summary::-webkit-details-marker{display:none}
+.qa summary::after{content:'+';color:var(--accent);font-weight:400;font-size:20px;line-height:1}
+.qa details[open] summary::after{content:'−'}
+.qa p{margin:10px 0 0;color:var(--muted);line-height:1.6}
 .ill>svg{width:100%;height:100%}
 .copy{padding:22px 26px 26px}
 .copy h3{font:600 22px/1.25 var(--hand);margin:0}
@@ -274,6 +282,7 @@ footer li a:hover{color:var(--accent)}
       <a href="#features">Features</a>
       <a href="#styles">Styles</a>
       <a href="#share">Sharing</a>
+      <a href="#faq">FAQ</a>
       <a href="app/">Editor</a>
     </nav>
     <div class="navactions">
@@ -288,6 +297,7 @@ footer li a:hover{color:var(--accent)}
     <a href="#features">Features</a>
     <a href="#styles">Styles</a>
     <a href="#share">Sharing</a>
+    <a href="#faq">FAQ</a>
     <a href="app/">Editor</a>
     <a class="btn" href="app/">Open Canvy <span class="arr">→</span></a>
   </div>
@@ -308,7 +318,7 @@ footer li a:hover{color:var(--accent)}
         </svg>
       </span>
     </h1>
-    <p class="lede">Canvy is a hand-drawn diagram canvas. Sketch freely, type a line like <span style="font-family:var(--mono);font-size:.88em;color:var(--ink);white-space:nowrap">web&nbsp;-&gt;&nbsp;api&nbsp;-&gt;&nbsp;db</span>, and watch it draw itself. It looks like a whiteboard, works like an editor, and keeps everything on your device.</p>
+    <p class="lede">Canvy is a hand-drawn diagram canvas. Sketch freely, type a line like <span style="font-family:var(--mono);font-size:.88em;color:var(--ink);white-space:nowrap">web&nbsp;-&gt;&nbsp;api&nbsp;-&gt;&nbsp;db</span>, or snap a photo of a printed diagram, and watch it draw itself. It works in Thai and English, looks like a whiteboard, and keeps everything on your device.</p>
     <div class="actions">
       <a class="btn lg" href="app/">Start a diagram <span class="arr">→</span></a>
       <a class="btn lg ghost" href="#features">See what it does</a>
@@ -325,7 +335,7 @@ footer li a:hover{color:var(--accent)}
           <svg width="16" height="16" viewBox="0 0 16 16"><path d="M3 2.5h6l4 4v7H3z" fill="none" stroke="#77736d" stroke-width="1.3" stroke-linejoin="round"/></svg>
           <span>Payments /</span><b>checkout-flow</b><span class="saved">· saved</span>
         </div>
-        <div class="seg"><span class="on">Pencil</span><span>Chalk</span><span>Blueprint</span><span>Ink</span></div>
+        <div class="seg"><span class="on">Pencil</span><span>Chalk</span><span>Marker</span><span>Blueprint</span><span>Ink</span><span>Neon</span></div>
         <span class="btn sm" style="height:32px">
           <svg width="14" height="14" viewBox="0 0 14 14"><path d="M5.5 8.5 8.5 5.5M6 3.5l1-1a2.5 2.5 0 0 1 3.5 3.5l-1 1M8 10.5l-1 1A2.5 2.5 0 0 1 3.5 8l1-1" fill="none" stroke="#fff" stroke-width="1.4" stroke-linecap="round"/></svg>
           Share
@@ -413,8 +423,8 @@ footer li a:hover{color:var(--accent)}
   <div class="wrap">
     <div class="sec-head">
       <div class="eyebrow">Inside the canvas</div>
-      <h2>Seven ways Canvy gets out of your way</h2>
-      <p>Everything a whiteboard does, plus the parts a whiteboard can't: typed diagrams, styles, presenting, share links and history.</p>
+      <h2>Nine ways Canvy gets out of your way</h2>
+      <p>Everything a whiteboard does, plus the parts a whiteboard can't: typed diagrams, photos that become diagrams, styles, presenting, share links and history.</p>
     </div>
 
     <div class="grid">
@@ -446,34 +456,45 @@ footer li a:hover{color:var(--accent)}
         </div>
       </article>
 
-      <!-- 2. primitives & metrics -->
-      <article class="card reveal">
+      <!-- 2. photo to diagram -->
+      <article class="card reveal" id="photo">
         <div class="ill dots">
           <svg viewBox="0 0 560 270" aria-hidden="true">
-            <g filter="url(#rough)" stroke="#171717" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" fill="none">
-              <rect x="30" y="86" width="104" height="60" rx="13" fill="#dce8fb"/>
-              <ellipse cx="216" cy="116" rx="58" ry="32" fill="#e9e1f7"/>
-              <path d="M346 72 L402 116 L346 160 L290 116 Z" fill="#fbf1cb"/>
-              <path d="M436 92 v46 a46 11 0 0 0 92 0 v-46" fill="#dcefdd"/>
-              <ellipse cx="482" cy="92" rx="46" ry="11" fill="#dcefdd"/>
+            <!-- the photo -->
+            <g transform="rotate(-4 140 135)">
+              <rect x="34" y="42" width="214" height="176" rx="10" fill="#e9e5dc" stroke="#d2ccbf"/>
+              <rect x="46" y="54" width="190" height="152" rx="4" fill="#f7f5f0"/>
+              <g stroke="#55514b" stroke-width="1.4" fill="none">
+                <rect x="62" y="74" width="66" height="32" fill="#dfe8f6"/><rect x="156" y="74" width="66" height="32"/>
+                <path d="M129 90 H154" /><path d="M150 86 l5 4 -5 4" />
+                <rect x="110" y="152" width="66" height="32"/><path d="M190 107 V128 H143 V150"/><path d="M139 146 l4 5 4 -5"/>
+              </g>
+              <g font-family="'IBM Plex Sans Thai', sans-serif" font-size="11" fill="#33302b" text-anchor="middle">
+                <text x="95" y="94">ลูกค้า</text><text x="189" y="94">สั่งซื้อ</text><text x="143" y="172">จัดส่ง</text>
+              </g>
+              <circle cx="232" cy="198" r="0" />
             </g>
-            <g font-family="'Playpen Sans Thai', cursive" font-weight="600" font-size="15.1" text-anchor="middle" fill="#171717">
-              <text x="82" y="122">box</text><text x="216" y="122">ellipse</text><text x="346" y="122">ok?</text><text x="482" y="128">users</text>
+            <!-- scan line -->
+            <path d="M272 135 C 292 130, 306 138, 326 134" stroke="#d95b35" stroke-width="2" fill="none" stroke-dasharray="4 5" marker-end="url(#aha)"/>
+            <text x="300" y="118" text-anchor="middle" font-family="'Playpen Sans Thai', cursive" font-size="12.6" fill="#d95b35">read on your device</text>
+            <!-- the result -->
+            <g filter="url(#rough)" stroke="#171717" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="350" y="62" width="76" height="42" rx="12" fill="#dce8fb"/>
+              <rect x="458" y="62" width="76" height="42" rx="12" fill="#fff"/>
+              <rect x="404" y="164" width="76" height="42" rx="12" fill="#fff"/>
+              <path d="M428 83 C 440 81, 446 85, 454 83" fill="none" marker-end="url(#ah)"/>
+              <path d="M496 106 C 494 130, 470 138, 450 160" fill="none" marker-end="url(#ah)"/>
             </g>
-            <g font-family="ui-monospace, Menlo, monospace" font-size="12" text-anchor="middle" fill="#55514b">
-              <rect x="40" y="186" width="84" height="26" rx="8" fill="#fff" stroke="#e9e5dd"/><text x="82" y="203">[box]</text>
-              <rect x="164" y="186" width="104" height="26" rx="8" fill="#fff" stroke="#e9e5dd"/><text x="216" y="203">(ellipse)</text>
-              <rect x="304" y="186" width="84" height="26" rx="8" fill="#fff" stroke="#e9e5dd"/><text x="346" y="203">{ok?}</text>
-              <rect x="430" y="186" width="104" height="26" rx="8" fill="#fff" stroke="#e9e5dd"/><text x="482" y="203">[(users)]</text>
+            <g font-family="'Playpen Sans Thai', cursive" font-weight="600" font-size="15" text-anchor="middle" fill="#171717">
+              <text x="388" y="88">ลูกค้า</text><text x="496" y="88">สั่งซื้อ</text><text x="442" y="190">จัดส่ง</text>
             </g>
-            <g font-family="Instrument Sans" font-size="11" fill="#a19b92" text-anchor="middle">
-              <text x="82" y="232">R</text><text x="216" y="232">O</text><text x="346" y="232">D</text><text x="482" y="232">B</text>
-            </g>
+            <rect x="378" y="224" width="128" height="22" rx="11" fill="#fbe6dc"/>
+            <text x="442" y="239" text-anchor="middle" font-family="Instrument Sans" font-size="11" fill="#d95b35">editable · beta</text>
           </svg>
         </div>
         <div class="copy">
-          <h3>Shapes that mean something</h3>
-          <p>Boxes, ellipses, decisions and databases are one keystroke away, by tool or by bracket. Arrows stay attached to their shapes, so moving things around never breaks the diagram.</p>
+          <h3>Snap a photo, get an editable diagram</h3>
+          <p>Photograph a printed or on-screen diagram. Canvy reads the Thai and English text, finds the boxes, arrows and labels, and rebuilds it so you can edit it. The photo never leaves your device. Handwriting isn't supported yet.</p>
         </div>
       </article>
 
@@ -519,7 +540,7 @@ footer li a:hover{color:var(--accent)}
         </div>
         <div class="copy">
           <h3>One diagram, many looks</h3>
-          <p>Switch the whole canvas between pencil, chalk, blueprint and clean ink. Your layout and labels stay exactly where they were.</p>
+          <p>Switch the whole canvas between six looks: pencil, chalk, marker, blueprint, clean ink and neon. Your layout and labels stay exactly where they were.</p>
         </div>
       </article>
 
@@ -537,12 +558,12 @@ footer li a:hover{color:var(--accent)}
             <rect x="262" y="38" width="48" height="20" rx="6" fill="#3b413c"/>
             <text x="286" y="52" text-anchor="middle" font-family="Instrument Sans" font-size="10.5" fill="#f1eee6">Esc</text>
             <path d="M28 40 v-22 h22 M310 18 h22 v22 M28 174 v22 h22 M310 196 h22 v-22" stroke="#d95b35" stroke-width="2" fill="none" stroke-linecap="round"/>
-            <text x="180" y="218" text-anchor="middle" font-family="Instrument Sans" font-size="11.5" fill="#77736d">fits to screen · toolbars hidden</text>
+            <text x="180" y="218" text-anchor="middle" font-family="Instrument Sans" font-size="11.5" fill="#77736d">frames as slides · notes · laser</text>
           </svg>
         </div>
         <div class="copy">
           <h3>Present without the clutter</h3>
-          <p>Press Present and Canvy hides the toolbars, fits your diagram to the screen and goes full screen. Esc takes you back to editing.</p>
+          <p>Press Present and each frame becomes a slide, full screen with the toolbars hidden. Press N for speaker notes and L for a laser pointer. Esc takes you back to editing.</p>
         </div>
       </article>
 
@@ -564,13 +585,14 @@ footer li a:hover{color:var(--accent)}
             <g font-family="Instrument Sans" font-size="11.5" font-weight="600" text-anchor="middle">
               <g transform="rotate(-6 150 20)"><rect x="122" y="6" width="56" height="26" rx="8" fill="#171717"/><text x="150" y="23" fill="#fff">PNG</text></g>
               <g transform="rotate(3 212 20)"><rect x="184" y="8" width="56" height="26" rx="8" fill="#fff" stroke="#d9d4ca"/><text x="212" y="25" fill="#171717">SVG</text></g>
-              <g transform="rotate(-2 278 20)"><rect x="246" y="6" width="60" height="26" rx="8" fill="#fde3d4" stroke="#e7c9b9"/><text x="276" y="23" fill="#b4472a">JSON</text></g>
+              <g transform="rotate(-2 278 20)"><rect x="246" y="6" width="56" height="26" rx="8" fill="#fde3d4" stroke="#e7c9b9"/><text x="274" y="23" fill="#b4472a">PDF</text></g>
+              <g transform="rotate(5 90 22)"><rect x="60" y="10" width="56" height="26" rx="8" fill="#fff" stroke="#d9d4ca"/><text x="88" y="27" fill="#171717">.canvy</text></g>
             </g>
           </svg>
         </div>
         <div class="copy">
           <h3>Export anywhere</h3>
-          <p>Download a PNG for slides, an SVG for docs, or a JSON backup you can import on another device.</p>
+          <p>Download a PNG for slides, an SVG for docs, a PDF with one page per frame, Mermaid code, or a .canvy file you can open on another device.</p>
         </div>
       </article>
 
@@ -582,13 +604,13 @@ footer li a:hover{color:var(--accent)}
             <h4>Share <span>✕</span></h4>
             <div style="color:var(--muted);font-size:11.5px;margin:-4px 0 10px">The whole diagram is packed into this link. Nothing is uploaded.</div>
             <div class="linkrow"><div>you.github.io/canvy/app/#d=zVZNb9swDP0rhs47JHGxYb7tsGGHbZf2NgxDYcupBSyWIUv5QJH/PlJ2krZZ0mxtB4QGRJrk03vkk6xTPIm//nuR/xtmZv1/NYzjj9+8+fnn2+uLy8tV+9vHVYwtf/r5rerq+uvi8vM34+rCz/7xzS3rtvduNvVuvvDqzaO+ZaRprwz5mmdbW7Xb1rr19r23vg/Ovd3ZxUVcBPUWozYXVeU3sbTjM+fiRqtJXN/Bf9tJ/ycrj6qeRb9z+V/Xh3Je6mR11OP/OpNkfkU+bPHHtV8i6/Wr0gvsHnoVFfTD0eAVbV3vY6pvvTrrnT0F7k+bPqtxtt8mtcybGX+f7O0yNq5MarZfdqZ8YnkW0GpRS/wXDY8UgFL5+Av3W/rDY4h4Z9VXo9gHmxdNnsp4vxLjYDY6tpDQ9Hfi82XA3bUd8vx/mL5Qfq7J1JbO3Q8r18+f3sqv5P94qgHG9YBhcr6v</div><b>Copy</b></div>
-            <div class="optrow"><div>Opens as an editable copy<small>No account needed to view or edit</small></div><span class="chip">Anyone</span></div>
-            <div class="optrow"><div>Also save as file<small>PNG · SVG · JSON backup</small></div><span class="chip">Export ▾</span></div>
+            <div class="optrow"><div>View only<small>People can look and zoom, but not edit</small></div><span class="chip">Off</span></div>
+            <div class="optrow"><div>Embed or show a QR code<small>Paste into a blog or Notion, or scan from a phone</small></div><span class="chip">QR</span></div>
           </div>
         </div>
         <div class="copy">
           <h3>Share with a link, not an account</h3>
-          <p>Canvy packs the whole diagram into the link itself. Whoever opens it gets their own editable copy. There's no server, no sign-up, and nothing is stored outside their browser.</p>
+          <p>Canvy packs the whole diagram into the link itself. Whoever opens it gets their own editable copy, or a view-only one if you tick View only. Copy an embed code or show a QR code. There's no server and no sign-up.</p>
         </div>
       </article>
 
@@ -626,6 +648,72 @@ footer li a:hover{color:var(--accent)}
           <p>Canvy saves to your browser as you work and keeps a version every few minutes. Step back through the history and restore any version with one click.</p>
         </div>
       </article>
+      <!-- 8. primitives -->
+      <article class="card reveal">
+        <div class="ill dots">
+          <svg viewBox="0 0 560 270" aria-hidden="true">
+            <g filter="url(#rough)" stroke="#171717" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" fill="none">
+              <rect x="30" y="86" width="104" height="60" rx="13" fill="#dce8fb"/>
+              <ellipse cx="216" cy="116" rx="58" ry="32" fill="#e9e1f7"/>
+              <path d="M346 72 L402 116 L346 160 L290 116 Z" fill="#fbf1cb"/>
+              <path d="M436 92 v46 a46 11 0 0 0 92 0 v-46" fill="#dcefdd"/>
+              <ellipse cx="482" cy="92" rx="46" ry="11" fill="#dcefdd"/>
+            </g>
+            <g font-family="'Playpen Sans Thai', cursive" font-weight="600" font-size="15.1" text-anchor="middle" fill="#171717">
+              <text x="82" y="122">box</text><text x="216" y="122">ellipse</text><text x="346" y="122">ok?</text><text x="482" y="128">users</text>
+            </g>
+            <g font-family="ui-monospace, Menlo, monospace" font-size="12" text-anchor="middle" fill="#55514b">
+              <rect x="40" y="186" width="84" height="26" rx="8" fill="#fff" stroke="#e9e5dd"/><text x="82" y="203">[box]</text>
+              <rect x="164" y="186" width="104" height="26" rx="8" fill="#fff" stroke="#e9e5dd"/><text x="216" y="203">(ellipse)</text>
+              <rect x="304" y="186" width="84" height="26" rx="8" fill="#fff" stroke="#e9e5dd"/><text x="346" y="203">{ok?}</text>
+              <rect x="430" y="186" width="104" height="26" rx="8" fill="#fff" stroke="#e9e5dd"/><text x="482" y="203">[(users)]</text>
+            </g>
+            <g font-family="Instrument Sans" font-size="11" fill="#a19b92" text-anchor="middle">
+              <text x="82" y="232">R</text><text x="216" y="232">O</text><text x="346" y="232">D</text><text x="482" y="232">B</text>
+            </g>
+          </svg>
+        </div>
+        <div class="copy">
+          <h3>Shapes that mean something</h3>
+          <p>Boxes, ellipses, decisions and databases are one keystroke away, by tool or by bracket. Arrows stay attached to their shapes, so moving things around never breaks the diagram.</p>
+        </div>
+      </article>
+
+      <!-- 9. templates, imports, palette -->
+      <article class="card reveal">
+        <div class="ill tall dots mini">
+          <div class="share-modal">
+            <h4><span style="color:var(--ink);font-weight:600">⌘K &nbsp;<span style="color:#a19b92;font-weight:400">Type a command…</span></span><span>esc</span></h4>
+            <div style="font:600 10px var(--sans);letter-spacing:.14em;text-transform:uppercase;color:#a19b92;margin:2px 0 6px">Templates</div>
+            <div class="optrow" style="border:0;margin:0;padding:6px 8px;background:#fbe6dc;border-radius:8px"><div>ผังองค์กร<small>Org chart, top to bottom</small></div><span class="chip">↵</span></div>
+            <div class="optrow" style="border:0;margin:0;padding:6px 8px"><div>วิเคราะห์ SWOT<small>Strengths, weaknesses, opportunities, threats</small></div></div>
+            <div class="optrow" style="border:0;margin:0;padding:6px 8px"><div>ขั้นตอนอนุมัติเอกสาร<small>Submit, review, approve or send back</small></div></div>
+            <div style="font:600 10px var(--sans);letter-spacing:.14em;text-transform:uppercase;color:#a19b92;margin:10px 0 6px">Open</div>
+            <div class="optrow" style="border:0;margin:0;padding:6px 8px"><div>Import .excalidraw or Mermaid<small>Shapes, labels and arrows come across</small></div></div>
+          </div>
+        </div>
+        <div class="copy">
+          <h3>Templates, blocks and imports</h3>
+          <p>Start from ready-made templates, including Thai business ones like an org chart, SWOT and an approval flow. Bring in Excalidraw files or Mermaid code. Press Ctrl/⌘ K to find any action, template or shape by name.</p>
+        </div>
+      </article>
+    </div>
+  </div>
+</section>
+
+<!-- ================= FAQ ================= -->
+<section class="faq" id="faq">
+  <div class="wrap">
+    <div class="sec-head">
+      <div class="eyebrow">Good to know</div>
+      <h2>Questions people ask</h2>
+    </div>
+    <div class="qa" id="privacy">
+      <details open><summary>Where is my work stored?</summary><p>In your own browser, on your device. Canvy has no server and no accounts, so nothing you draw is uploaded. Clearing your browser's site data deletes it, so save a .canvy file for anything important.</p></details>
+      <details><summary>What happens to a photo I turn into a diagram?</summary><p>It is read on your device and never sent anywhere. The first time, Canvy downloads the reading model, OpenThai2.0-OCR-Text, once (about 20 MB with its runtime) and keeps it for next time. It reads printed Thai and English; handwriting isn't supported yet.</p></details>
+      <details><summary>What is inside a share link?</summary><p>The diagram itself, compressed into the part of the link after #. Anyone with the link can open it, so share it the way you would share the file. Pictures you added are left out to keep links short.</p></details>
+      <details><summary>Does it work in Thai?</summary><p>Yes. The interface, templates and typed diagrams all work in Thai, with Thai word wrapping. Switch the language with the button at the top.</p></details>
+      <details><summary>Does it cost anything, and does it work offline?</summary><p>It's free. After your first visit, Canvy keeps working without an internet connection.</p></details>
     </div>
   </div>
 </section>
@@ -661,19 +749,19 @@ footer li a:hover{color:var(--accent)}
       </div>
       <div>
         <h5>Product</h5>
-        <ul><li><a href="app/">Editor</a></li><li><a href="#features">Text to diagram</a></li><li><a href="#styles">Styles</a></li><li><a href="#share">Sharing</a></li><li><a href="#">Changelog</a></li></ul>
+        <ul><li><a href="app/">Editor</a></li><li><a href="#features">Text to diagram</a></li><li><a href="#styles">Styles</a></li><li><a href="#photo">Photo to diagram</a></li><li><a href="#share">Sharing</a></li><li><a href="https://github.com/kimookpong/canvy/commits/main" rel="noopener">Changelog</a></li></ul>
       </div>
       <div>
         <h5>Explore</h5>
-        <ul><li><a href="#features">Features</a></li><li><a href="#styles">Drawing styles</a></li><li><a href="#share">Share links</a></li><li><a href="app/">Open the editor</a></li></ul>
+        <ul><li><a href="#features">Features</a></li><li><a href="#styles">Drawing styles</a></li><li><a href="#faq">FAQ</a></li><li><a href="app/?lang=th">ภาษาไทย</a></li></ul>
       </div>
       <div>
-        <h5>Legal</h5>
-        <ul><li><a href="#">Privacy</a></li><li><a href="#">Terms</a></li></ul>
+        <h5>Privacy</h5>
+        <ul><li><a href="#privacy">Where your work is stored</a></li><li><a href="https://github.com/kimookpong/canvy" rel="noopener">Source code</a></li></ul>
       </div>
       <div>
         <h5>Contact</h5>
-        <ul><li><a href="#">GitHub</a></li><li><a href="#">Report a bug</a></li></ul>
+        <ul><li><a href="https://github.com/kimookpong/canvy" rel="noopener">GitHub</a></li><li><a href="https://github.com/kimookpong/canvy/issues/new" rel="noopener">Report a bug</a></li></ul>
       </div>
     </div>
     <div class="fbottom">
@@ -703,7 +791,7 @@ footer li a:hover{color:var(--accent)}
 <script>
 // language: English / ไทย (?lang=th, a saved choice, or the browser's language)
 (function(){
-  var TH={"Features": "ฟีเจอร์", "Styles": "สไตล์", "Sharing": "การแชร์", "Editor": "เครื่องมือวาด", "Open Canvy": "เปิด Canvy", "Free": "ฟรี", "No account. No server. Saved in your browser.": "ไม่ต้องสมัคร ไม่มีเซิร์ฟเวอร์ บันทึกในเบราว์เซอร์ของคุณ", "Think it through": "คิดให้ชัด", "on paper that types": "บนกระดาษที่พิมพ์ได้", "Canvy is a hand-drawn diagram canvas. Sketch freely, type a line like": "Canvy คือผืนผ้าใบวาดไดอะแกรมสไตล์ลายมือ จะวาดเองก็ได้ หรือพิมพ์บรรทัดเดียวอย่าง", ", and watch it draw itself. It looks like a whiteboard, works like an editor, and keeps everything on your device.": " แล้วดูมันวาดให้เอง หน้าตาเหมือนไวต์บอร์ด ใช้งานเหมือนโปรแกรมแก้ไข และเก็บทุกอย่างไว้ในเครื่องคุณ", "Start a diagram": "เริ่มวาดไดอะแกรม", "See what it does": "ดูว่าทำอะไรได้บ้าง", "Runs in your browser · Nothing to install, nothing uploaded": "ทำงานในเบราว์เซอร์ · ไม่ต้องติดตั้ง ไม่มีการอัปโหลด", "Inside the canvas": "ในผืนผ้าใบ", "Seven ways Canvy gets out of your way": "7 อย่างที่ทำให้ Canvy ใช้ง่าย", "Everything a whiteboard does, plus the parts a whiteboard can't: typed diagrams, styles, presenting, share links and history.": "ทำได้ทุกอย่างที่ไวต์บอร์ดทำได้ และมากกว่านั้น: พิมพ์เป็นไดอะแกรม เปลี่ยนสไตล์ นำเสนอ แชร์ลิงก์ และย้อนประวัติ", "Type a line, get a diagram": "พิมพ์บรรทัดเดียว ได้ไดอะแกรม", "Write arrows the way you'd write them in a chat message. Canvy draws the boxes, spaces them out and keeps them editable, so you can drag things around afterwards.": "เขียนลูกศรเหมือนพิมพ์แชต Canvy จะวาดกล่อง จัดระยะให้ และยังแก้ไขต่อได้ ลากย้ายทีหลังได้ตามใจ", "Shapes that mean something": "รูปทรงที่มีความหมาย", "Boxes, ellipses, decisions and databases are one keystroke away, by tool or by bracket. Arrows stay attached to their shapes, so moving things around never breaks the diagram.": "กล่อง วงรี ทางเลือก ฐานข้อมูล เรียกได้ด้วยปุ่มเดียวหรือวงเล็บ ลูกศรติดกับรูปเสมอ ย้ายรูปแล้วไดอะแกรมไม่พัง", "One diagram, many looks": "ไดอะแกรมเดียว หลายหน้าตา", "Switch the whole canvas between pencil, chalk, blueprint and clean ink. Your layout and labels stay exactly where they were.": "สลับทั้งผืนเป็นดินสอ ชอล์ก พิมพ์เขียว หรือหมึกเรียบ ตำแหน่งและข้อความอยู่ที่เดิมทุกอย่าง", "Present without the clutter": "นำเสนอแบบไม่รก", "Press Present and Canvy hides the toolbars, fits your diagram to the screen and goes full screen. Esc takes you back to editing.": "กดนำเสนอ Canvy จะซ่อนแถบเครื่องมือ ปรับไดอะแกรมพอดีจอ และขึ้นเต็มจอ กด Esc เพื่อกลับมาแก้ไข", "Export anywhere": "ส่งออกได้ทุกที่", "Download a PNG for slides, an SVG for docs, or a JSON backup you can import on another device.": "ดาวน์โหลด PNG ใส่สไลด์ SVG ใส่เอกสาร หรือ JSON ไว้สำรองและเปิดบนเครื่องอื่น", "Share with a link, not an account": "แชร์ด้วยลิงก์ ไม่ต้องมีบัญชี", "Canvy packs the whole diagram into the link itself. Whoever opens it gets their own editable copy. There's no server, no sign-up, and nothing is stored outside their browser.": "Canvy ใส่ไดอะแกรมทั้งหมดไว้ในลิงก์ ใครเปิดก็ได้สำเนาที่แก้ไขได้ ไม่มีเซิร์ฟเวอร์ ไม่ต้องสมัคร และไม่มีข้อมูลถูกเก็บนอกเบราว์เซอร์", "Every version, kept": "เก็บทุกเวอร์ชัน", "Canvy saves to your browser as you work and keeps a version every few minutes. Step back through the history and restore any version with one click.": "Canvy บันทึกลงเบราว์เซอร์ระหว่างทำงาน และเก็บเวอร์ชันทุกไม่กี่นาที ย้อนดูประวัติและกู้คืนได้ในคลิกเดียว", "Your next diagram is": "ไดอะแกรมต่อไปของคุณ", "one line away": "ห่างแค่บรรทัดเดียว", "Open a blank canvas and start drawing or typing. There's nothing to sign up for, and your work stays in your browser.": "เปิดผืนผ้าใบเปล่าแล้วเริ่มวาดหรือพิมพ์ได้เลย ไม่ต้องสมัคร และงานของคุณอยู่ในเบราว์เซอร์ของคุณ", "A hand-drawn canvas for thinking out loud: systems, flows and plans. Free, and private by design.": "ผืนผ้าใบลายมือสำหรับคิดออกมาเป็นภาพ ทั้งระบบ ขั้นตอน และแผนงาน ฟรีและเป็นส่วนตัว", "Start drawing": "เริ่มวาด", "Product": "ผลิตภัณฑ์", "Text to diagram": "พิมพ์เป็นไดอะแกรม", "Changelog": "บันทึกการเปลี่ยนแปลง", "Explore": "สำรวจ", "Drawing styles": "สไตล์การวาด", "Share links": "แชร์ลิงก์", "Open the editor": "เปิดเครื่องมือวาด", "Legal": "กฎหมาย", "Privacy": "ความเป็นส่วนตัว", "Terms": "ข้อกำหนด", "Contact": "ติดต่อ", "Report a bug": "แจ้งปัญหา", "© 2026 Canvy. All rights reserved.": "© 2026 Canvy สงวนลิขสิทธิ์", "Drawn on a dotted grid, one line at a time.": "วาดบนกระดาษจุด ทีละบรรทัด", "Link copied": "คัดลอกลิงก์แล้ว", "Opens as an editable copy": "เปิดเป็นสำเนาที่แก้ไขได้", "No account needed to view or edit": "ไม่ต้องมีบัญชีก็ดูและแก้ไขได้", "Anyone": "ทุกคน", "Also save as file": "บันทึกเป็นไฟล์ได้ด้วย", "Export ▾": "ส่งออก ▾", "The whole diagram is packed into this link. Nothing is uploaded.": "ไดอะแกรมทั้งหมดอยู่ในลิงก์นี้ ไม่มีการอัปโหลด", "Copy": "คัดลอก", "History": "ประวัติ", "Restore": "กู้คืน", "Saved by you": "บันทึกโดยคุณ", "Share": "แชร์"},ORIG=new WeakMap(),btn=document.getElementById('langBtn');
+  var TH={"Features": "ฟีเจอร์", "Styles": "สไตล์", "Sharing": "การแชร์", "Editor": "เครื่องมือวาด", "Open Canvy": "เปิด Canvy", "Free": "ฟรี", "No account. No server. Saved in your browser.": "ไม่ต้องสมัคร ไม่มีเซิร์ฟเวอร์ บันทึกในเบราว์เซอร์ของคุณ", "Think it through": "คิดให้ชัด", "on paper that types": "บนกระดาษที่พิมพ์ได้", "Canvy is a hand-drawn diagram canvas. Sketch freely, type a line like": "Canvy คือผืนผ้าใบวาดไดอะแกรมสไตล์ลายมือ จะวาดเองก็ได้ หรือพิมพ์บรรทัดเดียวอย่าง", ", and watch it draw itself. It looks like a whiteboard, works like an editor, and keeps everything on your device.": " แล้วดูมันวาดให้เอง หน้าตาเหมือนไวต์บอร์ด ใช้งานเหมือนโปรแกรมแก้ไข และเก็บทุกอย่างไว้ในเครื่องคุณ", "Start a diagram": "เริ่มวาดไดอะแกรม", "See what it does": "ดูว่าทำอะไรได้บ้าง", "Runs in your browser · Nothing to install, nothing uploaded": "ทำงานในเบราว์เซอร์ · ไม่ต้องติดตั้ง ไม่มีการอัปโหลด", "Inside the canvas": "ในผืนผ้าใบ", "Seven ways Canvy gets out of your way": "7 อย่างที่ทำให้ Canvy ใช้ง่าย", "Everything a whiteboard does, plus the parts a whiteboard can't: typed diagrams, styles, presenting, share links and history.": "ทำได้ทุกอย่างที่ไวต์บอร์ดทำได้ และมากกว่านั้น: พิมพ์เป็นไดอะแกรม เปลี่ยนสไตล์ นำเสนอ แชร์ลิงก์ และย้อนประวัติ", "Type a line, get a diagram": "พิมพ์บรรทัดเดียว ได้ไดอะแกรม", "Write arrows the way you'd write them in a chat message. Canvy draws the boxes, spaces them out and keeps them editable, so you can drag things around afterwards.": "เขียนลูกศรเหมือนพิมพ์แชต Canvy จะวาดกล่อง จัดระยะให้ และยังแก้ไขต่อได้ ลากย้ายทีหลังได้ตามใจ", "Shapes that mean something": "รูปทรงที่มีความหมาย", "Boxes, ellipses, decisions and databases are one keystroke away, by tool or by bracket. Arrows stay attached to their shapes, so moving things around never breaks the diagram.": "กล่อง วงรี ทางเลือก ฐานข้อมูล เรียกได้ด้วยปุ่มเดียวหรือวงเล็บ ลูกศรติดกับรูปเสมอ ย้ายรูปแล้วไดอะแกรมไม่พัง", "One diagram, many looks": "ไดอะแกรมเดียว หลายหน้าตา", "Switch the whole canvas between pencil, chalk, blueprint and clean ink. Your layout and labels stay exactly where they were.": "สลับทั้งผืนเป็นดินสอ ชอล์ก พิมพ์เขียว หรือหมึกเรียบ ตำแหน่งและข้อความอยู่ที่เดิมทุกอย่าง", "Present without the clutter": "นำเสนอแบบไม่รก", "Press Present and Canvy hides the toolbars, fits your diagram to the screen and goes full screen. Esc takes you back to editing.": "กดนำเสนอ Canvy จะซ่อนแถบเครื่องมือ ปรับไดอะแกรมพอดีจอ และขึ้นเต็มจอ กด Esc เพื่อกลับมาแก้ไข", "Export anywhere": "ส่งออกได้ทุกที่", "Download a PNG for slides, an SVG for docs, or a JSON backup you can import on another device.": "ดาวน์โหลด PNG ใส่สไลด์ SVG ใส่เอกสาร หรือ JSON ไว้สำรองและเปิดบนเครื่องอื่น", "Share with a link, not an account": "แชร์ด้วยลิงก์ ไม่ต้องมีบัญชี", "Canvy packs the whole diagram into the link itself. Whoever opens it gets their own editable copy. There's no server, no sign-up, and nothing is stored outside their browser.": "Canvy ใส่ไดอะแกรมทั้งหมดไว้ในลิงก์ ใครเปิดก็ได้สำเนาที่แก้ไขได้ ไม่มีเซิร์ฟเวอร์ ไม่ต้องสมัคร และไม่มีข้อมูลถูกเก็บนอกเบราว์เซอร์", "Every version, kept": "เก็บทุกเวอร์ชัน", "Canvy saves to your browser as you work and keeps a version every few minutes. Step back through the history and restore any version with one click.": "Canvy บันทึกลงเบราว์เซอร์ระหว่างทำงาน และเก็บเวอร์ชันทุกไม่กี่นาที ย้อนดูประวัติและกู้คืนได้ในคลิกเดียว", "Your next diagram is": "ไดอะแกรมต่อไปของคุณ", "one line away": "ห่างแค่บรรทัดเดียว", "Open a blank canvas and start drawing or typing. There's nothing to sign up for, and your work stays in your browser.": "เปิดผืนผ้าใบเปล่าแล้วเริ่มวาดหรือพิมพ์ได้เลย ไม่ต้องสมัคร และงานของคุณอยู่ในเบราว์เซอร์ของคุณ", "A hand-drawn canvas for thinking out loud: systems, flows and plans. Free, and private by design.": "ผืนผ้าใบลายมือสำหรับคิดออกมาเป็นภาพ ทั้งระบบ ขั้นตอน และแผนงาน ฟรีและเป็นส่วนตัว", "Start drawing": "เริ่มวาด", "Product": "ผลิตภัณฑ์", "Text to diagram": "พิมพ์เป็นไดอะแกรม", "Changelog": "บันทึกการเปลี่ยนแปลง", "Explore": "สำรวจ", "Drawing styles": "สไตล์การวาด", "Share links": "แชร์ลิงก์", "Open the editor": "เปิดเครื่องมือวาด", "Legal": "กฎหมาย", "Privacy": "ความเป็นส่วนตัว", "Terms": "ข้อกำหนด", "Contact": "ติดต่อ", "Report a bug": "แจ้งปัญหา", "© 2026 Canvy. All rights reserved.": "© 2026 Canvy สงวนลิขสิทธิ์", "Drawn on a dotted grid, one line at a time.": "วาดบนกระดาษจุด ทีละบรรทัด", "Link copied": "คัดลอกลิงก์แล้ว", "Opens as an editable copy": "เปิดเป็นสำเนาที่แก้ไขได้", "No account needed to view or edit": "ไม่ต้องมีบัญชีก็ดูและแก้ไขได้", "Anyone": "ทุกคน", "Also save as file": "บันทึกเป็นไฟล์ได้ด้วย", "Export ▾": "ส่งออก ▾", "The whole diagram is packed into this link. Nothing is uploaded.": "ไดอะแกรมทั้งหมดอยู่ในลิงก์นี้ ไม่มีการอัปโหลด", "Copy": "คัดลอก", "History": "ประวัติ", "Restore": "กู้คืน", "Saved by you": "บันทึกโดยคุณ", "Share": "แชร์", ", or snap a photo of a printed diagram, and watch it draw itself. It works in Thai and English, looks like a whiteboard, and keeps everything on your device.": " หรือถ่ายรูปไดอะแกรมที่พิมพ์ไว้ แล้วดูมันวาดให้เอง ใช้ได้ทั้งภาษาไทยและอังกฤษ หน้าตาเหมือนไวต์บอร์ด และเก็บทุกอย่างไว้ในเครื่องคุณ", "FAQ": "คำถามที่พบบ่อย", "Nine ways Canvy gets out of your way": "9 อย่างที่ทำให้ Canvy ใช้ง่าย", "Everything a whiteboard does, plus the parts a whiteboard can't: typed diagrams, photos that become diagrams, styles, presenting, share links and history.": "ทำได้ทุกอย่างที่ไวต์บอร์ดทำได้ และมากกว่านั้น: พิมพ์เป็นไดอะแกรม แปลงรูปถ่ายเป็นไดอะแกรม เปลี่ยนสไตล์ นำเสนอ แชร์ลิงก์ และย้อนประวัติ", "Snap a photo, get an editable diagram": "ถ่ายรูป ได้ไดอะแกรมที่แก้ไขได้", "Photograph a printed or on-screen diagram. Canvy reads the Thai and English text, finds the boxes, arrows and labels, and rebuilds it so you can edit it. The photo never leaves your device. Handwriting isn't supported yet.": "ถ่ายรูปไดอะแกรมที่พิมพ์ไว้หรืออยู่บนจอ Canvy จะอ่านข้อความไทยและอังกฤษ หากล่อง ลูกศร และป้ายกำกับ แล้วสร้างใหม่ให้แก้ไขได้ รูปไม่ออกจากเครื่องคุณ ยังอ่านลายมือไม่ได้", "Switch the whole canvas between six looks: pencil, chalk, marker, blueprint, clean ink and neon. Your layout and labels stay exactly where they were.": "สลับทั้งผืนได้ 6 แบบ: ดินสอ ชอล์ก มาร์กเกอร์ พิมพ์เขียว หมึกเรียบ และนีออน ตำแหน่งและข้อความอยู่ที่เดิมทุกอย่าง", "Press Present and each frame becomes a slide, full screen with the toolbars hidden. Press N for speaker notes and L for a laser pointer. Esc takes you back to editing.": "กดนำเสนอ แต่ละเฟรมจะกลายเป็นสไลด์แบบเต็มจอ ซ่อนแถบเครื่องมือ กด N ดูโน้ตผู้พูด กด L ใช้เลเซอร์ชี้ กด Esc เพื่อกลับมาแก้ไข", "Download a PNG for slides, an SVG for docs, a PDF with one page per frame, Mermaid code, or a .canvy file you can open on another device.": "ดาวน์โหลด PNG ใส่สไลด์ SVG ใส่เอกสาร PDF หน้าละเฟรม โค้ด Mermaid หรือไฟล์ .canvy ไว้เปิดบนเครื่องอื่น", "View only": "ดูอย่างเดียว", "People can look and zoom, but not edit": "ดูและซูมได้ แต่แก้ไขไม่ได้", "Off": "ปิด", "Embed or show a QR code": "ฝังในเว็บ หรือแสดง QR code", "Paste into a blog or Notion, or scan from a phone": "วางในบล็อกหรือ Notion หรือสแกนจากมือถือ", "Canvy packs the whole diagram into the link itself. Whoever opens it gets their own editable copy, or a view-only one if you tick View only. Copy an embed code or show a QR code. There's no server and no sign-up.": "Canvy ใส่ไดอะแกรมทั้งหมดไว้ในลิงก์ ใครเปิดก็ได้สำเนาที่แก้ไขได้ หรือดูได้อย่างเดียวถ้าติ๊ก ดูอย่างเดียว คัดลอกโค้ดฝังเว็บหรือแสดง QR code ได้ ไม่มีเซิร์ฟเวอร์และไม่ต้องสมัคร", "Type a command…": "พิมพ์คำสั่ง…", "Templates": "เทมเพลต", "Open": "เปิด", "Org chart, top to bottom": "ผังองค์กร จากบนลงล่าง", "Strengths, weaknesses, opportunities, threats": "จุดแข็ง จุดอ่อน โอกาส อุปสรรค", "Submit, review, approve or send back": "ยื่น ตรวจ อนุมัติ หรือส่งกลับแก้", "Import .excalidraw or Mermaid": "นำเข้า .excalidraw หรือ Mermaid", "Shapes, labels and arrows come across": "ได้ทั้งรูปทรง ข้อความ และลูกศร", "Templates, blocks and imports": "เทมเพลต บล็อก และการนำเข้า", "Start from ready-made templates, including Thai business ones like an org chart, SWOT and an approval flow. Bring in Excalidraw files or Mermaid code. Press Ctrl/⌘ K to find any action, template or shape by name.": "เริ่มจากเทมเพลตสำเร็จรูป รวมถึงเทมเพลตธุรกิจภาษาไทยอย่างผังองค์กร SWOT และขั้นตอนอนุมัติ นำเข้าไฟล์ Excalidraw หรือโค้ด Mermaid ได้ กด Ctrl/⌘ K เพื่อค้นหาคำสั่ง เทมเพลต หรือรูปทรงด้วยชื่อ", "Good to know": "ควรรู้", "Questions people ask": "คำถามที่พบบ่อย", "Where is my work stored?": "งานของฉันเก็บไว้ที่ไหน", "In your own browser, on your device. Canvy has no server and no accounts, so nothing you draw is uploaded. Clearing your browser's site data deletes it, so save a .canvy file for anything important.": "ในเบราว์เซอร์บนเครื่องของคุณเอง Canvy ไม่มีเซิร์ฟเวอร์และไม่มีบัญชีผู้ใช้ สิ่งที่วาดจึงไม่ถูกอัปโหลด ถ้าล้างข้อมูลเว็บไซต์ในเบราว์เซอร์งานจะหายไป งานสำคัญควรบันทึกเป็นไฟล์ .canvy", "What happens to a photo I turn into a diagram?": "รูปที่แปลงเป็นไดอะแกรมไปอยู่ที่ไหน", "It is read on your device and never sent anywhere. The first time, Canvy downloads the reading model, OpenThai2.0-OCR-Text, once (about 20 MB with its runtime) and keeps it for next time. It reads printed Thai and English; handwriting isn't supported yet.": "รูปถูกอ่านในเครื่องของคุณและไม่ถูกส่งไปไหน ครั้งแรก Canvy จะดาวน์โหลดโมเดลอ่านข้อความ OpenThai2.0-OCR-Text ครั้งเดียว (ประมาณ 20 MB รวมตัวรัน) แล้วเก็บไว้ใช้ครั้งต่อไป อ่านตัวพิมพ์ไทยและอังกฤษได้ ยังอ่านลายมือไม่ได้", "What is inside a share link?": "ในลิงก์แชร์มีอะไรบ้าง", "The diagram itself, compressed into the part of the link after #. Anyone with the link can open it, so share it the way you would share the file. Pictures you added are left out to keep links short.": "ตัวไดอะแกรมเอง บีบอัดไว้ในส่วนของลิงก์หลังเครื่องหมาย # ใครมีลิงก์ก็เปิดได้ จึงควรแชร์อย่างระมัดระวังเหมือนแชร์ไฟล์ รูปภาพที่ใส่ไว้จะไม่ถูกใส่ในลิงก์เพื่อให้ลิงก์สั้น", "Does it work in Thai?": "ใช้ภาษาไทยได้ไหม", "Yes. The interface, templates and typed diagrams all work in Thai, with Thai word wrapping. Switch the language with the button at the top.": "ได้ หน้าจอ เทมเพลต และการพิมพ์เป็นไดอะแกรมใช้ภาษาไทยได้ทั้งหมด พร้อมตัดคำภาษาไทย เปลี่ยนภาษาได้ที่ปุ่มด้านบน", "Does it cost anything, and does it work offline?": "เสียเงินไหม และใช้แบบออฟไลน์ได้ไหม", "It's free. After your first visit, Canvy keeps working without an internet connection.": "ฟรี หลังจากเปิดครั้งแรกแล้ว Canvy ใช้งานต่อได้แม้ไม่มีอินเทอร์เน็ต", "Photo to diagram": "รูปถ่ายเป็นไดอะแกรม", "Where your work is stored": "งานของคุณเก็บไว้ที่ไหน", "Source code": "ซอร์สโค้ด", "Pencil": "ดินสอ", "Chalk": "ชอล์ก", "Marker": "มาร์กเกอร์", "Blueprint": "พิมพ์เขียว", "Ink": "หมึก", "Neon": "นีออน", "· saved": "· บันทึกแล้ว", "Today, 14:02": "วันนี้ 14:02", "Today, 11:40": "วันนี้ 11:40", "just now · 9 items": "เมื่อสักครู่ · 9 รายการ", "2 h ago · 7 items": "2 ชม. ก่อน · 7 รายการ", "Yesterday · 5 items": "เมื่อวาน · 5 รายการ"},ORIG=new WeakMap(),btn=document.getElementById('langBtn');
   function pick(){try{var q=new URLSearchParams(location.search).get('lang');if(q==='th'||q==='en')return q;var s=localStorage.getItem('canvy:lang');if(s)return JSON.parse(s)}catch(e){}return (navigator.language||'').toLowerCase().indexOf('th')===0?'th':'en'}
   function apply(lang){
     document.documentElement.lang=lang;
