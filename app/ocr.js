@@ -113,12 +113,14 @@ const OCR=(()=>{
   /* ---- page ---- */
   async function read(src,onLine){
     await load();
-    const boxes=await detect(src),lines=[];let i=0;
+    const boxes=await detect(src),lines=[],weak=[];let i=0;
     for(const b of boxes){const r=await readBox(src,b);onLine&&onLine(++i,boxes.length);
       const text=canonical(r.text),n=text.replace(/\s/g,'').length;
-      if(!text||r.conf<C.drop||(n<2&&r.conf<.9)||(r.conf<C.junkBelow&&invalidShare(text)>C.junkInvalid))continue;
+      if(!text||r.conf<C.drop||(n<2&&r.conf<.9)||(r.conf<C.junkBelow&&invalidShare(text)>C.junkInvalid)){
+        // kept aside: a diagram still needs to know something was written there (an arrow label, say)
+        if(r.conf>=.3)weak.push({text:r.conf>=.6&&invalidShare(text)<=C.junkInvalid?text:'',conf:r.conf,weak:true,...b});continue}
       lines.push({text,conf:r.conf,...b})}
-    return lines;
+    lines.weak=weak;return lines;
   }
   return{load,read,isCached,canonical};
 })();

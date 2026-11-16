@@ -2465,7 +2465,7 @@ function runTemplate(t){if(t.build)insertBuilt(t.build());else applyCommand(t.cm
 
 /* ============================== photo -> diagram ============================== */
 let ocrScript=null,photoSrc=null,photoResult=null;
-function loadOcr(){if(window.OCR)return Promise.resolve();if(!ocrScript)ocrScript=new Promise((ok,no)=>{const s=document.createElement('script');s.src='ocr.js?v=2';s.onload=ok;s.onerror=()=>{ocrScript=null;no(new Error('offline'))};document.head.appendChild(s)});return ocrScript}
+function loadOcr(){if(window.OCR)return Promise.resolve();if(!ocrScript)ocrScript=new Promise((ok,no)=>{const s=document.createElement('script');s.src='ocr.js?v=3';s.onload=ok;s.onerror=()=>{ocrScript=null;no(new Error('offline'))};document.head.appendChild(s)});return ocrScript}
 const median=a=>{if(!a.length)return 0;const b=[...a].sort((x,y)=>x-y),m=b.length>>1;return b.length%2?b[m]:(b[m-1]+b[m])/2};
 /* From the picture and the text lines OCR found: group lines into nodes, find the outline around each node
    (rectangle, ellipse or diamond, by casting rays out from the text), then treat the remaining ink as connectors. */
@@ -2474,8 +2474,8 @@ function analyzePhoto(src,lines){
   const cv=document.createElement('canvas');cv.width=w;cv.height=h;const g=cv.getContext('2d',{willReadFrequently:true});g.fillStyle='#fff';g.fillRect(0,0,w,h);g.drawImage(src,0,0,w,h);
   const px=g.getImageData(0,0,w,h).data,N=w*h,lum=new Float32Array(N);for(let i=0,j=0;i<N;i++,j+=4)lum[i]=.299*px[j]+.587*px[j+1]+.114*px[j+2];
   {const smp=[];for(let i=0;i<N;i+=Math.max(1,(N/4000)|0))smp.push(lum[i]);if(median(smp)<110)for(let i=0;i<N;i++)lum[i]=255-lum[i]}  // light lines on a dark board
-  const L=lines.map(l=>({text:l.text,x:l.x*k,y:l.y*k,w:l.w*k,h:l.h*k}));
-  const hm=Math.max(6,median(L.map(l=>l.h))||14*k);
+  const L=[...lines,...(lines.weak||[])].map(l=>({text:l.text,weak:!!l.weak,x:l.x*k,y:l.y*k,w:l.w*k,h:l.h*k}));
+  const hm=Math.max(6,median(L.filter(l=>!l.weak).map(l=>l.h))||median(L.map(l=>l.h))||14*k);
   // ink: clearly darker than the local background (works with uneven light in photos)
   const r=Math.max(6,Math.round(hm*1.5)),I=new Float64Array((w+1)*(h+1));
   for(let y=0;y<h;y++){let s=0;for(let x=0;x<w;x++){s+=lum[y*w+x];I[(y+1)*(w+1)+x+1]=I[y*(w+1)+x+1]+s}}
@@ -2494,8 +2494,8 @@ function analyzePhoto(src,lines){
     if(!ruled)par[find(i)]=find(j)}
   const groups=new Map();L.forEach((l,i)=>{const r0=find(i);if(!groups.has(r0))groups.set(r0,[]);groups.get(r0).push(l)});
   const nodes=[...groups.values()].map(ls=>{ls.sort((a,b)=>a.y-b.y||a.x-b.x);const rows=[];for(const l of ls){const row=rows.find(rw=>Math.abs(rw.cy-(l.y+l.h/2))<.45*hm);if(row){row.ls.push(l)}else rows.push({cy:l.y+l.h/2,ls:[l]})}
-    const text=rows.map(rw=>rw.ls.sort((a,b)=>a.x-b.x).map(l=>l.text).join(' ')).join('\n'),x=Math.min(...ls.map(l=>l.x)),y=Math.min(...ls.map(l=>l.y));
-    return{text,x,y,w:Math.max(...ls.map(l=>l.x+l.w))-x,h:Math.max(...ls.map(l=>l.y+l.h))-y,kind:'text'}});
+    const text=rows.map(rw=>rw.ls.sort((a,b)=>a.x-b.x).map(l=>l.text).filter(Boolean).join(' ')).filter(Boolean).join('\n'),weak=ls.every(l=>l.weak),x=Math.min(...ls.map(l=>l.x)),y=Math.min(...ls.map(l=>l.y));
+    return{text,weak,x,y,w:Math.max(...ls.map(l=>l.x+l.w))-x,h:Math.max(...ls.map(l=>l.y+l.h))-y,kind:'text'}});
   // 2. outline around each node: flood the blank space touching the text box; if it is closed (does not run to the
   //    edge of the picture or grow far beyond the text) it is the inside of a shape. Its fill ratio tells the kind.
   const owner=new Int32Array(N),openF=new Set();let flood=0;const st=new Int32Array(N);
@@ -2548,12 +2548,14 @@ function analyzePhoto(src,lines){
   for(const[r0,m]of byRoot){const li=labelOf.get(r0);if(li!=null)m.label=li;
     for(const ni of[...m.touch.keys()])if(nodes[ni].isLabel)m.touch.delete(ni);merged.push(m)}
   const edges=[],seen=new Set();
-  for(const m of merged){const t=[...m.touch.entries()].sort((a,b)=>b[1]-a[1]);if(t.length<2)continue;
+  for(const m of merged){for(const ni of[...m.touch.keys()])if(nodes[ni].weak&&nodes[ni].kind==='text')m.touch.delete(ni);const t=[...m.touch.entries()].sort((a,b)=>b[1]-a[1]);if(t.length<2)continue;
     const label=m.label!=null?nodes[m.label].text:'';
     if(t.length===2){let[to,from]=[t[0][0],t[1][0]];
       if(t[0][1]<1.25*t[1][1]){const A=nodes[from].box,B=nodes[to].box,dx=(B.x+B.w/2)-(A.x+A.w/2),dy=(B.y+B.h/2)-(A.y+A.h/2);if(Math.abs(dx)>=Math.abs(dy)?dx<0:dy<0)[from,to]=[to,from]}  // no clear arrowhead: read left-to-right, top-to-bottom
       const key=from+'>'+to;if(!seen.has(key)){seen.add(key);edges.push({from,to,label,sure:t[0][1]>=1.15*t[1][1]})}}
     else if(t[0][1]>=1.4*t[1][1])for(const[from]of t.slice(1)){const key=from+'>'+t[0][0];if(!seen.has(key)){seen.add(key);edges.push({from,to:t[0][0],label:'',sure:true})}}}
+  // an unreadable scrap that is neither a shape nor an arrow label is left out
+  nodes.forEach(n=>{if(n.weak&&n.kind==='text'&&!n.isLabel)n.isLabel=true,n.drop=true});
   return{nodes:nodes.filter(n=>!n.isLabel),allNodes:nodes,edges,hm,k,w,h};
 }
 function photoElements(res,mode){
@@ -2572,7 +2574,7 @@ function drawPhotoPreview(){
   for(const e of r.edges){const a=r.allNodes[e.from],b=r.allNodes[e.to],ca=a.kind==='text'?[a.x+a.w/2,a.y+a.h/2]:[a.ox+a.ow/2,a.oy+a.oh/2],cb=b.kind==='text'?[b.x+b.w/2,b.y+b.h/2]:[b.ox+b.ow/2,b.oy+b.oh/2];
     g.strokeStyle='rgba(234,88,12,.85)';g.beginPath();g.moveTo(ca[0]*q,ca[1]*q);g.lineTo(cb[0]*q,cb[1]*q);g.stroke();
     const ang=Math.atan2(cb[1]-ca[1],cb[0]-ca[0]),mx=(ca[0]+cb[0])/2*q,my=(ca[1]+cb[1])/2*q;g.fillStyle='rgba(234,88,12,.95)';g.beginPath();g.moveTo(mx+Math.cos(ang)*9,my+Math.sin(ang)*9);g.lineTo(mx+Math.cos(ang+2.5)*9,my+Math.sin(ang+2.5)*9);g.lineTo(mx+Math.cos(ang-2.5)*9,my+Math.sin(ang-2.5)*9);g.fill()}
-  for(const n of r.allNodes){g.strokeStyle=n.isLabel?'rgba(120,120,120,.8)':'rgba(37,99,235,.9)';g.setLineDash(n.kind==='text'?[5,4]:[]);
+  for(const n of r.allNodes){if(n.drop)continue;g.strokeStyle=n.isLabel?'rgba(120,120,120,.8)':'rgba(37,99,235,.9)';g.setLineDash(n.kind==='text'?[5,4]:[]);
     if(n.kind==='text')g.strokeRect(n.x*q,n.y*q,n.w*q,n.h*q);
     else{g.beginPath();const x=n.ox*q,y=n.oy*q,ww=n.ow*q,hh=n.oh*q;if(n.kind==='ellipse')g.ellipse(x+ww/2,y+hh/2,ww/2,hh/2,0,0,7);else if(n.kind==='diamond'){g.moveTo(x+ww/2,y);g.lineTo(x+ww,y+hh/2);g.lineTo(x+ww/2,y+hh);g.lineTo(x,y+hh/2);g.closePath()}else g.rect(x,y,ww,hh);g.stroke()}}
   g.setLineDash([]);
