@@ -1,0 +1,24 @@
+{
+  "manifest_version": "0.3",
+  "name": "canvy",
+  "display_name": "Canvy diagrams",
+  "version": "1.0.0",
+  "description": "Make editable hand-drawn diagrams in Thai and English from a short description.",
+  "long_description": "Ask Claude for a flowchart, process, architecture or org chart and get a Canvy link that opens it as an editable hand-drawn diagram. Works in Thai and English, accepts Mermaid, and stores nothing: the diagram travels inside the link and is saved only in your browser when you open it.",
+  "author": { "name": "Canvy", "url": "https://kimookpong.github.io/canvy/" },
+  "homepage": "https://kimookpong.github.io/canvy/",
+  "repository": { "type": "git", "url": "https://github.com/kimookpong/canvy" },
+  "icon": "icon.png",
+  "server": {
+    "type": "node",
+    "entry_point": "server/server.mjs",
+    "mcp_config": { "command": "node", "args": ["${__dirname}/server/server.mjs"], "env": {} }
+  },
+  "tools": [
+    { "name": "create_diagram", "description": "Create an editable Canvy diagram link from Canvy syntax or Mermaid" },
+    { "name": "get_canvy_syntax", "description": "Canvy diagram syntax with examples and tips" }
+  ],
+  "keywords": ["diagram", "flowchart", "thai", "mermaid", "hand-drawn"],
+  "license": "MIT",
+  "compatibility": { "platforms": ["darwin", "win32", "linux"], "runtimes": { "node": ">=18.0.0" } }
+}

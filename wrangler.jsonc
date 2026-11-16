@@ -1,0 +1,11 @@
+// One Worker for canvy.thasala.dev: the static site from this folder (see .assetsignore) and the MCP endpoint at /mcp.
+// Requests that match a file are served as that file; everything else (like /mcp) reaches worker/index.mjs.
+{
+  "name": "canvy",
+  "main": "worker/index.mjs",
+  "compatibility_date": "2026-11-01",
+  "assets": { "directory": "." },
+  "routes": [{ "pattern": "canvy.thasala.dev", "custom_domain": true }],
+  "workers_dev": true,
+  "observability": { "enabled": true }
+}

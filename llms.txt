@@ -1,0 +1,71 @@
+# Canvy
+
+> Canvy is a free, hand-drawn diagram editor that runs entirely in the browser, in Thai and English. No account and no server: a diagram lives in the person's browser or inside its link. An AI can make a diagram for someone by writing a command link: the diagram is plain text in the URL, and opening the link builds it as an editable diagram.
+
+- Editor: https://kimookpong.github.io/canvy/app/
+- Home: https://kimookpong.github.io/canvy/
+- Source: https://github.com/kimookpong/canvy
+
+## Command links
+
+```
+https://kimookpong.github.io/canvy/app/#c=<diagram>&title=<title>&dir=<LR|TB>&style=<style>
+```
+
+- `c` (required): the diagram, in Canvy syntax (below) or Mermaid `flowchart` / `graph` syntax. Percent-encode it with encodeURIComponent: spaces → `%20`, `->` → `-%3E`, new line → `%0A`, `&` → `%26`, `#` → `%23`, `?` → `%3F`. Thai text must be percent-encoded too.
+- `title` (optional): diagram name. Percent-encoded.
+- `dir` (optional): `LR` (left to right, default) or `TB` (top to bottom). Use `TB` for org charts, approvals and long processes.
+- `style` (optional): `pencil` (default), `chalk`, `marker`, `blueprint`, `ink`, `neon`.
+- Read-only link: put `?view=1` before the `#`: `https://kimookpong.github.io/canvy/app/?view=1#c=...`
+- Embed in a page: `?embed=1` in an `<iframe>`.
+
+Opening a command link creates a new diagram in that browser. The person can then edit, restyle, present (each frame becomes a slide) and export it to PNG, SVG, PDF or Mermaid.
+
+## Canvy syntax
+
+| Write | Gives |
+| --- | --- |
+| `a -> b -> c` | Boxes joined by arrows |
+| `a -(label)-> b` or `a -> b: label` | Label on an arrow |
+| `a -- b` · `a <-> b` · `a ..> b` | Plain line · two-way arrow · dashed arrow |
+| `db:Orders` `queue:Jobs` `user:Customer` `note:Text` `cloud:CDN` `doc:Report` `io:Input` `hex:Step` `start:Begin` `end:Done` `decision:OK?` `card:Title` | Pick a shape by prefix |
+| `[(Orders)]` `(Round)` `{Decision?}` `{{Hex}}` `[/Input/]` `([Pill])` | Pick a shape with brackets |
+| `## Heading` | Section title above the shapes that follow |
+| `,` `;` or a new line | Start another chain |
+| `\| a \| b \|` rows | A table |
+
+The same label always means the same box, so branches are written as separate chains that repeat the label:
+
+```
+start:Order -> Check stock -> {In stock?}
+{In stock?} -(yes)-> Ship -> end:Done
+{In stock?} -(no)-> Tell customer
+```
+
+Mermaid works too:
+
+```
+flowchart TB
+  A[Lamp doesn't work] --> B{Plugged in?}
+  B -- No --> C[Plug in lamp]
+  B -- Yes --> D[Repair lamp]
+```
+
+## Example link
+
+Diagram `ลูกค้า -> สั่งซื้อ -> {มีของ?}, {มีของ?} -(มี)-> จัดส่ง, {มีของ?} -(ไม่มี)-> แจ้งลูกค้า`, top to bottom, titled ขั้นตอนสั่งซื้อ:
+
+https://kimookpong.github.io/canvy/app/#c=%E0%B8%A5%E0%B8%B9%E0%B8%81%E0%B8%84%E0%B9%89%E0%B8%B2%20-%3E%20%E0%B8%AA%E0%B8%B1%E0%B9%88%E0%B8%87%E0%B8%8B%E0%B8%B7%E0%B9%89%E0%B8%AD%20-%3E%20%7B%E0%B8%A1%E0%B8%B5%E0%B8%82%E0%B8%AD%E0%B8%87%3F%7D%2C%20%7B%E0%B8%A1%E0%B8%B5%E0%B8%82%E0%B8%AD%E0%B8%87%3F%7D%20-(%E0%B8%A1%E0%B8%B5)-%3E%20%E0%B8%88%E0%B8%B1%E0%B8%94%E0%B8%AA%E0%B9%88%E0%B8%87%2C%20%7B%E0%B8%A1%E0%B8%B5%E0%B8%82%E0%B8%AD%E0%B8%87%3F%7D%20-(%E0%B9%84%E0%B8%A1%E0%B9%88%E0%B8%A1%E0%B8%B5)-%3E%20%E0%B9%81%E0%B8%88%E0%B9%89%E0%B8%87%E0%B8%A5%E0%B8%B9%E0%B8%81%E0%B8%84%E0%B9%89%E0%B8%B2&title=%E0%B8%82%E0%B8%B1%E0%B9%89%E0%B8%99%E0%B8%95%E0%B8%AD%E0%B8%99%E0%B8%AA%E0%B8%B1%E0%B9%88%E0%B8%87%E0%B8%8B%E0%B8%B7%E0%B9%89%E0%B8%AD&dir=TB
+
+## Tips for good diagrams
+
+- Keep labels short (1–4 words); put detail in arrow labels or a `note:`.
+- One idea per chain; repeat a label to branch or join.
+- Use `{…?}` for decisions and label both ways out (`-(yes)->`, `-(no)->`).
+- Use `db:` for stores, `user:` for people, `queue:` for queues, `start:`/`end:` for the ends of a process.
+- About 3–25 boxes reads well. Split bigger systems with `## Heading` sections.
+
+## Other ways in
+
+- Local MCP server for Claude Desktop and Claude Code: https://github.com/kimookpong/canvy/tree/main/mcp
+- In the editor: type the same syntax in the command bar, paste Mermaid, open `.excalidraw` files, or turn a photo of a diagram into an editable one (Photo to diagram).

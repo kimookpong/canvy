@@ -1,0 +1,18 @@
+{
+  "name": "canvy",
+  "version": "1.0.0",
+  "description": "Canvy: hand-drawn diagrams in Thai and English. This package is the Canvy MCP server (stdio).",
+  "type": "module",
+  "bin": { "canvy-mcp": "mcp/server.mjs" },
+  "files": ["mcp/core.mjs", "mcp/server.mjs"],
+  "engines": { "node": ">=18" },
+  "scripts": {
+    "mcp": "node mcp/server.mjs",
+    "test:mcp": "node mcp/test.mjs",
+    "build:mcpb": "sh mcp/build-mcpb.sh"
+  },
+  "license": "MIT",
+  "homepage": "https://kimookpong.github.io/canvy/",
+  "repository": { "type": "git", "url": "https://github.com/kimookpong/canvy.git" },
+  "keywords": ["mcp", "diagram", "flowchart", "thai", "hand-drawn", "canvy"]
+}

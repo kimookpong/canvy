@@ -1,0 +1,14 @@
+# kept off the public site (served by Cloudflare from this folder)
+.git
+.github
+.wrangler
+node_modules
+tests
+worker
+mcp
+wrangler.jsonc
+package.json
+package-lock.json
+.assetsignore
+.nojekyll
+*.sh

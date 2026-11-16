@@ -194,6 +194,11 @@ with sync_playwright() as p:
       for(const deg of[-4,2,5]){const W=src.width+80,H=src.height+80,c=document.createElement('canvas');c.width=W;c.height=H;const g=c.getContext('2d');
         g.fillStyle='#f4f1ea';g.fillRect(0,0,W,H);g.translate(W/2,H/2);g.rotate(deg*Math.PI/180);g.drawImage(src,-src.width/2,-src.height/2);out.push(Math.abs(estimateSkew(c)-deg))}return out}""")
     check('photo tilt is measured within 0.6 degrees', max(errs) <= 0.6)
+    # ---- command links (#c=) ----
+    cp = ctx.new_page(); cp.goto(BASE + '/app/#c=' + 'start:%E0%B8%A2%E0%B8%B7%E0%B9%88%E0%B8%99 -> {OK%3F}%0A{OK%3F} -(yes)-> end:Done&title=Link%20test&dir=TB&style=ink'); cp.wait_for_timeout(700)
+    r = cp.evaluate("({n:doc.name,s:doc.style,k:els.filter(e=>SHAPES.has(e.type)).map(e=>e.type).join(),a:els.filter(e=>e.type==='arrow').map(a=>a.label||'').join(),h:location.hash})")
+    check('command link builds a diagram', r['n']=='Link test' and r['s']=='ink' and r['k']=='pill,diamond,pill' and r['a']==',yes' and r['h']=='')
+    cp.close()
     pg.evaluate("view={x:-3000,y:-3000,z:1};renderView()")
     check('minimap shows when the diagram is off screen', pg.evaluate("getComputedStyle(document.querySelector('#minimap')).display") == 'block')
 

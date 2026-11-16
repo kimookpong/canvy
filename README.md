@@ -62,6 +62,12 @@ A hand-drawn diagram canvas that runs entirely in the browser. There is no accou
 | `## Heading` | Section title above the new shapes |
 | `, ; or new line` | Separate chains |
 
+### Use Canvy from AI
+
+- **Command links**: `app/#c=<diagram>&title=…&dir=LR|TB&style=…` builds a diagram from Canvy syntax or Mermaid written into the link. Add `?view=1` for read-only.
+- **MCP server** for Claude Desktop (`canvy.mcpb`), Claude Code (`npx -y github:kimookpong/canvy`) and, once the Worker is deployed, claude.ai (`https://canvy.thasala.dev/mcp`). See [mcp/README.md](mcp/README.md).
+- **[llms.txt](llms.txt)** and a **Claude skill** ([skills/canvy-diagrams](skills/canvy-diagrams/SKILL.md)) teach any AI the syntax and the link format.
+
 ## Run locally
 
 Open `index.html` directly, or serve the folder:
