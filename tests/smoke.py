@@ -189,6 +189,11 @@ with sync_playwright() as p:
       const r=analyzePhoto(img,lines);return {kinds:r.nodes.map(n=>n.kind).sort().join(','),edges:r.edges.map(e=>e.from+'>'+e.to+':'+e.label)}}""",[LINES,WEAK])
     check('example photo: 4 boxes and 2 diamonds on lined paper', r['kinds']=='diamond,diamond,rect,rect,rect,rect')
     check('example photo: 5 arrows, all with their Yes/No labels but the first', len(r['edges'])==5 and sum(1 for e in r['edges'] if e.split(':')[1])==4)
+    # ---- tilted photos are straightened before reading ----
+    errs = pg.evaluate("""async()=>{const src=await createImageBitmap(await (await fetch('samples/flowchart-photo.jpg')).blob());const out=[];
+      for(const deg of[-4,2,5]){const W=src.width+80,H=src.height+80,c=document.createElement('canvas');c.width=W;c.height=H;const g=c.getContext('2d');
+        g.fillStyle='#f4f1ea';g.fillRect(0,0,W,H);g.translate(W/2,H/2);g.rotate(deg*Math.PI/180);g.drawImage(src,-src.width/2,-src.height/2);out.push(Math.abs(estimateSkew(c)-deg))}return out}""")
+    check('photo tilt is measured within 0.6 degrees', max(errs) <= 0.6)
     pg.evaluate("view={x:-3000,y:-3000,z:1};renderView()")
     check('minimap shows when the diagram is off screen', pg.evaluate("getComputedStyle(document.querySelector('#minimap')).display") == 'block')
 

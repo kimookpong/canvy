@@ -1242,8 +1242,10 @@ function render(){
   if(todo.length){const g=document.createElementNS('http://www.w3.org/2000/svg','g');g.innerHTML=todo.map(t=>renderEl(t[0],t[1])).join('');const kids=[...g.children];
     todo.forEach((t,j)=>{elCache.set(t[0].id,{k:t[2],n:kids[j]});nodes[t[3]]=kids[j]})}
   if(elCache.size>order.length+64){const live=new Set(order.map(e=>e.id));for(const id of[...elCache.keys()])if(!live.has(id))elCache.delete(id)}
-  const cur=world.children;let same=cur.length===nodes.length;if(same)for(let i=0;i<nodes.length;i++)if(cur[i]!==nodes[i]){same=false;break}
-  if(!same)world.replaceChildren(...nodes);
+  // swap just the nodes that changed; re-attach everything only when the order or count changed
+  const cur=world.children;let diff=cur.length===nodes.length?[]:null;
+  if(diff)for(let i=0;i<nodes.length;i++)if(cur[i]!==nodes[i]){if(nodes[i].parentNode===world){diff=null;break}diff.push(i)}
+  if(!diff)world.replaceChildren(...nodes);else for(const i of diff)cur[i].replaceWith(nodes[i]);
   renderView();renderOverlay();renderProps();
   $('#empty').style.display=els.length||editing?'none':'grid';
   $('#empty').classList.toggle('dark',S().dark);
@@ -2621,6 +2623,32 @@ function analyzePhoto(src,lines){
   const debug=merged.map(m=>[...m.touch.entries()].map(([i,v])=>nodes[i].text+':'+v).join(' | '));
   return{nodes:nodes.filter(n=>!n.isLabel),allNodes:nodes,edges,hm,k,w,h,debug};
 }
+/* How far the photo is tilted: try angles and keep the one where the ink lines up best in rows and columns
+   (box edges, ruled lines and lines of text all do once the picture is straight). Degrees, + = turned clockwise. */
+function estimateSkew(src){
+  const k=Math.min(1,640/Math.max(src.width,src.height)),w=Math.max(1,Math.round(src.width*k)),h=Math.max(1,Math.round(src.height*k));
+  const c=document.createElement('canvas');c.width=w;c.height=h;const g=c.getContext('2d',{willReadFrequently:true});g.drawImage(src,0,0,w,h);
+  const px=g.getImageData(0,0,w,h).data,N=w*h,lum=new Float32Array(N);for(let i=0,j=0;i<N;i++,j+=4)lum[i]=.299*px[j]+.587*px[j+1]+.114*px[j+2];
+  {const smp=[];for(let i=0;i<N;i+=Math.max(1,(N/3000)|0))smp.push(lum[i]);if(median(smp)<110)for(let i=0;i<N;i++)lum[i]=255-lum[i]}
+  const r=8,I=new Float64Array((w+1)*(h+1));for(let y=0;y<h;y++){let s=0;for(let x=0;x<w;x++){s+=lum[y*w+x];I[(y+1)*(w+1)+x+1]=I[y*(w+1)+x+1]+s}}
+  const P=[];for(let y=0;y<h;y++){const y0=Math.max(0,y-r),y1=Math.min(h,y+r+1);for(let x=0;x<w;x++){const x0=Math.max(0,x-r),x1=Math.min(w,x+r+1),m=(I[y1*(w+1)+x1]-I[y0*(w+1)+x1]-I[y1*(w+1)+x0]+I[y0*(w+1)+x0])/((y1-y0)*(x1-x0));if(lum[y*w+x]<m-14)P.push(x-w/2,y-h/2)}}
+  if(P.length<200)return 0;
+  const step=Math.max(2,Math.floor(P.length/2/30000))*2,D=Math.ceil(Math.hypot(w,h))+4,hr=new Float32Array(D),hc=new Float32Array(D);
+  const score=deg=>{const a=deg*Math.PI/180,ca=Math.cos(a),sa=Math.sin(a);hr.fill(0);hc.fill(0);
+    for(let i=0;i<P.length;i+=step){const x=P[i],y=P[i+1];hr[(y*ca-x*sa+D/2)|0]++;hc[(x*ca+y*sa+D/2)|0]++}
+    let s=0;for(let i=0;i<D;i++)s+=hr[i]*hr[i]+hc[i]*hc[i];return s};
+  let best=0,bs=-1;for(let d=-8;d<=8.001;d+=.5){const v=score(d);if(v>bs){bs=v;best=d}}
+  const c0=best;for(let d=c0-.5;d<=c0+.501;d+=.1){const v=score(d);if(v>bs){bs=v;best=d}}
+  return Math.round(best*10)/10;
+}
+function straighten(src,deg){
+  const a=-deg*Math.PI/180,W=src.width,H=src.height,c=document.createElement('canvas');c.width=W;c.height=H;const g=c.getContext('2d');
+  // fill the corners the turn uncovers with the paper colour, so they don't read as ink
+  const t=document.createElement('canvas');t.width=t.height=8;const tg=t.getContext('2d');tg.drawImage(src,0,0,8,8);const d=tg.getImageData(0,0,8,8).data,edge=[];
+  for(let i=0;i<64;i++){const x=i%8,y=(i/8)|0;if(x===0||y===0||x===7||y===7)edge.push([d[i*4],d[i*4+1],d[i*4+2]])}
+  g.fillStyle=`rgb(${[0,1,2].map(j=>Math.round(median(edge.map(p=>p[j])))).join(',')})`;g.fillRect(0,0,W,H);
+  g.translate(W/2,H/2);g.rotate(a);g.drawImage(src,-W/2,-H/2);return c;
+}
 function photoElements(res,mode){
   const z=FS.m*2/res.hm,out=[],ids=new Map();  // the reader's boxes are padded: real letters are ~2/3 of their height
   res.allNodes.forEach((n,i)=>{if(n.isLabel)return;let el;
@@ -2662,7 +2690,8 @@ function openPhoto(file){closeFloating();$('#photoScrim').classList.add('show');
 async function readPhoto(file){
   const st=$('#photoStatus'),say=t=>st.textContent=T(t);
   let bmp;try{bmp=await createImageBitmap(file,{imageOrientation:'from-image'})}catch(_){try{bmp=await createImageBitmap(file)}catch(__){say('That file is not a picture Canvy can open');return}}
-  const k=Math.min(1,2000/Math.max(bmp.width,bmp.height)),c=document.createElement('canvas');c.width=Math.round(bmp.width*k);c.height=Math.round(bmp.height*k);c.getContext('2d').drawImage(bmp,0,0,c.width,c.height);
+  const k=Math.min(1,2000/Math.max(bmp.width,bmp.height));let c=document.createElement('canvas');c.width=Math.round(bmp.width*k);c.height=Math.round(bmp.height*k);c.getContext('2d').drawImage(bmp,0,0,c.width,c.height);
+  {const sk=estimateSkew(c);if(Math.abs(sk)>=.5)c=straighten(c,sk)}  // read a tilted photo as if it were straight
   photoSrc=c;photoResult=null;drawPhotoPreview();document.body.classList.add('photo-busy');$('#photoInsert').disabled=true;
   try{
     say('Loading the reader…');await loadOcr();
