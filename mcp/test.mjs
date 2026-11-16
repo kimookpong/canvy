@@ -68,6 +68,33 @@ async function exercise(label, s) {
   const own = await (await worker.fetch(new Request('https://canvy.thasala.dev/mcp', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ jsonrpc: '2.0', id: 9, method: 'tools/call', params: { name: 'create_diagram', arguments: { diagram: 'a -> b' } } }) }))).json();
   check('worker: links use its own domain', own.result?.structuredContent?.edit_url.startsWith('https://canvy.thasala.dev/app/#c='), JSON.stringify(own)); }
 
+// 2b. link previews on the Worker (with an in-memory stand-in for Workers KV)
+{ const worker = (await import(join(root, 'worker/index.mjs'))).default;
+  const store = new Map(), env = { PREVIEWS: {
+    async put(k, v, o) { store.set(k, { v: v instanceof ArrayBuffer ? v : await new Response(v).arrayBuffer(), m: o?.metadata ?? null }); },
+    async getWithMetadata(k, o) { const e = store.get(k); if (!e) return { value: null, metadata: null }; const t = typeof o === 'string' ? o : o?.type;
+      return { value: t === 'stream' ? new Response(e.v).body : e.v, metadata: e.m }; } } };
+  // a real 1200x630 JPEG header is enough for the size check
+  const jpeg = new Uint8Array(600); jpeg.set([0xff, 0xd8, 0xff, 0xc0, 0x00, 0x11, 0x08, 0x02, 0x76, 0x04, 0xb0]);
+  const id = '0123456789abcdef', base = 'https://canvy.thasala.dev';
+  const put = (q, body, h = {}) => worker.fetch(new Request(base + '/api/preview' + q, { method: 'PUT', body, headers: { 'Content-Type': 'image/jpeg', Origin: base, 'X-Canvy-Title': encodeURIComponent('ขั้นตอน <อนุมัติ>'), ...h } }), env);
+  check('preview: upload accepted', (await put('?id=' + id, jpeg)).status === 204);
+  check('preview: bad id refused', (await put('?id=../x', jpeg)).status === 400);
+  check('preview: other site refused', (await put('?id=' + id, jpeg, { Origin: 'https://evil.example' })).status === 403);
+  const small = new Uint8Array(600); small.set([0xff, 0xd8, 0xff, 0xc0, 0x00, 0x11, 0x08, 0x00, 0x10, 0x00, 0x10]);
+  check('preview: wrong size refused', (await put('?id=' + id, small)).status === 415);
+  check('preview: not an image refused', (await put('?id=' + id, new Uint8Array(600))).status === 415);
+  const page = await worker.fetch(new Request(base + '/s/' + id), env), html = await page.text();
+  check('preview: share page has og:image of the diagram', page.status === 200 && html.includes(`<meta property="og:image" content="${base}/s/${id}.jpg">`) && html.includes('summary_large_image'));
+  check('preview: share page title is escaped', html.includes('<meta property="og:title" content="ขั้นตอน &lt;อนุมัติ&gt;">'));
+  check('preview: people are sent on to the editor', html.includes("location.replace('/app/'+location.search+location.hash)"));
+  const img = await worker.fetch(new Request(base + '/s/' + id + '.jpg'), env);
+  check('preview: picture served', img.status === 200 && img.headers.get('content-type') === 'image/jpeg' && (await img.arrayBuffer()).byteLength === 600);
+  const missing = await worker.fetch(new Request(base + '/s/ffffffffffffffff.jpg'), env);
+  check('preview: unknown picture falls back to the site image', missing.status === 302 && missing.headers.get('location').endsWith('/og-image.png'));
+  const noKv = await worker.fetch(new Request(base + '/api/preview?id=' + id, { method: 'PUT', body: jpeg, headers: { Origin: base } }), {});
+  check('preview: without storage the app falls back', noKv.status === 503); }
+
 // 3. the .mcpb bundle: build, unzip, run the server the way the manifest says
 { execSync('sh mcp/build-mcpb.sh', { cwd: root, stdio: 'ignore' });
   check('mcpb: built', existsSync(join(root, 'canvy.mcpb')));

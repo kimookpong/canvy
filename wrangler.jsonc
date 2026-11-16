@@ -7,5 +7,7 @@
   "assets": { "directory": "." },
   "routes": [{ "pattern": "canvy.thasala.dev", "custom_domain": true }],
   "workers_dev": true,
-  "observability": { "enabled": true }
+  "observability": { "enabled": true },
+  // pictures for link previews (/s/<id>); created automatically on the first deploy
+  "kv_namespaces": [{ "binding": "PREVIEWS" }]
 }
