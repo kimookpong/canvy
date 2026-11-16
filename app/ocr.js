@@ -101,6 +101,9 @@ const OCR=(()=>{
     t=t.replace(MARK_RUN,run=>{const o=[];[...run].sort((a,b)=>rank(a)-rank(b)).forEach(ch=>{if(o[o.length-1]!==ch)o.push(ch)});return o.join('')});
     t=t.replace(/([่-๋]?)ํ([่-๋]?)า/g,(m,a,b)=>a+b+'ำ').split('เเ').join('แ').split('ำำ').join('ำ');
     t=t.replace(/(^|[^A-Za-z])[Ww](?=\.?[ก-ฮเ-ไ])/g,'$1พ').replace(/([๐-๙])[Oo0]/g,'$1๐').replace(/[Oo0](?=[๐-๙])/g,'๐');
+    // a lone Latin look-alike glued to Thai letters (no Latin neighbours): บ read as U, ร as s, ก as n …
+    const LOOK={U:'\u0E1A',u:'\u0E1A',s:'\u0E23',S:'\u0E23',n:'\u0E01',w:'\u0E1E',W:'\u0E1E',J:'\u0E07',a:'\u0E32',e:'\u0E40',o:'\u0E2D',O:'\u0E2D'};
+    t=t.replace(/(^|[^A-Za-z])([UusSnwWJaeoO])(?=[^A-Za-z]|$)/g,(m,p,c,off,str)=>{const prev=str[off+p.length-1]||'',next=str[off+p.length+1]||'',th=x=>x>='\u0E01'&&x<='\u0E4E';return(th(prev)||th(next))&&(th(prev)||!/[A-Za-z0-9]/.test(prev))?p+LOOK[c]:m});
     return t.split(/\r\n|\r|\n/).map(l=>l.replace(/[ \t\f\v]+/g,' ').trim()).join('\n').trim();
   }
   const MARKS='ัิีึืฺุู็่้๊๋์ํ๎',LEAD='เแโใไ',cons=c=>c>='ก'&&c<='ฮ';
