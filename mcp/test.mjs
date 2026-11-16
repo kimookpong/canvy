@@ -72,6 +72,7 @@ async function exercise(label, s) {
 { const worker = (await import(join(root, 'worker/index.mjs'))).default;
   const store = new Map(), env = { PREVIEWS: {
     async put(k, v, o) { store.set(k, { v: v instanceof ArrayBuffer ? v : await new Response(v).arrayBuffer(), m: o?.metadata ?? null }); },
+    async get(k, o) { const e = store.get(k); if (!e) return null; const t = typeof o === 'string' ? o : o?.type; return t === 'text' ? new TextDecoder().decode(e.v) : t === 'stream' ? new Response(e.v).body : e.v; },
     async getWithMetadata(k, o) { const e = store.get(k); if (!e) return { value: null, metadata: null }; const t = typeof o === 'string' ? o : o?.type;
       return { value: t === 'stream' ? new Response(e.v).body : e.v, metadata: e.m }; } } };
   // a real 1200x630 JPEG header is enough for the size check
@@ -87,7 +88,19 @@ async function exercise(label, s) {
   const page = await worker.fetch(new Request(base + '/s/' + id), env), html = await page.text();
   check('preview: share page has og:image of the diagram', page.status === 200 && html.includes(`<meta property="og:image" content="${base}/s/${id}.jpg">`) && html.includes('summary_large_image'));
   check('preview: share page title is escaped', html.includes('<meta property="og:title" content="ขั้นตอน &lt;อนุมัติ&gt;">'));
-  check('preview: people are sent on to the editor', html.includes("location.replace('/app/'+location.search+location.hash)"));
+  check('preview: people are sent on to the editor', html.includes("location.replace('/app/'+location.search+(location.hash||(D?'#d='+D:'')))"));
+  // stored diagrams for social posts
+  const code = 'zq1YqUqpKzi_IBdGBOakFqboKVkpJ-fklqXmlRUWZjnqZuXlqOkopRZlJSZkKOjmpBSX5RZn5qcVKOjk51SB2SnpOJkZufmlRYgk', sid = await (async () => { const h = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(code)); return [...new Uint8Array(h)].slice(0, 8).map(b => b.toString(16).padStart(2, '0')).join(''); })();
+  const sh = (i, body, h = {}) => worker.fetch(new Request(base + '/api/share?id=' + i, { method: 'PUT', body, headers: { Origin: base, ...h } }), env);
+  check('share: stores a diagram under its own hash', (await sh(sid, code)).status === 204);
+  check('share: refuses a mismatched id', (await sh('0123456789abcdef', code)).status === 409);
+  check('share: refuses odd characters', (await sh(sid, code + '<script>')).status === 400);
+  check('share: other site refused', (await sh(sid, code, { Origin: 'https://evil.example' })).status === 403);
+  const sp = await (await worker.fetch(new Request(base + '/s/' + sid), env)).text();
+  check('share: page opens the stored diagram even without #', sp.includes('var D=' + JSON.stringify(code)));
+  const firstPic = jpeg.slice(); const other = jpeg.slice(); other[599] = 7;
+  await put('?id=' + id, other);
+  check('preview: the first picture for an id is kept', new Uint8Array(await (await worker.fetch(new Request(base + '/s/' + id + '.jpg'), env)).arrayBuffer())[599] === firstPic[599]);
   const img = await worker.fetch(new Request(base + '/s/' + id + '.jpg'), env);
   check('preview: picture served', img.status === 200 && img.headers.get('content-type') === 'image/jpeg' && (await img.arrayBuffer()).byteLength === 600);
   const missing = await worker.fetch(new Request(base + '/s/ffffffffffffffff.jpg'), env);

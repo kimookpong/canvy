@@ -13,7 +13,21 @@ const MAX_BODY = 64 * 1024;
 
 // ---------- link previews: /s/<id> shows crawlers a picture of the diagram, people go on to the editor ----------
 const ID_RE = /^[a-f0-9]{16}$/;
-const MAX_IMG = 1.5 * 1024 * 1024;
+const MAX_IMG = 1.5 * 1024 * 1024, MAX_CODE = 200 * 1024, TTL = 60 * 60 * 24 * 400;
+const CODE_RE = /^[A-Za-z0-9_-]+$/;
+async function codeId(code) { const h = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(code)); return [...new Uint8Array(h)].slice(0, 8).map(b => b.toString(16).padStart(2, '0')).join(''); }
+// Posting to social apps: those apps may drop the #… part of a link, so the diagram itself is stored under its own hash.
+async function putShare(request, env, url) {
+  if (!env.PREVIEWS) return new Response('Sharing is not set up', { status: 503 });
+  const origin = request.headers.get('Origin');
+  if (origin && origin !== url.origin) return new Response('Forbidden', { status: 403 });
+  const id = url.searchParams.get('id') || '';
+  const code = (await request.text()).trim();
+  if (!ID_RE.test(id) || !code || code.length > MAX_CODE || !CODE_RE.test(code)) return new Response('Bad request', { status: 400 });
+  if (await codeId(code) !== id) return new Response('id does not match the diagram', { status: 409 });
+  await env.PREVIEWS.put('d:' + id, code, { expirationTtl: TTL });
+  return new Response(null, { status: 204 });
+}
 const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 function imageInfo(buf) {
   const b = new Uint8Array(buf);
@@ -38,7 +52,9 @@ async function putPreview(request, env, url) {
   const info = imageInfo(buf);
   if (!info || info.w !== 1200 || info.h !== 630) return new Response('Expected a 1200x630 PNG or JPEG', { status: 415 });
   let title = ''; try { title = decodeURIComponent(request.headers.get('X-Canvy-Title') || '').slice(0, 120); } catch { }
-  await env.PREVIEWS.put('pv:' + id, buf, { metadata: { t: title, ct: info.type }, expirationTtl: 60 * 60 * 24 * 400 });
+  const had = await env.PREVIEWS.get('pv:' + id, { type: 'stream' });
+  if (had) { if (had.cancel) had.cancel(); return new Response(null, { status: 204 }); }
+  await env.PREVIEWS.put('pv:' + id, buf, { metadata: { t: title, ct: info.type }, expirationTtl: TTL });
   return new Response(null, { status: 204 });
 }
 async function getPreviewImage(env, id) {
@@ -47,8 +63,11 @@ async function getPreviewImage(env, id) {
   return new Response(r.value, { headers: { 'Content-Type': (r.metadata && r.metadata.ct) || 'image/jpeg', 'Cache-Control': 'public, max-age=31536000, immutable' } });
 }
 async function sharePage(env, url, id) {
-  let title = '';
-  if (env.PREVIEWS && ID_RE.test(id)) { const r = await env.PREVIEWS.getWithMetadata('pv:' + id, { type: 'stream', cacheTtl: 86400 }); if (r.value && r.value.cancel) r.value.cancel(); title = (r.metadata && r.metadata.t) || ''; }
+  let title = '', code = '';
+  if (env.PREVIEWS && ID_RE.test(id)) {
+    const r = await env.PREVIEWS.getWithMetadata('pv:' + id, { type: 'stream', cacheTtl: 86400 }); if (r.value && r.value.cancel) r.value.cancel(); title = (r.metadata && r.metadata.t) || '';
+    const c = await env.PREVIEWS.get('d:' + id, { type: 'text', cacheTtl: 86400 }); if (c && CODE_RE.test(c)) code = c;
+  }
   const name = title || 'Canvy diagram', img = url.origin + '/s/' + id + '.jpg', desc = 'แผนภาพที่วาดด้วย Canvy เปิดลิงก์เพื่อดูและแก้ไขสำเนาของคุณ · A hand-drawn diagram made with Canvy. Open the link to view and edit your own copy.';
   const html = `<!DOCTYPE html><html lang="th"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
 <title>${esc(name)} · Canvy</title><meta name="description" content="${esc(desc)}"><meta name="robots" content="noindex">
@@ -56,7 +75,7 @@ async function sharePage(env, url, id) {
 <meta property="og:description" content="${esc(desc)}"><meta property="og:url" content="${esc(url.origin + '/s/' + id)}">
 <meta property="og:image" content="${esc(img)}"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630"><meta property="og:image:alt" content="${esc(name)}">
 <meta name="twitter:card" content="summary_large_image"><meta name="twitter:title" content="${esc(name)}"><meta name="twitter:image" content="${esc(img)}">
-<link rel="icon" href="/favicon.svg"><script>location.replace('/app/'+location.search+location.hash)</script>
+<link rel="icon" href="/favicon.svg"><script>var D=${JSON.stringify(code)};location.replace('/app/'+location.search+(location.hash||(D?'#d='+D:'')))</script>
 </head><body style="font-family:system-ui;padding:40px"><p><a href="/app/">Open in Canvy</a></p></body></html>`;
   return new Response(html, { headers: { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'public, max-age=300' } });
 }
@@ -64,6 +83,10 @@ async function sharePage(env, url, id) {
 export default {
   async fetch(request, env = {}) {
     const url = new URL(request.url);
+    if (url.pathname === '/api/share') {
+      if (request.method === 'PUT') return putShare(request, env, url);
+      return new Response('Method Not Allowed', { status: 405, headers: { Allow: 'PUT' } });
+    }
     if (url.pathname === '/api/preview') {
       if (request.method === 'PUT') return putPreview(request, env, url);
       return new Response('Method Not Allowed', { status: 405, headers: { Allow: 'PUT' } });
