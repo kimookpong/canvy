@@ -194,6 +194,10 @@ with sync_playwright() as p:
       for(const deg of[-4,2,5]){const W=src.width+80,H=src.height+80,c=document.createElement('canvas');c.width=W;c.height=H;const g=c.getContext('2d');
         g.fillStyle='#f4f1ea';g.fillRect(0,0,W,H);g.translate(W/2,H/2);g.rotate(deg*Math.PI/180);g.drawImage(src,-src.width/2,-src.height/2);out.push(Math.abs(estimateSkew(c)-deg))}return out}""")
     check('photo tilt is measured within 0.6 degrees', max(errs) <= 0.6)
+    # ---- layout never stacks boxes on each other (loop + skipping arrows) ----
+    ov = pg.evaluate(r"""()=>{openDoc(newDoc('ov'));applyCommand('user:ผู้ใช้ -> Hey Hub -> PetScene\nHey Hub -> เพลง\nเพลง -> heynp -> io:Now Playing\nHey Hub -> AIUsageService\nAIUsageService -> cloud:API\nAIUsageService -(80/95%)-> PetScene\nHey Hub -> UpdateService\nUpdateService -> cloud:GitHub Releases\nUpdateService -(ใหม่)-> Hey Hub');
+      const S=els.filter(e=>SHAPES.has(e.type));let n=0;for(let i=0;i<S.length;i++)for(let j=i+1;j<S.length;j++){const a=S[i],b=S[j];if(a.x<b.x+b.w&&b.x<a.x+a.w&&a.y<b.y+b.h&&b.y<a.y+a.h)n++}return n}""")
+    check('typed diagrams never stack boxes on each other', ov == 0)
     # ---- command links (#c=) ----
     cp = ctx.new_page(); cp.goto(BASE + '/app/#c=' + 'start:%E0%B8%A2%E0%B8%B7%E0%B9%88%E0%B8%99 -> {OK%3F}%0A{OK%3F} -(yes)-> end:Done&title=Link%20test&dir=TB&style=ink'); cp.wait_for_timeout(700)
     r = cp.evaluate("({n:doc.name,s:doc.style,k:els.filter(e=>SHAPES.has(e.type)).map(e=>e.type).join(),a:els.filter(e=>e.type==='arrow').map(a=>a.label||'').join(),h:location.hash})")

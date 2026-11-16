@@ -1756,6 +1756,9 @@ function layered(keys,sizeOf,preds,dir,origin,edges){
     for(const k of keys){if(k===a||k===b)continue;const q=pos.get(k),r=rank.get(k);if(r<=lo||r>=hi)continue;
       const pc=P=>LR?[P.m+P.w/2,P.c]:[P.c,P.m+P.h/2];
       if(distSeg(pc(q),pc(A),pc(B))<(LR?q.h:q.w)/2+18){const d=(LR?q.h/2+B.h/2:q.w/2+B.w/2)+60;q.c+=d}}}
+  // the nudge can land a box on a neighbour: space every column out again, keeping its order
+  for(const col of cols.values()){const qs=col.map(k=>pos.get(k)).sort((p,q)=>p.c-q.c),half=q=>(LR?q.h:q.w)/2;
+    for(let i=1;i<qs.length;i++){const need=qs[i-1].c+half(qs[i-1])+gapCross+half(qs[i]);if(qs[i].c<need)qs[i].c=need}}
   const out=new Map();for(const[k,q]of pos){const x=LR?q.m:q.c-q.w/2,y=LR?q.c-q.h/2:q.m;out.set(k,{x:origin[0]+x,y:origin[1]+y,w:q.w,h:q.h})}
   return{pos:out,rank};
 }
