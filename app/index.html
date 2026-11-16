@@ -897,6 +897,7 @@ function tableSvg(el,sc){
 }
 function cellAt(el,p){if(!el.colW)return null;let x=el.x,c=-1,y=el.y,r=-1;for(let j=0;j<el.colW.length;j++){if(p[0]>=x&&p[0]<x+el.colW[j]){c=j;break}x+=el.colW[j]}for(let i=0;i<el.rowH.length;i++){if(p[1]>=y&&p[1]<y+el.rowH[i]){r=i;break}y+=el.rowH[i]}return r<0||c<0?null:{r,c}}
 function cellRect(el,cell){let x=el.x,y=el.y;for(let j=0;j<cell.c;j++)x+=el.colW[j];for(let i=0;i<cell.r;i++)y+=el.rowH[i];return{x,y,w:el.colW[cell.c],h:el.rowH[cell.r]}}
+function placeFree(el){let g=0;while(overlaps(rectOf(el),24)&&g++<80)el.y+=Math.max(40,el.h/2)}
 function makeTable(rows,at){const el={id:uid(),type:'table',x:0,y:0,w:10,h:10,rows,fill:'blue',stroke:'ink',sw:1,fs:'s',seed:seed()};layoutTable(el);el.x=at[0]-el.w/2;el.y=at[1]-el.h/2;return el}
 function tableEdit(op){const el=selected().find(e=>e.type==='table');if(!el)return;pushUndo();const R=el.rows;
   if(op==='+row')R.push(R[0].map(()=>''));if(op==='-row'&&R.length>1)R.pop();if(op==='+col')R.forEach((r,i)=>r.push(i?'':'Column'));if(op==='-col'&&R[0].length>1)R.forEach(r=>r.pop());
@@ -1773,7 +1774,7 @@ function findByName(q){q=q.toLowerCase();return els.find(e=>(e.label||'').toLowe
 function applyCommand(src,opts={}){
   src=src.trim();if(!src)return false;
   if(/^\|/.test(src)){const rows=src.split(/\n|;/).map(l=>l.trim()).filter(l=>l.startsWith('|')&&!/^\|[\s:|-]+\|?$/.test(l)).map(l=>l.replace(/^\||\|$/g,'').split('|').map(c=>c.trim()));
-    if(!rows.length)return false;if(rows.length===1)rows.push(rows[0].map(()=>''));pushUndo();const el=makeTable(rows,toWorld(innerWidth/2,innerHeight/2));els.push(el);sel=new Set([el.id]);setTool('select');commit();toast('Added a table');return true}
+    if(!rows.length)return false;if(rows.length===1)rows.push(rows[0].map(()=>''));pushUndo();const el=makeTable(rows,toWorld(innerWidth/2,innerHeight/2));placeFree(el);els.push(el);sel=new Set([el.id]);setTool('select');commit();toast('Added a table');return true}
   // search & go: a bare name that already exists
   if(!/->|→|=>|--|<->|\.\.>|^#|^\s*(graph|flowchart)\b|[\[\({]|:/i.test(src)){const hit=findByName(src);if(hit){sel=new Set([hit.id]);setTool('select');fitBox(bbox(hit),1.4);render();toast('Found “'+(hit.label||src)+'”');return true}}
   const parsed=parseCommand(src),{nodes,edges,headings}=parsed;
@@ -1915,6 +1916,7 @@ $('#libList').addEventListener('click',e=>{
   const b=e.target.closest('[data-b]');if(!b)return;const blk=BLOCKS[b.dataset.g].items[+b.dataset.b];
   pushUndo();insN=(insN+1)%6;const[cx,cy]=toWorld(innerWidth/2+insN*18,innerHeight/2+insN*18);
   const list=blockEls(blk),bb=unionBox(list);for(const el of list){el.x+=cx-(bb.x+bb.w/2);el.y+=cy-(bb.y+bb.h/2)}
+  if(list.length===1&&list[0].type!=='frame')placeFree(list[0]);
   els.push(...list);sel=new Set(list.map(x=>x.id));setTool('select');commit();toast('Added '+blk.n,1200);
 });
 
