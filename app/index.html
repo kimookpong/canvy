@@ -8,11 +8,11 @@
 <link rel="icon" href="../favicon.svg" type="image/svg+xml">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Kalam:wght@400;700&family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Kalam:wght@400;700&family=Instrument+Sans:wght@400;500;600&family=Mali:wght@400;600;700&family=Sriracha&family=IBM+Plex+Sans+Thai:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
 :root{
   --paper:#fffefb;--ink:#171717;--muted:#77736d;--line:#e9e5dd;--line-2:#d9d4ca;--accent:#d95b35;--accent-soft:#fbe6dc;
-  --hand:'Kalam','Comic Sans MS',cursive;--sans:'Instrument Sans',ui-sans-serif,system-ui,sans-serif;--mono:ui-monospace,'SF Mono',Menlo,Consolas,monospace;
+  --hand:'Kalam','Mali','Comic Sans MS',cursive;--sans:'Instrument Sans','IBM Plex Sans Thai',ui-sans-serif,system-ui,sans-serif;--mono:ui-monospace,'SF Mono',Menlo,Consolas,'IBM Plex Sans Thai',monospace;
   --shadow:0 12px 30px -18px rgba(70,55,30,.38),0 1px 2px rgba(70,55,30,.05);
 }
 *{box-sizing:border-box}
@@ -27,7 +27,7 @@ svg{display:block}
 #stage.c-cross{cursor:crosshair}#stage.c-text{cursor:text}#stage.c-grab{cursor:grab}#stage.c-grabbing{cursor:grabbing}
 #stage.c-move{cursor:move}#stage.c-nwse{cursor:nwse-resize}#stage.c-nesw{cursor:nesw-resize}#stage.c-erase{cursor:cell}
 #svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
-#editor{position:fixed;z-index:15;border:0;outline:1.5px dashed var(--accent);outline-offset:4px;background:transparent;resize:none;overflow:hidden;padding:0;margin:0;white-space:pre;line-height:1.25;border-radius:2px}
+#editor{position:fixed;z-index:15;border:0;outline:1.5px dashed var(--accent);outline-offset:4px;background:transparent;resize:none;overflow:hidden;padding:0;margin:0;white-space:pre;line-height:1.35;border-radius:2px}
 
 /* chrome */
 .ui{position:fixed;z-index:10}
@@ -177,6 +177,7 @@ body.presenting .exit{display:inline-flex}
     <button data-cmd="start -> {logged in?}, {logged in?} -> dashboard: yes, {logged in?} -> sign in page: no, sign in page -> dashboard">Login flow</button>
     <button data-cmd="idea -> sketch -> build -> ship -> learn, learn -> idea: repeat">Product loop</button>
     <button data-cmd="question -> [(docs)] -> retriever -> llm -> answer, question -> llm">RAG</button>
+    <button data-cmd="ลูกค้าสั่งซื้อ -> {ชำระเงินสำเร็จ?}, {ชำระเงินสำเร็จ?} -> ส่งอีเมลยืนยัน: ใช่, {ชำระเงินสำเร็จ?} -> แจ้งลองใหม่: ไม่, ส่งอีเมลยืนยัน -> [(คำสั่งซื้อ)]">ภาษาไทย</button>
   </div>
 </div></div>
 
@@ -326,19 +327,20 @@ const esc=s=>String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'
 const f1=n=>Math.round(n*10)/10;
 
 const STYLES={
-  pencil:{bg:'#fffefb',dot:'#e3dfd6',grid:'dots',stroke:'#171717',accent:'#d95b35',dark:false,font:"Kalam, 'Comic Sans MS', cursive",weight:700,rough:1,passes:2,radius:12,fillOp:1,
+  pencil:{bg:'#fffefb',dot:'#e3dfd6',grid:'dots',stroke:'#171717',accent:'#d95b35',dark:false,font:"Kalam, Mali, 'Comic Sans MS', cursive",weight:700,thai:['Mali',700],latin:['Kalam',700],rough:1,passes:2,radius:12,fillOp:1,
     fills:{blue:'#dce8fb',green:'#dcefdd',lilac:'#e9e1f7',peach:'#fde3d4',butter:'#fbf1cb'}},
-  chalk:{bg:'#2b2f2c',dot:'#3b413c',grid:'dots',stroke:'#f1eee6',accent:'#ff9b78',dark:true,font:"Kalam, 'Comic Sans MS', cursive",weight:400,rough:1.5,passes:2,radius:12,fillOp:.2,
+  chalk:{bg:'#2b2f2c',dot:'#3b413c',grid:'dots',stroke:'#f1eee6',accent:'#ff9b78',dark:true,font:"Kalam, Sriracha, 'Comic Sans MS', cursive",weight:400,thai:['Sriracha',400],latin:['Kalam',400],rough:1.5,passes:2,radius:12,fillOp:.2,
     fills:{blue:'#8fb4ea',green:'#9fd3a6',lilac:'#bfa9ea',peach:'#f6a987',butter:'#efd98a'}},
-  blueprint:{bg:'#1f4e8c',dot:'#2d5f9f',grid:'lines',stroke:'#dbeaff',accent:'#ffd28a',dark:true,font:"ui-monospace, 'SF Mono', Menlo, Consolas, monospace",weight:500,rough:0,passes:1,radius:3,fillOp:.16,
+  blueprint:{bg:'#1f4e8c',dot:'#2d5f9f',grid:'lines',stroke:'#dbeaff',accent:'#ffd28a',dark:true,font:"ui-monospace, 'SF Mono', Menlo, Consolas, 'IBM Plex Sans Thai', monospace",weight:500,thai:['IBM Plex Sans Thai',500],latin:null,rough:0,passes:1,radius:3,fillOp:.16,
     fills:{blue:'#9cc3ff',green:'#a6e3c0',lilac:'#cdb8ff',peach:'#ffc49e',butter:'#ffe7a3'}},
-  ink:{bg:'#ffffff',dot:'#ebe8e2',grid:'dots',stroke:'#171717',accent:'#d95b35',dark:false,font:"'Instrument Sans', system-ui, sans-serif",weight:600,rough:.3,passes:1,radius:10,fillOp:1,
+  ink:{bg:'#ffffff',dot:'#ebe8e2',grid:'dots',stroke:'#171717',accent:'#d95b35',dark:false,font:"'Instrument Sans', 'IBM Plex Sans Thai', system-ui, sans-serif",weight:600,thai:['IBM Plex Sans Thai',600],latin:['Instrument Sans',600],rough:.3,passes:1,radius:10,fillOp:1,
     fills:{blue:'#dce8fb',green:'#dcefdd',lilac:'#e9e1f7',peach:'#fde3d4',butter:'#fbf1cb'}}
 };
 const FILLS=['none','blue','green','lilac','peach','butter'];
 const STROKES=['ink','accent','blue','green'];
 const SW={1:1.2,2:1.8,3:3.2};
 const FS={s:16,m:20,l:28};
+const LH=1.35; // line height; roomy enough for Thai marks above and below the line
 const SHAPES=new Set(['rect','ellipse','diamond','cylinder']);
 const S=()=>STYLES[doc.style]||STYLES.pencil;
 function strokeCol(k){const s=S();return k==='accent'?s.accent:k==='blue'?(s.dark?'#9cc3ff':'#2f62c4'):k==='green'?(s.dark?'#a6e3b0':'#2f7d3e'):s.stroke}
@@ -439,7 +441,7 @@ const mctx=document.createElement('canvas').getContext('2d');
 function measure(text,size){
   const s=S();mctx.font=`${s.weight} ${size}px ${s.font}`;
   const lines=String(text||'').split('\n');let w=0;for(const l of lines)w=Math.max(w,mctx.measureText(l||' ').width);
-  return{w,h:lines.length*size*1.25,lines};
+  return{w,h:lines.length*size*LH,lines};
 }
 function fitText(el){
   const m=measure(el.label,FS[el.fs||'m']);
@@ -487,7 +489,7 @@ function smooth(P,closed){
   return closed?d+'Z':d;
 }
 function labelSvg(text,cx,cy,size,color,anchor){
-  const s=S(),lines=String(text).split('\n'),lh=size*1.25;
+  const s=S(),lines=String(text).split('\n'),lh=size*LH;
   let o=`<text font-family="${esc(s.font)}" font-weight="${s.weight}" font-size="${size}" fill="${color}" text-anchor="${anchor||'middle'}" dominant-baseline="central">`;
   lines.forEach((l,i)=>{o+=`<tspan x="${f1(cx)}" y="${f1(cy+(i-(lines.length-1)/2)*lh)}">${esc(l)||' '}</tspan>`});
   return o+'</text>';
@@ -527,9 +529,9 @@ function renderEl(el){
     else{for(let i=1;i<P.length-1;i++){const m=[(P[i][0]+P[i+1][0])/2,(P[i][1]+P[i+1][1])/2];d+='Q'+pt(P[i])+' '+pt(m)}d+='L'+pt(P[P.length-1])}
     o+=`<path d="${d}" fill="none" stroke="${sc}" stroke-width="${sw*1.15}"${op} stroke-linecap="round" stroke-linejoin="round"/>`;
   }else if(el.type==='text'){
-    if(editing!==el.id){const size=FS[el.fs||'m'],lines=String(el.label).split('\n'),lh=size*1.25;
+    if(editing!==el.id){const size=FS[el.fs||'m'],lines=String(el.label).split('\n'),lh=size*LH;
       o+=`<text font-family="${esc(s.font)}" font-weight="${s.weight}" font-size="${size}" fill="${sc}">`;
-      lines.forEach((l,i)=>{o+=`<tspan x="${f1(el.x)}" y="${f1(el.y+i*lh+size*.95)}">${esc(l)||' '}</tspan>`});o+='</text>'}
+      lines.forEach((l,i)=>{o+=`<tspan x="${f1(el.x)}" y="${f1(el.y+i*lh+size*1.0)}">${esc(l)||' '}</tspan>`});o+='</text>'}
   }
   return o+'</g>';
 }
@@ -785,7 +787,7 @@ stage.addEventListener('wheel',e=>{
 /* ============================== text editing ============================== */
 let editSnap=null;
 function createText(p){
-  const size=FS[props.fs];const el=makeShape('text',p[0],p[1]-size*.62,10,size*1.25);el.label='';
+  const size=FS[props.fs];const el=makeShape('text',p[0],p[1]-size*.65,10,size*LH);el.label='';
   editSnap=snap();els.push(el);setTool('select');startEdit(el,true);
 }
 function startEdit(el,isNew){
@@ -797,12 +799,12 @@ function startEdit(el,isNew){
 function placeEditor(){
   const el=byId(editing);if(!el){editor.style.display='none';return}
   const size=(el.type==='arrow'?FS.s:FS[el.fs||'m'])*view.z,m=measure(editor.value||' ',el.type==='arrow'?FS.s:FS[el.fs||'m']);
-  const w=Math.max(m.w*view.z+size*1.2,size*2),h=m.lines.length*size*1.25;
-  editor.style.fontSize=size+'px';editor.style.width=w+'px';editor.style.height=h+'px';
+  const w=Math.max(m.w*view.z+size*1.2,size*2),h=m.lines.length*size*LH;
+  const pv=size*.12;editor.style.fontSize=size+'px';editor.style.width=w+'px';editor.style.height=(h+pv*2)+'px';editor.style.padding=pv+'px 0';
   let sx,sy;
   if(el.type==='text'){sx=el.x*view.z+view.x;sy=el.y*view.z+view.y;}
   else{let c;if(el.type==='arrow'){const[a,b]=arrowPts(el);c=[(a[0]+b[0])/2,(a[1]+b[1])/2]}else c=center(el);sx=c[0]*view.z+view.x-w/2;sy=c[1]*view.z+view.y-h/2}
-  editor.style.left=sx+'px';editor.style.top=sy+'px';
+  editor.style.left=sx+'px';editor.style.top=(sy-pv)+'px';
 }
 function commitEdit(){
   if(!editing)return;const el=byId(editing);const v=editor.value.replace(/\s+$/,'');editing=null;editor.style.display='none';editor.blur();
@@ -944,7 +946,7 @@ addEventListener('paste',e=>{
 /* ============================== chrome wiring ============================== */
 $('#zIn').onclick=()=>zoomAt(1.2);$('#zOut').onclick=()=>zoomAt(1/1.2);$('#zPct').onclick=()=>zoomAt(1/view.z);$('#zFit').onclick=fit;
 $('#bUndo').onclick=undo;$('#bRedo').onclick=redo;$('#bHelp').onclick=()=>$('#help').classList.toggle('show');
-$('#styleSeg').addEventListener('click',e=>{const b=e.target.closest('[data-style]');if(!b||b.dataset.style===doc.style)return;doc.style=b.dataset.style;syncStyleUI();remeasureAll();commit()});
+$('#styleSeg').addEventListener('click',e=>{const b=e.target.closest('[data-style]');if(!b||b.dataset.style===doc.style)return;doc.style=b.dataset.style;syncStyleUI();remeasureAll();commit();ensureFonts()});
 function syncStyleUI(){$$('#styleSeg [data-style]').forEach(b=>b.classList.toggle('on',b.dataset.style===doc.style))}
 $('#docName').addEventListener('change',e=>{doc.name=e.target.value.trim()||'Untitled diagram';e.target.value=doc.name;save(true)});
 $('#docName').addEventListener('keydown',e=>{if(e.key==='Enter'||e.key==='Escape')e.target.blur()});
@@ -1028,7 +1030,7 @@ function buildSvg(withFontImport){
   const list=sel.size?selected():els;const b=unionBox(list);if(!b)return null;const pad=36,s=S();
   const prev=editing;editing=null;let inner='';for(const el of list)inner+=renderEl(el);editing=prev;
   const W=Math.ceil(b.w+pad*2),H=Math.ceil(b.h+pad*2);
-  return{W,H,svg:`<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="${f1(b.x-pad)} ${f1(b.y-pad)} ${W} ${H}">${withFontImport?`<style>@import url('https://fonts.googleapis.com/css2?family=Kalam:wght@400;700&amp;family=Instrument+Sans:wght@400;600&amp;display=swap');</style>`:''}<rect x="${f1(b.x-pad)}" y="${f1(b.y-pad)}" width="${W}" height="${H}" fill="${s.bg}"/>${inner}</svg>`};
+  return{W,H,svg:`<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="${f1(b.x-pad)} ${f1(b.y-pad)} ${W} ${H}">${withFontImport?`<style>@import url('https://fonts.googleapis.com/css2?family=Kalam:wght@400;700&amp;family=Instrument+Sans:wght@600&amp;family=Mali:wght@700&amp;family=Sriracha&amp;family=IBM+Plex+Sans+Thai:wght@500;600&amp;display=swap');</style>`:''}<rect x="${f1(b.x-pad)}" y="${f1(b.y-pad)}" width="${W}" height="${H}" fill="${s.bg}"/>${inner}</svg>`};
 }
 $('#exSvg').onclick=()=>{const r=buildSvg(true);if(!r)return toast('Nothing to export yet');download(new Blob([r.svg],{type:'image/svg+xml'}),slug()+'.svg')};
 $('#exJson').onclick=()=>{download(new Blob([JSON.stringify({app:'canvy',v:1,name:doc.name,style:doc.style,elements:els},null,1)],{type:'application/json'}),slug()+'.json')};
@@ -1040,18 +1042,24 @@ $('#exPng').onclick=async()=>{
   img.onerror=()=>toast('PNG export failed in this browser. Try SVG.');
   img.src='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(svg);
 };
-// embed the current style's web font in the SVG so PNG export keeps the hand-drawn look
+// embed the fonts the current style uses, subset to just the characters on the canvas (Google Fonts &text=)
 let fontCache={};
 async function inlineFonts(svg){
-  const fam=doc.style==='ink'?'Instrument+Sans:wght@600':doc.style==='blueprint'?null:'Kalam:wght@'+(S().weight);
-  if(!fam)return svg;
-  if(!fontCache[fam]){
-    const css=await (await fetch('https://fonts.googleapis.com/css2?family='+fam+'&display=swap')).text();
-    const urls=[...css.matchAll(/url\((https:[^)]+)\)/g)].map(m=>m[1]);const blocks=css.split('@font-face').slice(1);let out='';
-    for(let i=0;i<blocks.length;i++){const u=urls[i];if(!u)continue;const buf=new Uint8Array(await (await fetch(u)).arrayBuffer());out+='@font-face'+blocks[i].replace(u,'data:font/woff2;base64,'+btoa(Array.from(buf,c=>String.fromCharCode(c)).join('')))}
-    fontCache[fam]=out;
+  const st=S(),chars=[...new Set(els.map(e=>e.label||'').join('')+'?')].join('');
+  const fams=[st.latin,st.thai].filter(Boolean);let css='';
+  for(const[name,w]of fams){
+    const key=name+w+chars;
+    if(!fontCache[key]){
+      const url='https://fonts.googleapis.com/css2?family='+encodeURIComponent(name).replace(/%20/g,'+')+(name==='Sriracha'?'':':wght@'+w)+'&text='+encodeURIComponent(chars);
+      const txt=await (await fetch(url)).text();let out='';
+      for(const block of txt.split('@font-face').slice(1)){const m=block.match(/url\((https:[^)]+)\)/);if(!m)continue;
+        const buf=new Uint8Array(await (await fetch(m[1])).arrayBuffer());let bin='';for(let i=0;i<buf.length;i+=0x8000)bin+=String.fromCharCode.apply(null,buf.subarray(i,i+0x8000));
+        out+='@font-face'+block.replace(m[1],'data:font/woff2;base64,'+btoa(bin))}
+      fontCache[key]=out;
+    }
+    css+=fontCache[key];
   }
-  return svg.replace(/(<svg[^>]*>)/,`$1<style>${fontCache[fam]}</style>`);
+  return css?svg.replace(/(<svg[^>]*>)/,`$1<style>${css}</style>`):svg;
 }
 
 /* ============================== present ============================== */
@@ -1078,7 +1086,15 @@ async function boot(){
 }
 let toastT=null;function toast(msg,ms=2200){const t=$('#toast');t.textContent=msg;t.classList.add('show');clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove('show'),ms)}
 boot();
-if(document.fonts&&document.fonts.ready)document.fonts.ready.then(()=>{if(doc){remeasureAll();render()}});
+async function ensureFonts(){
+  if(!document.fonts||!document.fonts.load)return;
+  const st=S(),jobs=[];
+  for(const f of[st.latin,st.thai])if(f)jobs.push(document.fonts.load(`${f[1]} 20px "${f[0]}"`,'Aaกิ่ง'));
+  try{await Promise.all(jobs)}catch(_){}
+  if(doc){remeasureAll();for(const el of els)if(SHAPES.has(el.type)&&el.label)fitText(el);render()}
+}
+ensureFonts();
+if(document.fonts&&document.fonts.ready)document.fonts.ready.then(ensureFonts);
 </script>
 </body>
 </html>
