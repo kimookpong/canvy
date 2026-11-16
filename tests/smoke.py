@@ -146,6 +146,36 @@ with sync_playwright() as p:
     vp.mouse.move(600,400); vp.mouse.down(); vp.mouse.move(700,450,steps=3); vp.mouse.up()
     check('view-only link does not save a copy', vp.evaluate("indexList().length") == n_before and not vp.evaluate("indexList().some(d=>d.id===doc.id)"))
     vp.close()
+    # ---- photo to diagram (shape/arrow detection; the OCR model itself is not downloaded in tests) ----
+    PHOTO_JS = r'''
+(light)=>{
+ const c=document.createElement('canvas');c.width=1200;c.height=700;const g=c.getContext('2d');
+ g.fillStyle='#fff';g.fillRect(0,0,1200,700);
+ const lines=[];const F='28px sans-serif';g.font=F;g.textBaseline='middle';
+ const label=(t,cx,cy)=>{g.fillStyle='#222';g.textAlign='center';g.fillText(t,cx,cy);const m=g.measureText(t);lines.push({text:t,x:cx-m.width/2-6,y:cy-20,w:m.width+12,h:40})};
+ const arrow=(x1,y1,x2,y2)=>{g.strokeStyle='#333';g.lineWidth=3;g.beginPath();g.moveTo(x1,y1);g.lineTo(x2,y2);g.stroke();const a=Math.atan2(y2-y1,x2-x1);g.fillStyle='#333';g.beginPath();g.moveTo(x2,y2);g.lineTo(x2-18*Math.cos(a-.4),y2-18*Math.sin(a-.4));g.lineTo(x2-18*Math.cos(a+.4),y2-18*Math.sin(a+.4));g.fill()};
+ g.lineWidth=3;g.strokeStyle='#222';
+ g.fillStyle='#cfe3ff';g.fillRect(60,100,220,90);g.strokeRect(60,100,220,90);label('Start here',170,145);
+ g.beginPath();g.moveTo(520,60);g.lineTo(660,145);g.lineTo(520,230);g.lineTo(380,145);g.closePath();g.fillStyle='#fff3c4';g.fill();g.stroke();label('Approve?',520,145);
+ g.beginPath();g.ellipse(960,145,140,60,0,0,7);g.fillStyle='#fff';g.fill();g.stroke();label('Send to finance',960,145);
+ g.strokeRect(410,420,220,90);label('Fix the form',520,465);label('Line two',520,495);
+ arrow(282,145,375,145);
+ arrow(662,145,817,145); label('yes',740,115);
+ arrow(520,233,520,415);label('no',560,320);
+ // a stray note with no border
+ label('Note: printed text only',220,600);
+ if(light){ // uneven light + noise like a phone photo
+   const gr=g.createLinearGradient(0,0,1200,700);gr.addColorStop(0,'rgba(0,0,0,0)');gr.addColorStop(1,'rgba(40,30,0,.35)');g.fillStyle=gr;g.fillRect(0,0,1200,700);
+   const d=g.getImageData(0,0,1200,700);for(let i=0;i<d.data.length;i+=4){const n=(Math.random()-.5)*30;d.data[i]+=n;d.data[i+1]+=n;d.data[i+2]+=n}g.putImageData(d,0,0);
+ }
+ const r=analyzePhoto(c,lines);
+ return {nodes:r.allNodes.map(n=>[n.text,n.kind,n.fill||'',!!n.isLabel]),edges:r.edges.map(e=>[r.allNodes[e.from].text,r.allNodes[e.to].text,e.label,e.sure])};
+}'''
+    for light in (False, True):
+        r = pg.evaluate(PHOTO_JS, light)
+        kinds = {n[0]: n[1] for n in r['nodes'] if not n[3]}
+        check('photo: shapes found' + (' (uneven light)' if light else ''), kinds.get('Start here')=='rect' and kinds.get('Approve?')=='diamond' and kinds.get('Send to finance')=='ellipse' and kinds.get('Fix the form\nLine two')=='rect')
+        check('photo: arrows, labels and directions' + (' (uneven light)' if light else ''), sorted(map(tuple, r['edges'])) == sorted([('Start here','Approve?','',True),('Approve?','Send to finance','yes',True),('Approve?','Fix the form\nLine two','no',True)]))
     pg.evaluate("view={x:-3000,y:-3000,z:1};renderView()")
     check('minimap shows when the diagram is off screen', pg.evaluate("getComputedStyle(document.querySelector('#minimap')).display") == 'block')
 
