@@ -37,8 +37,8 @@
 <link href="https://fonts.googleapis.com/css2?family=Playpen+Sans+Thai:wght@400;500;600;700&family=Instrument+Sans:wght@400;500;600&family=IBM+Plex+Sans+Thai:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
 :root{
-  --paper:#fffefb;--dot:#e6e3dc;--ink:#171717;--muted:#77736d;--line:#e9e5dd;--line-2:#d9d4ca;
-  --accent:#d95b35;--accent-soft:#fbe6dc;
+  --paper:#fffefb;--dot:#e6e3dc;--ink:#171717;--muted:#66625b;--line:#e9e5dd;--line-2:#d9d4ca;
+  --accent:#d95b35;--accent-ink:#ad4126;--accent-soft:#fbe6dc;
   --blue:#dce8fb;--green:#dcefdd;--lilac:#e9e1f7;--peach:#fde3d4;--butter:#fbf1cb;
   --hand:'Playpen Sans Thai','Comic Sans MS',cursive;--sans:'Playpen Sans Thai',ui-sans-serif,system-ui,sans-serif;
   --mono:ui-monospace,'SF Mono',Menlo,Consolas,monospace;
@@ -88,7 +88,7 @@ header.open .mobile-menu{display:block}
   -webkit-mask-image:radial-gradient(ellipse 70% 75% at 50% 35%,#000 30%,transparent 78%);
           mask-image:radial-gradient(ellipse 70% 75% at 50% 35%,#000 30%,transparent 78%)}
 .pill{display:inline-flex;align-items:center;gap:10px;padding:6px 14px 6px 8px;border:1px solid var(--line);border-radius:999px;background:#fff;font-size:13px;color:var(--muted)}
-.pill .tag{background:var(--accent-soft);color:var(--accent);font-weight:600;padding:2px 9px;border-radius:999px;font-size:12px}
+.pill .tag{background:var(--accent-soft);color:var(--accent-ink);font-weight:600;padding:2px 9px;border-radius:999px;font-size:12px}
 h1{font:700 clamp(38px,6.4vw,82px)/1.08 var(--hand);letter-spacing:-.02em;margin:26px 0 0}
 h1 .l1{display:block;transform:rotate(-1.1deg)}
 h1 .l2{display:inline-block;position:relative;transform:rotate(.7deg) translateX(.12em);margin-top:.04em}
@@ -98,7 +98,7 @@ h1 .l2{display:inline-block;position:relative;transform:rotate(.7deg) translateX
 @keyframes fadein{from{opacity:0;clip-path:inset(0 100% 0 0)}to{opacity:1;clip-path:inset(0 0 0 0)}}
 .lede{max-width:540px;margin:28px auto 0;color:var(--muted);font-size:17.5px;line-height:1.6}
 .actions{display:flex;justify-content:center;gap:12px;margin-top:32px}
-.fine{margin-top:16px;font-size:12.5px;color:#a19b92}
+.fine{margin-top:16px;font-size:12.5px;color:var(--muted)}
 
 /* ---------- product mockup ---------- */
 .app-scroll{margin:64px auto 0;max-width:1124px;padding:0 2px 30px}
@@ -111,7 +111,7 @@ h1 .l2{display:inline-block;position:relative;transform:rotate(.7deg) translateX
 .lights i{width:10px;height:10px;border-radius:50%;background:#ebe7e0}
 .file{display:flex;align-items:center;gap:8px;color:#55514b;margin-left:8px}
 .file b{color:var(--ink);font-weight:600}
-.file .saved{color:#a19b92;font-size:12px}
+.file .saved{color:var(--muted);font-size:12px}
 .seg{display:flex;gap:2px;padding:3px;border:1px solid var(--line);border-radius:10px;margin-left:auto;background:#faf8f4}
 .seg span{padding:4px 10px;border-radius:7px;color:var(--muted);font-size:12.5px}
 .seg span.on{background:#fff;color:var(--ink);box-shadow:0 1px 2px rgba(0,0,0,.08)}
@@ -120,7 +120,7 @@ h1 .l2{display:inline-block;position:relative;transform:rotate(.7deg) translateX
 .app-body{display:grid;grid-template-columns:58px 1fr;height:520px}
 .rail{border-right:1px solid var(--line);display:flex;flex-direction:column;align-items:center;gap:4px;padding:14px 0;background:#fff}
 .tool{width:38px;height:38px;border-radius:11px;display:grid;place-items:center;color:#5d5952}
-.tool.on{background:var(--accent-soft);color:var(--accent)}
+.tool.on{background:var(--accent-soft);color:var(--accent-ink)}
 .rail hr{width:24px;border:0;border-top:1px solid var(--line);margin:6px 0}
 .canvas{position:relative;overflow:hidden;background-color:#fffefb}
 .canvas>svg{position:absolute;inset:0;width:100%;height:100%}
@@ -128,14 +128,14 @@ h1 .l2{display:inline-block;position:relative;transform:rotate(.7deg) translateX
 .zoom span{padding:5px 9px}
 .cmd{position:absolute;left:50%;bottom:20px;transform:translateX(-50%);width:min(580px,78%);display:flex;align-items:center;gap:10px;
   padding:7px 7px 7px 12px;border:1px solid var(--line-2);border-radius:15px;background:#fff;box-shadow:0 14px 30px -18px rgba(70,55,30,.35)}
-.cmd .spark{width:28px;height:28px;border-radius:9px;background:var(--accent-soft);color:var(--accent);display:grid;place-items:center;flex:none}
+.cmd .spark{width:28px;height:28px;border-radius:9px;background:var(--accent-soft);color:var(--accent-ink);display:grid;place-items:center;flex:none}
 .cmd code{flex:1;font:13px var(--mono);color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.cmd code em{font-style:normal;color:var(--accent)}
+.cmd code em{font-style:normal;color:var(--accent-ink)}
 .cmd kbd{font:11px var(--mono);color:var(--muted);border:1px solid var(--line);border-radius:6px;padding:2px 6px;background:#faf8f4}
 
 /* ---------- features ---------- */
 .features{padding-top:240px}
-.eyebrow{font:600 11.5px var(--sans);letter-spacing:.2em;text-transform:uppercase;color:var(--accent)}
+.eyebrow{font:600 11.5px var(--sans);letter-spacing:.2em;text-transform:uppercase;color:var(--accent-ink)}
 .sec-head{text-align:center;max-width:720px;margin:0 auto 56px}
 h2{font:700 clamp(32px,4.3vw,52px)/1.12 var(--hand);letter-spacing:-.015em;margin:14px 0 0}
 .sec-head p{color:var(--muted);margin:16px auto 0;max-width:500px;font-size:16px}
@@ -152,7 +152,7 @@ h2{font:700 clamp(32px,4.3vw,52px)/1.12 var(--hand);letter-spacing:-.015em;margi
 .qa details{background:#fff;border:1px solid var(--line);border-radius:16px;padding:16px 20px}
 .qa summary{cursor:pointer;font-weight:600;list-style:none;display:flex;justify-content:space-between;gap:12px}
 .qa summary::-webkit-details-marker{display:none}
-.qa summary::after{content:'+';color:var(--accent);font-weight:400;font-size:20px;line-height:1}
+.qa summary::after{content:'+';color:var(--accent-ink);font-weight:400;font-size:20px;line-height:1}
 .qa details[open] summary::after{content:'−'}
 .qa p{margin:10px 0 0;color:var(--muted);line-height:1.6}
 .ill>svg{width:100%;height:100%}
@@ -166,7 +166,7 @@ h2{font:700 clamp(32px,4.3vw,52px)/1.12 var(--hand);letter-spacing:-.015em;margi
 .mini{font-family:var(--sans);font-size:12px;color:var(--ink)}
 .share-modal{position:relative;width:340px;background:#fff;border:1px solid var(--line-2);border-radius:16px;padding:16px;box-shadow:0 24px 40px -24px rgba(70,55,30,.45)}
 .share-modal h4{margin:0 0 12px;font:600 13.5px var(--sans);display:flex;justify-content:space-between}
-.share-modal h4 span{color:#a19b92;font-weight:400}
+.share-modal h4 span{color:var(--muted);font-weight:400}
 .linkrow{display:flex;gap:6px}
 .linkrow div{flex:1;border:1px solid var(--line);border-radius:9px;padding:7px 10px;font:11.5px var(--mono);color:#55514b;background:#faf8f4;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .linkrow b{background:var(--ink);color:#fff;border-radius:9px;padding:7px 12px;font-weight:500}
@@ -183,7 +183,7 @@ h2{font:700 clamp(32px,4.3vw,52px)/1.12 var(--hand);letter-spacing:-.015em;margi
 /* mini UI: history */
 .hist{display:grid;grid-template-columns:190px 1fr;width:88%;height:236px;background:#fff;border:1px solid var(--line-2);border-radius:16px;overflow:hidden;box-shadow:0 24px 40px -24px rgba(70,55,30,.45)}
 .hist ul{list-style:none;margin:0;padding:10px;overflow:hidden;min-height:0;border-right:1px solid var(--line);background:#fcfbf8}
-.hist .ttl{font:600 10.5px var(--sans);letter-spacing:.14em;text-transform:uppercase;color:#a19b92;padding:2px 8px 8px}
+.hist .ttl{font:600 10.5px var(--sans);letter-spacing:.14em;text-transform:uppercase;color:var(--muted);padding:2px 8px 8px}
 .hist li{padding:7px 8px;border-radius:9px;margin-bottom:2px;position:relative;padding-left:22px}
 .hist li::before{content:"";position:absolute;left:8px;top:13px;width:6px;height:6px;border-radius:50%;background:#cfc9be}
 .hist li b{display:block;font-weight:500;font-size:12px}
@@ -207,11 +207,11 @@ h2{font:700 clamp(32px,4.3vw,52px)/1.12 var(--hand);letter-spacing:-.015em;margi
 footer{padding:70px 0 30px}
 .fgrid{display:grid;grid-template-columns:1.6fr 1fr 1fr 1fr 1.2fr;gap:32px}
 .fbrand p{color:var(--muted);font-size:14px;max-width:260px;margin:14px 0 20px}
-footer h5{font:600 11.5px var(--sans);letter-spacing:.16em;text-transform:uppercase;color:#a19b92;margin:6px 0 14px}
+footer .fh{font:600 11.5px var(--sans);letter-spacing:.16em;text-transform:uppercase;color:var(--muted);margin:6px 0 14px}
 footer ul{list-style:none;margin:0;padding:0}
 footer li{margin-bottom:9px;font-size:14px;color:#4a4742}
-footer li a:hover{color:var(--accent)}
-.fbottom{display:flex;justify-content:space-between;gap:16px;margin-top:56px;padding-top:20px;border-top:1px solid var(--line);font-size:12.5px;color:#a19b92}
+footer li a:hover{color:var(--accent-ink)}
+.fbottom{display:flex;justify-content:space-between;gap:16px;margin-top:56px;padding-top:20px;border-top:1px solid var(--line);font-size:12.5px;color:var(--muted)}
 
 /* ---------- responsive ---------- */
 @media (max-width:980px){
@@ -677,12 +677,12 @@ footer li a:hover{color:var(--accent)}
       <article class="card reveal">
         <div class="ill tall dots mini">
           <div class="share-modal">
-            <h4><span style="color:var(--ink);font-weight:600">⌘K &nbsp;<span style="color:#a19b92;font-weight:400">Type a command…</span></span><span>esc</span></h4>
-            <div style="font:600 10px var(--sans);letter-spacing:.14em;text-transform:uppercase;color:#a19b92;margin:2px 0 6px">Templates</div>
+            <h4><span style="color:var(--ink);font-weight:600">⌘K &nbsp;<span style="color:var(--muted);font-weight:400">Type a command…</span></span><span>esc</span></h4>
+            <div style="font:600 10px var(--sans);letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin:2px 0 6px">Templates</div>
             <div class="optrow" style="border:0;margin:0;padding:6px 8px;background:#fbe6dc;border-radius:8px"><div>ผังองค์กร<small>Org chart, top to bottom</small></div><span class="chip">↵</span></div>
             <div class="optrow" style="border:0;margin:0;padding:6px 8px"><div>วิเคราะห์ SWOT<small>Strengths, weaknesses, opportunities, threats</small></div></div>
             <div class="optrow" style="border:0;margin:0;padding:6px 8px"><div>ขั้นตอนอนุมัติเอกสาร<small>Submit, review, approve or send back</small></div></div>
-            <div style="font:600 10px var(--sans);letter-spacing:.14em;text-transform:uppercase;color:#a19b92;margin:10px 0 6px">Open</div>
+            <div style="font:600 10px var(--sans);letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin:10px 0 6px">Open</div>
             <div class="optrow" style="border:0;margin:0;padding:6px 8px"><div>Import .excalidraw or Mermaid<small>Shapes, labels and arrows come across</small></div></div>
           </div>
         </div>
@@ -742,19 +742,19 @@ footer li a:hover{color:var(--accent)}
         <a class="btn sm" href="app/">Start drawing <span class="arr">→</span></a>
       </div>
       <div>
-        <h5>Product</h5>
+        <h2 class="fh">Product</h2>
         <ul><li><a href="app/">Editor</a></li><li><a href="#features">Text to diagram</a></li><li><a href="#styles">Styles</a></li><li><a href="#photo">Photo to diagram</a></li><li><a href="#share">Sharing</a></li><li><a href="https://github.com/kimookpong/canvy/commits/main" rel="noopener">Changelog</a></li></ul>
       </div>
       <div>
-        <h5>Explore</h5>
+        <h2 class="fh">Explore</h2>
         <ul><li><a href="#features">Features</a></li><li><a href="#styles">Drawing styles</a></li><li><a href="#faq">FAQ</a></li><li><a href="app/?lang=th">ภาษาไทย</a></li></ul>
       </div>
       <div>
-        <h5>Privacy</h5>
+        <h2 class="fh">Privacy</h2>
         <ul><li><a href="#privacy">Where your work is stored</a></li><li><a href="https://github.com/kimookpong/canvy" rel="noopener">Source code</a></li></ul>
       </div>
       <div>
-        <h5>Contact</h5>
+        <h2 class="fh">Contact</h2>
         <ul><li><a href="https://github.com/kimookpong/canvy" rel="noopener">GitHub</a></li><li><a href="https://github.com/kimookpong/canvy/issues/new" rel="noopener">Report a bug</a></li></ul>
       </div>
     </div>
