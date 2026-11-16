@@ -4,7 +4,33 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Canvy — Hand-drawn diagrams from a single line</title>
-<meta name="description" content="Canvy is a free, no-sign-up canvas for hand-drawn diagrams. Draw freely or type a line like web -> api -> db. Everything stays in your browser.">
+<meta name="description" content="Free hand-drawn diagram canvas. Draw, or type a line like web -> api -> db and watch it draw itself. Thai supported. No sign-up; everything stays in your browser.">
+<link rel="canonical" href="https://kimookpong.github.io/canvy/">
+<link rel="alternate" hreflang="en" href="https://kimookpong.github.io/canvy/">
+<link rel="alternate" hreflang="th" href="https://kimookpong.github.io/canvy/?lang=th">
+<link rel="alternate" hreflang="x-default" href="https://kimookpong.github.io/canvy/">
+<meta name="robots" content="index,follow,max-image-preview:large">
+<meta name="theme-color" content="#fffefb">
+<meta name="author" content="Canvy">
+<meta name="keywords" content="diagram, flowchart, hand-drawn, whiteboard, architecture diagram, text to diagram, mermaid, ไดอะแกรม, ผังงาน, วาดแผนภาพ, ไวต์บอร์ด">
+<link rel="manifest" href="https://kimookpong.github.io/canvy/manifest.webmanifest">
+<link rel="apple-touch-icon" href="https://kimookpong.github.io/canvy/icon-180.png">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Canvy">
+<meta property="og:title" content="Canvy — Hand-drawn diagrams from a single line">
+<meta property="og:description" content="Free hand-drawn diagram canvas. Draw, or type a line like web -> api -> db and watch it draw itself. Thai supported. No sign-up; everything stays in your browser.">
+<meta property="og:url" content="https://kimookpong.github.io/canvy/">
+<meta property="og:image" content="https://kimookpong.github.io/canvy/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="A hand-drawn Canvy diagram: Customer to Web app to API, with an Orders database and a Jobs queue feeding an Email worker">
+<meta property="og:locale" content="en_US">
+<meta property="og:locale:alternate" content="th_TH">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Canvy — Hand-drawn diagrams from a single line">
+<meta name="twitter:description" content="Free hand-drawn diagram canvas. Draw, or type a line like web -> api -> db and watch it draw itself. Thai supported. No sign-up; everything stays in your browser.">
+<meta name="twitter:image" content="https://kimookpong.github.io/canvy/og-image.png">
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "SoftwareApplication", "name": "Canvy", "url": "https://kimookpong.github.io/canvy/", "applicationCategory": "DesignApplication", "operatingSystem": "Web browser", "description": "A free, no-sign-up canvas for hand-drawn diagrams. Draw freely or type a line like web -> api -> db. Everything stays in your browser.", "inLanguage": ["en", "th"], "offers": {"@type": "Offer", "price": "0", "priceCurrency": "USD"}, "image": "https://kimookpong.github.io/canvy/og-image.png", "featureList": ["Text to diagram", "Hand-drawn styles", "Thai language support", "Share by link", "Export PNG, SVG, JSON and Mermaid", "Works offline in the browser"]}</script>
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -251,6 +277,7 @@ footer li a:hover{color:var(--accent)}
       <a href="app/">Editor</a>
     </nav>
     <div class="navactions">
+      <button class="btn sm ghost" id="langBtn" type="button" style="min-width:48px">ไทย</button>
       <a class="btn sm" href="app/">Open Canvy <span class="arr">→</span></a>
       <button class="menu-btn" aria-label="Open menu" aria-expanded="false" id="menuBtn">
         <svg width="18" height="18" viewBox="0 0 18 18"><path d="M3 5.5h12M3 9h12M3 12.5h12" stroke="#171717" stroke-width="1.6" stroke-linecap="round"/></svg>
@@ -672,6 +699,22 @@ footer li a:hover{color:var(--accent)}
     },{rootMargin:'0px 0px -8% 0px'});
     els.forEach(function(e){io.observe(e)});
   })();
+</script>
+<script>
+// language: English / ไทย (?lang=th, a saved choice, or the browser's language)
+(function(){
+  var TH={"Features": "ฟีเจอร์", "Styles": "สไตล์", "Sharing": "การแชร์", "Editor": "เครื่องมือวาด", "Open Canvy": "เปิด Canvy", "Free": "ฟรี", "No account. No server. Saved in your browser.": "ไม่ต้องสมัคร ไม่มีเซิร์ฟเวอร์ บันทึกในเบราว์เซอร์ของคุณ", "Think it through": "คิดให้ชัด", "on paper that types": "บนกระดาษที่พิมพ์ได้", "Canvy is a hand-drawn diagram canvas. Sketch freely, type a line like": "Canvy คือผืนผ้าใบวาดไดอะแกรมสไตล์ลายมือ จะวาดเองก็ได้ หรือพิมพ์บรรทัดเดียวอย่าง", ", and watch it draw itself. It looks like a whiteboard, works like an editor, and keeps everything on your device.": " แล้วดูมันวาดให้เอง หน้าตาเหมือนไวต์บอร์ด ใช้งานเหมือนโปรแกรมแก้ไข และเก็บทุกอย่างไว้ในเครื่องคุณ", "Start a diagram": "เริ่มวาดไดอะแกรม", "See what it does": "ดูว่าทำอะไรได้บ้าง", "Runs in your browser · Nothing to install, nothing uploaded": "ทำงานในเบราว์เซอร์ · ไม่ต้องติดตั้ง ไม่มีการอัปโหลด", "Inside the canvas": "ในผืนผ้าใบ", "Seven ways Canvy gets out of your way": "7 อย่างที่ทำให้ Canvy ใช้ง่าย", "Everything a whiteboard does, plus the parts a whiteboard can't: typed diagrams, styles, presenting, share links and history.": "ทำได้ทุกอย่างที่ไวต์บอร์ดทำได้ และมากกว่านั้น: พิมพ์เป็นไดอะแกรม เปลี่ยนสไตล์ นำเสนอ แชร์ลิงก์ และย้อนประวัติ", "Type a line, get a diagram": "พิมพ์บรรทัดเดียว ได้ไดอะแกรม", "Write arrows the way you'd write them in a chat message. Canvy draws the boxes, spaces them out and keeps them editable, so you can drag things around afterwards.": "เขียนลูกศรเหมือนพิมพ์แชต Canvy จะวาดกล่อง จัดระยะให้ และยังแก้ไขต่อได้ ลากย้ายทีหลังได้ตามใจ", "Shapes that mean something": "รูปทรงที่มีความหมาย", "Boxes, ellipses, decisions and databases are one keystroke away, by tool or by bracket. Arrows stay attached to their shapes, so moving things around never breaks the diagram.": "กล่อง วงรี ทางเลือก ฐานข้อมูล เรียกได้ด้วยปุ่มเดียวหรือวงเล็บ ลูกศรติดกับรูปเสมอ ย้ายรูปแล้วไดอะแกรมไม่พัง", "One diagram, many looks": "ไดอะแกรมเดียว หลายหน้าตา", "Switch the whole canvas between pencil, chalk, blueprint and clean ink. Your layout and labels stay exactly where they were.": "สลับทั้งผืนเป็นดินสอ ชอล์ก พิมพ์เขียว หรือหมึกเรียบ ตำแหน่งและข้อความอยู่ที่เดิมทุกอย่าง", "Present without the clutter": "นำเสนอแบบไม่รก", "Press Present and Canvy hides the toolbars, fits your diagram to the screen and goes full screen. Esc takes you back to editing.": "กดนำเสนอ Canvy จะซ่อนแถบเครื่องมือ ปรับไดอะแกรมพอดีจอ และขึ้นเต็มจอ กด Esc เพื่อกลับมาแก้ไข", "Export anywhere": "ส่งออกได้ทุกที่", "Download a PNG for slides, an SVG for docs, or a JSON backup you can import on another device.": "ดาวน์โหลด PNG ใส่สไลด์ SVG ใส่เอกสาร หรือ JSON ไว้สำรองและเปิดบนเครื่องอื่น", "Share with a link, not an account": "แชร์ด้วยลิงก์ ไม่ต้องมีบัญชี", "Canvy packs the whole diagram into the link itself. Whoever opens it gets their own editable copy. There's no server, no sign-up, and nothing is stored outside their browser.": "Canvy ใส่ไดอะแกรมทั้งหมดไว้ในลิงก์ ใครเปิดก็ได้สำเนาที่แก้ไขได้ ไม่มีเซิร์ฟเวอร์ ไม่ต้องสมัคร และไม่มีข้อมูลถูกเก็บนอกเบราว์เซอร์", "Every version, kept": "เก็บทุกเวอร์ชัน", "Canvy saves to your browser as you work and keeps a version every few minutes. Step back through the history and restore any version with one click.": "Canvy บันทึกลงเบราว์เซอร์ระหว่างทำงาน และเก็บเวอร์ชันทุกไม่กี่นาที ย้อนดูประวัติและกู้คืนได้ในคลิกเดียว", "Your next diagram is": "ไดอะแกรมต่อไปของคุณ", "one line away": "ห่างแค่บรรทัดเดียว", "Open a blank canvas and start drawing or typing. There's nothing to sign up for, and your work stays in your browser.": "เปิดผืนผ้าใบเปล่าแล้วเริ่มวาดหรือพิมพ์ได้เลย ไม่ต้องสมัคร และงานของคุณอยู่ในเบราว์เซอร์ของคุณ", "A hand-drawn canvas for thinking out loud: systems, flows and plans. Free, and private by design.": "ผืนผ้าใบลายมือสำหรับคิดออกมาเป็นภาพ ทั้งระบบ ขั้นตอน และแผนงาน ฟรีและเป็นส่วนตัว", "Start drawing": "เริ่มวาด", "Product": "ผลิตภัณฑ์", "Text to diagram": "พิมพ์เป็นไดอะแกรม", "Changelog": "บันทึกการเปลี่ยนแปลง", "Explore": "สำรวจ", "Drawing styles": "สไตล์การวาด", "Share links": "แชร์ลิงก์", "Open the editor": "เปิดเครื่องมือวาด", "Legal": "กฎหมาย", "Privacy": "ความเป็นส่วนตัว", "Terms": "ข้อกำหนด", "Contact": "ติดต่อ", "Report a bug": "แจ้งปัญหา", "© 2026 Canvy. All rights reserved.": "© 2026 Canvy สงวนลิขสิทธิ์", "Drawn on a dotted grid, one line at a time.": "วาดบนกระดาษจุด ทีละบรรทัด", "Link copied": "คัดลอกลิงก์แล้ว", "Opens as an editable copy": "เปิดเป็นสำเนาที่แก้ไขได้", "No account needed to view or edit": "ไม่ต้องมีบัญชีก็ดูและแก้ไขได้", "Anyone": "ทุกคน", "Also save as file": "บันทึกเป็นไฟล์ได้ด้วย", "Export ▾": "ส่งออก ▾", "The whole diagram is packed into this link. Nothing is uploaded.": "ไดอะแกรมทั้งหมดอยู่ในลิงก์นี้ ไม่มีการอัปโหลด", "Copy": "คัดลอก", "History": "ประวัติ", "Restore": "กู้คืน", "Saved by you": "บันทึกโดยคุณ", "Share": "แชร์"},ORIG=new WeakMap(),btn=document.getElementById('langBtn');
+  function pick(){try{var q=new URLSearchParams(location.search).get('lang');if(q==='th'||q==='en')return q;var s=localStorage.getItem('canvy:lang');if(s)return JSON.parse(s)}catch(e){}return (navigator.language||'').toLowerCase().indexOf('th')===0?'th':'en'}
+  function apply(lang){
+    document.documentElement.lang=lang;
+    var w=document.createTreeWalker(document.body,NodeFilter.SHOW_TEXT),n;
+    while((n=w.nextNode())){if(n.parentElement&&n.parentElement.closest('svg,code,script,style'))continue;var raw=ORIG.has(n)?ORIG.get(n):n.nodeValue,key=raw.replace(/\s+/g,' ').trim();if(!key||!TH[key])continue;ORIG.set(n,raw);n.nodeValue=lang==='th'?raw.replace(raw.trim(),TH[key]):raw}
+    btn.textContent=lang==='th'?'EN':'ไทย';btn.title=lang==='th'?'Switch to English':'เปลี่ยนเป็นภาษาไทย';
+    document.title=lang==='th'?'Canvy — วาดไดอะแกรมลายมือ แค่พิมพ์บรรทัดเดียว':'Canvy — Hand-drawn diagrams from a single line';
+  }
+  var lang=pick();apply(lang);
+  btn.addEventListener('click',function(){lang=lang==='th'?'en':'th';try{localStorage.setItem('canvy:lang',JSON.stringify(lang))}catch(e){}apply(lang)});
+})();
 </script>
 </body>
 </html>

@@ -4,7 +4,33 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Canvy — Editor</title>
-<meta name="description" content="Canvy editor: hand-drawn diagrams that live in your browser.">
+<meta name="description" content="Open a blank hand-drawn canvas. Type user -> api -> db or draw with shapes, icons and arrows. Thai supported, free, no sign-up, saved in your browser.">
+<link rel="canonical" href="https://kimookpong.github.io/canvy/app/">
+<link rel="alternate" hreflang="en" href="https://kimookpong.github.io/canvy/app/">
+<link rel="alternate" hreflang="th" href="https://kimookpong.github.io/canvy/app/?lang=th">
+<link rel="alternate" hreflang="x-default" href="https://kimookpong.github.io/canvy/app/">
+<meta name="robots" content="index,follow,max-image-preview:large">
+<meta name="theme-color" content="#fffefb">
+<meta name="author" content="Canvy">
+<meta name="keywords" content="diagram, flowchart, hand-drawn, whiteboard, architecture diagram, text to diagram, mermaid, ไดอะแกรม, ผังงาน, วาดแผนภาพ, ไวต์บอร์ด">
+<link rel="manifest" href="https://kimookpong.github.io/canvy/manifest.webmanifest">
+<link rel="apple-touch-icon" href="https://kimookpong.github.io/canvy/icon-180.png">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Canvy">
+<meta property="og:title" content="Canvy Editor — draw or type hand-drawn diagrams">
+<meta property="og:description" content="Open a blank hand-drawn canvas. Type user -> api -> db or draw with shapes, icons and arrows. Thai supported, free, no sign-up, saved in your browser.">
+<meta property="og:url" content="https://kimookpong.github.io/canvy/app/">
+<meta property="og:image" content="https://kimookpong.github.io/canvy/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="A hand-drawn Canvy diagram: Customer to Web app to API, with an Orders database and a Jobs queue feeding an Email worker">
+<meta property="og:locale" content="en_US">
+<meta property="og:locale:alternate" content="th_TH">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Canvy Editor — draw or type hand-drawn diagrams">
+<meta name="twitter:description" content="Open a blank hand-drawn canvas. Type user -> api -> db or draw with shapes, icons and arrows. Thai supported, free, no sign-up, saved in your browser.">
+<meta name="twitter:image" content="https://kimookpong.github.io/canvy/og-image.png">
+
 <link rel="icon" href="../favicon.svg" type="image/svg+xml">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -198,6 +224,9 @@ svg{display:block}
 .mrow .btns{display:flex;gap:8px;flex-wrap:wrap}
 .mrow small{display:block;color:var(--muted);font-size:12px;margin-top:8px}
 .warn{color:#b4381a!important}
+.sharepv{height:150px;border:1px solid var(--line);border-radius:12px;margin:0 0 12px;display:grid;place-items:center;overflow:hidden;background:#fffefb}
+.sharepv img{max-width:100%;max-height:100%;display:block}
+.pvnote{display:block;color:var(--muted);font-size:12px;margin-top:8px}
 
 #moveTip{position:fixed;z-index:45;display:none;pointer-events:none;background:var(--ink);color:#fff;font:11px var(--mono);padding:3px 7px;border-radius:6px}
 .toast{position:fixed;z-index:50;left:50%;bottom:76px;transform:translate(-50%,8px);background:var(--ink);color:#fff;padding:9px 14px;border-radius:10px;font-size:13px;opacity:0;pointer-events:none;transition:opacity .2s,transform .2s;max-width:calc(100% - 24px)}
@@ -240,7 +269,7 @@ body.presenting .pbar{display:flex}
 
 <div class="empty" id="empty"><div>
   <h2>A blank page. Your move.</h2>
-  <p>Draw with the tools on the left, right-click for the tool dial, or type a line at the bottom.</p>
+  <p>Draw with the tools on the left, right-click for the quick menu, or type a line at the bottom.</p>
   <div class="ex" id="emptyEx"></div>
 </div></div>
 
@@ -263,6 +292,7 @@ body.presenting .pbar{display:flex}
       <button class="btn ghost sm hide-sm" id="btnHist" title="Version history">History</button>
       <button class="btn ghost sm" id="btnPresent" title="Present — Shift P">Present</button>
     </div>
+    <button class="btn" id="langBtn" title="เปลี่ยนเป็นภาษาไทย" style="min-width:52px;justify-content:center">ไทย</button>
     <button class="btn dark" id="btnShare"><svg width="14" height="14" viewBox="0 0 14 14"><path d="M5.5 8.5 8.5 5.5M6 3.5l1-1a2.5 2.5 0 0 1 3.5 3.5l-1 1M8 10.5l-1 1A2.5 2.5 0 0 1 3.5 8l1-1" fill="none" stroke="#fff" stroke-width="1.4" stroke-linecap="round"/></svg>Share</button>
   </div>
 </div>
@@ -363,7 +393,7 @@ body.presenting .pbar{display:flex}
   </table>
   <h4 style="margin-top:14px">Shortcuts</h4>
   <table>
-    <tr><td>Right-click · long-press · tap Space</td><td>Tool dial (flick toward a tool and release)</td></tr>
+    <tr><td>Right-click · long-press · tap Space</td><td>Quick menu: tools, zoom, view</td></tr>
     <tr><td>V H R A L P M T N F E I</td><td>Tools (R again switches shape)</td></tr>
     <tr><td>Double-click · Enter</td><td>Edit a label, or add text</td></tr>
     <tr><td>Space + drag · scroll</td><td>Pan</td></tr>
@@ -422,7 +452,10 @@ body.presenting .pbar{display:flex}
   <div class="panel modal" role="dialog" aria-labelledby="shareTitle">
     <h3 id="shareTitle">Share <button class="ibtn" id="shareClose" title="Close">✕</button></h3>
     <p id="shareNote">The whole diagram is packed into this link. Nothing is uploaded: whoever opens it gets their own copy.</p>
+    <div class="sharepv" id="sharePv"></div>
     <div class="linkrow"><input id="shareLink" readonly value="Preparing link…"><button class="btn dark" id="copyLink">Copy</button></div>
+    <div class="btns" style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap"><button class="btn sm" id="copyImg">Copy image</button><button class="btn sm" id="dlCard">Download preview card</button></div>
+    <small class="pvnote">Paste the image next to the link so people see the diagram before they open it.</small>
     <div class="mrow">
       <h5>Export</h5>
       <div class="btns">
@@ -547,6 +580,66 @@ let warnedFull=false;
 function storageFull(){if(!warnedFull){warnedFull=true;toast('Browser storage is full. Export a JSON backup and delete old diagrams.',5000)}}
 const K={index:'canvy:index',last:'canvy:last',doc:id=>'canvy:doc:'+id,hist:id=>'canvy:hist:'+id,props:'canvy:props'};
 
+/* ============================== language: English / ไทย ============================== */
+// UI strings only — never the user's own labels on the canvas
+const TH={
+'Share':'แชร์','History':'ประวัติ','Present':'นำเสนอ','Tidy':'จัดเรียง','Tidy up — Shift T':'จัดเรียงอัตโนมัติ — Shift T','Version history':'ประวัติเวอร์ชัน','Present — Shift P':'นำเสนอ — Shift P',
+'Saved in this browser':'บันทึกในเบราว์เซอร์นี้แล้ว','Saving…':'กำลังบันทึก…','Not saved':'ยังไม่ได้บันทึก','Diagram name':'ชื่อไดอะแกรม','My diagrams':'ไดอะแกรมของฉัน','Back to the Canvy homepage':'กลับหน้าแรก Canvy',
+'Look: skin, paper, stroke — Shift L':'รูปลักษณ์: สไตล์ กระดาษ เส้น — Shift L','Skin':'สไตล์','Paper':'กระดาษ','Stroke':'เส้น','Skin default':'ตามสไตล์','Plain':'เรียบ','Dots':'จุด','Grid':'ตาราง','Ruled':'บรรทัด','Sketch':'สเก็ตช์','Clean':'เรียบร้อย','Marker':'ปากกาเมจิก',
+'Pencil':'ดินสอ','Chalkboard':'กระดานดำ','Whiteboard':'ไวต์บอร์ด','Blueprint':'พิมพ์เขียว','Clean ink':'หมึกเรียบ','Neon':'นีออน',
+'Select — V':'เลือก — V','Pan — H (or Space + drag)':'เลื่อนผืนผ้าใบ — H (หรือ Space + ลาก)','Shapes — R (press again to switch shape)':'รูปทรง — R (กดซ้ำเพื่อเปลี่ยนรูปทรง)','Arrow — A (drag from shape to shape)':'ลูกศร — A (ลากจากรูปไปอีกรูป)','Line — L':'เส้นตรง — L','Pen — P':'ปากกา — P','Highlighter — M':'ปากกาไฮไลต์ — M','Text — T':'ข้อความ — T','Sticky note — N':'โน้ตแปะ — N','Frame — F (frames become slides)':'เฟรม — F (ใช้เป็นสไลด์ได้)','Eraser — E':'ยางลบ — E','Blocks & templates — I':'บล็อกและเทมเพลต — I',
+'Select':'เลือก','Pan':'เลื่อน','Shapes':'รูปทรง','Arrow':'ลูกศร','Line':'เส้นตรง','Pen':'ปากกา','Highlighter':'ไฮไลต์','Text':'ข้อความ','Sticky note':'โน้ตแปะ','Frame':'เฟรม','Eraser':'ยางลบ',
+'Box':'กล่อง','Pill':'แคปซูล','Ellipse':'วงรี','Decision':'ทางเลือก','Database':'ฐานข้อมูล','Hexagon':'หกเหลี่ยม','In / out':'รับ / ส่ง','Document':'เอกสาร','Cloud':'เมฆ','Sticky':'โน้ตแปะ','Person':'คน',
+'Change shape':'เปลี่ยนรูปทรง','Change icon':'เปลี่ยนไอคอน','Fill':'สีพื้น','Bold':'ตัวหนา','Numbered badge':'ป้ายตัวเลข','Mark: ✓ ✗ ⚠ (click to cycle)':'เครื่องหมาย ✓ ✗ ⚠ (คลิกเพื่อสลับ)','Lift (paper shadow)':'ยกขึ้น (เงา)','Pencil shading':'แรเงาดินสอ','Draw as a stack (×2, ×3)':'วาดซ้อนเป็นตั้ง (×2, ×3)',
+'Arrow ends (click to cycle)':'หัวลูกศร (คลิกเพื่อสลับ)','Dashed':'เส้นประ','Elbow routing':'เส้นหักมุม','Align left':'ชิดซ้าย','Align centers':'กึ่งกลางแนวตั้ง','Align top':'ชิดบน','Align middles':'กึ่งกลางแนวนอน','Distribute horizontally':'เว้นระยะเท่ากันแนวนอน','Distribute vertically':'เว้นระยะเท่ากันแนวตั้ง',
+'Make smaller — Shift −':'ย่อ — Shift −','Make bigger — Shift +':'ขยาย — Shift +','Duplicate — Ctrl/⌘ D':'ทำสำเนา — Ctrl/⌘ D','Bring to front — ]':'นำมาไว้หน้าสุด — ]','Delete — Del':'ลบ — Del',
+'Zoom out — Ctrl/⌘ −':'ซูมออก — Ctrl/⌘ −','Reset to 100%':'กลับเป็น 100%','Zoom in — Ctrl/⌘ +':'ซูมเข้า — Ctrl/⌘ +','Fit everything — 0':'พอดีจอ — 0','Undo — Ctrl/⌘ Z':'เลิกทำ — Ctrl/⌘ Z','Redo — Ctrl/⌘ Shift Z':'ทำซ้ำ — Ctrl/⌘ Shift Z','Syntax and shortcuts — ?':'วิธีพิมพ์และคีย์ลัด — ?',
+'Text to diagram':'พิมพ์เป็นไดอะแกรม','Type:  user:Customer -> API -(SQL)-> db:Orders   ·  ## Heading  ·  or a name to find it':'พิมพ์:  user:ลูกค้า -> API -(SQL)-> db:คำสั่งซื้อ   ·  ## หัวข้อ  ·  หรือพิมพ์ชื่อเพื่อค้นหา','Layout direction for typed diagrams':'ทิศการจัดวางของไดอะแกรมที่พิมพ์',
+'Type a diagram':'พิมพ์ไดอะแกรม','Boxes joined by arrows':'กล่องเชื่อมด้วยลูกศร','Label on an arrow':'ข้อความบนลูกศร','Plain line · both ways · dashed':'เส้นธรรมดา · สองทาง · เส้นประ','Pick a shape by name':'เลือกรูปทรงด้วยชื่อ','Or by brackets':'หรือใช้วงเล็บ','Self-loop':'ลูกศรวนเข้าตัวเอง','A section title above what you add':'หัวข้อเหนือสิ่งที่เพิ่ม','A name that already exists: fly to it':'ชื่อที่มีอยู่แล้ว: พาไปที่รูปนั้น','Mermaid flowcharts work too (or paste them)':'ใช้ Mermaid ได้ (หรือวางลงมาเลย)','Separate chains':'แยกหลายสาย',', ; or new line':', ; หรือขึ้นบรรทัดใหม่',
+'Shortcuts':'คีย์ลัด','Right-click · long-press · tap Space':'คลิกขวา · กดค้าง · แตะ Space','Quick menu: tools, zoom, view':'เมนูด่วน: เครื่องมือ ซูม มุมมอง','Tools (R again switches shape)':'เครื่องมือ (กด R ซ้ำเพื่อเปลี่ยนรูปทรง)','Double-click · Enter':'ดับเบิลคลิก · Enter','Edit a label, or add text':'แก้ข้อความ หรือเพิ่มข้อความ','Space + drag · scroll':'Space + ลาก · เลื่อนล้อเมาส์','Ctrl/⌘ + scroll':'Ctrl/⌘ + เลื่อนล้อเมาส์','Zoom':'ซูม','Zoom · fit all · zoom to selection · fly to frame':'ซูม · พอดีจอ · ซูมไปที่ที่เลือก · ไปยังเฟรม','Make the selection bigger / smaller':'ขยาย / ย่อสิ่งที่เลือก','Drag · Shift-drag · Alt-drag':'ลาก · Shift-ลาก · Alt-ลาก','Move · move along one axis · move a copy':'ย้าย · ย้ายแนวเดียว · ลากสำเนา','Arrows · Shift · Alt':'ปุ่มลูกศร · Shift · Alt','Nudge 1 · 10 · 50 px':'ขยับ 1 · 10 · 50 px','Tidy · present · look':'จัดเรียง · นำเสนอ · รูปลักษณ์','Undo · duplicate · copy · paste · all':'เลิกทำ · สำเนา · คัดลอก · วาง · ทั้งหมด','Next / previous frame':'เฟรมถัดไป / ก่อนหน้า','Jump to the command bar':'ไปที่ช่องพิมพ์',
+'A blank page. Your move.':'หน้าว่างพร้อมแล้ว เริ่มเลย','Draw with the tools on the left, right-click for the quick menu, or type a line at the bottom.':'วาดด้วยเครื่องมือด้านซ้าย คลิกขวาเพื่อเปิดเมนูด่วน หรือพิมพ์ที่ช่องด้านล่าง','Templates…':'เทมเพลต…','Web app':'เว็บแอป','Login flow':'ขั้นตอนล็อกอิน',
+'Diagrams are saved in this browser only. Export a JSON backup to move them to another device.':'ไดอะแกรมถูกบันทึกในเบราว์เซอร์นี้เท่านั้น ถ้าจะย้ายไปเครื่องอื่นให้ export เป็น JSON','+ New diagram':'+ ไดอะแกรมใหม่','Templates':'เทมเพลต','Import JSON':'นำเข้า JSON','Close':'ปิด','Delete':'ลบ','Sure?':'แน่ใจ?',
+'Insert':'แทรก','Search all blocks: cache, queue, gear, ผู้ใช้…':'ค้นหาบล็อก: cache, queue, ผู้ใช้, ฐานข้อมูล…','Sections':'ส่วน','Systems':'ระบบ','Data & APIs':'ข้อมูลและ API','Notes':'โน้ต','Patterns':'แพตเทิร์น','Icons':'ไอคอน',
+'Canvy keeps a version every couple of minutes while you work, up to 30 per diagram.':'Canvy เก็บเวอร์ชันทุก 2–3 นาทีระหว่างทำงาน สูงสุด 30 เวอร์ชันต่อไดอะแกรม','Save a version now':'บันทึกเวอร์ชันตอนนี้','Restore':'กู้คืน','No versions yet. They appear here as you work.':'ยังไม่มีเวอร์ชัน จะแสดงที่นี่เมื่อเริ่มทำงาน',
+'The whole diagram is packed into this link. Nothing is uploaded: whoever opens it gets their own copy.':'ไดอะแกรมทั้งหมดถูกใส่ไว้ในลิงก์นี้ ไม่มีการอัปโหลด ใครเปิดลิงก์ก็ได้สำเนาของตัวเอง','Copy':'คัดลอก','Copied':'คัดลอกแล้ว','Export':'ส่งออก','PNG image':'รูป PNG','JSON backup':'สำรอง JSON','Copy as Mermaid':'คัดลอกเป็น Mermaid','Mermaid copied':'คัดลอก Mermaid แล้ว','Preparing link…':'กำลังสร้างลิงก์…','Draw something first':'วาดอะไรสักอย่างก่อน',
+'The canvas is empty, so there is nothing to share yet.':'ผืนผ้าใบยังว่าง จึงยังไม่มีอะไรให้แชร์','To import Mermaid, paste a':'นำเข้า Mermaid ได้โดยวาง','into the canvas or the command bar.':'ลงบนผืนผ้าใบหรือช่องพิมพ์','or':'หรือ',
+'Exit · Esc':'ออก · Esc','Previous — ←':'ก่อนหน้า — ←','Next — →':'ถัดไป — →',
+'Edit text':'แก้ข้อความ','Duplicate':'ทำสำเนา','Paste':'วาง','Make bigger':'ขยาย','Make smaller':'ย่อ','Bring to front':'นำมาไว้หน้าสุด','Send to back':'ส่งไปไว้หลังสุด','Zoom to selection':'ซูมไปที่ที่เลือก','Tidy selection':'จัดเรียงที่เลือก',
+'Insert blocks…':'แทรกบล็อก…','Zoom in':'ซูมเข้า','Zoom out':'ซูมออก','Zoom to 100%':'ซูม 100%','Fit everything':'พอดีจอ','Center view here':'จัดจุดนี้ไว้กลางจอ','Move canvas (hand)':'เลื่อนผืนผ้าใบ (มือ)','Select all':'เลือกทั้งหมด','Paste here':'วางตรงนี้',
+'No fill':'ไม่มีสีพื้น','Default':'ค่าเริ่มต้น','Thin line':'เส้นบาง','Medium line':'เส้นกลาง','Bold line':'เส้นหนา','Small text':'ตัวเล็ก','Medium text':'ตัวกลาง','Large text':'ตัวใหญ่',
+'Nothing matches. Try “db”, “queue” or “ผู้ใช้”.':'ไม่พบบล็อกที่ตรง ลองคำว่า “db”, “queue” หรือ “ผู้ใช้”',
+// toasts
+'Browser storage is full. Export a JSON backup and delete old diagrams.':'พื้นที่เก็บในเบราว์เซอร์เต็มแล้ว ให้ export เป็น JSON แล้วลบไดอะแกรมเก่า','That diagram could not be found':'ไม่พบไดอะแกรมนั้น','Diagram deleted':'ลบไดอะแกรมแล้ว','That file is not a Canvy JSON export':'ไฟล์นี้ไม่ใช่ไฟล์ JSON จาก Canvy','No changes since the last version':'ไม่มีอะไรเปลี่ยนจากเวอร์ชันล่าสุด','That version matches the canvas':'เวอร์ชันนี้เหมือนกับที่อยู่บนผืนผ้าใบ','Version restored. Undo is available.':'กู้คืนเวอร์ชันแล้ว กดเลิกทำได้',
+'Nothing to export yet':'ยังไม่มีอะไรให้ส่งออก','No shapes to export yet':'ยังไม่มีรูปให้ส่งออก','PNG export failed in this browser. Try SVG.':'ส่งออก PNG ไม่ได้ในเบราว์เซอร์นี้ ลองใช้ SVG','Select three or more to distribute':'เลือก 3 ชิ้นขึ้นไปเพื่อเว้นระยะ','Tidy arranges shapes that are connected by arrows':'การจัดเรียงใช้กับรูปที่เชื่อมกันด้วยลูกศร','Those shapes and arrows are already on the canvas':'รูปและลูกศรเหล่านั้นมีอยู่แล้ว','Nothing to draw yet. Try: user:Customer -> API -> db:Orders':'ยังไม่มีอะไรให้วาด ลองพิมพ์: user:ลูกค้า -> API -> db:คำสั่งซื้อ','That share link looks broken or was cut short. Ask for the link again, or a JSON export.':'ลิงก์แชร์นี้เสียหรือถูกตัดขาด ขอลิงก์ใหม่หรือขอไฟล์ JSON แทน','Saved in this browser.':'บันทึกในเบราว์เซอร์นี้แล้ว','New diagrams flow top to bottom':'ไดอะแกรมใหม่จะเรียงจากบนลงล่าง','New diagrams flow left to right':'ไดอะแกรมใหม่จะเรียงจากซ้ายไปขวา','Language: English':'ภาษา: English','Untitled diagram':'ไดอะแกรมไม่มีชื่อ','Preview':'ตัวอย่าง','Copy image':'คัดลอกรูป','Image copied':'คัดลอกรูปแล้ว','Download preview card':'ดาวน์โหลดภาพการ์ด','Paste the image next to the link so people see the diagram before they open it.':'วางรูปคู่กับลิงก์ คนรับจะเห็นไดอะแกรมก่อนเปิด','Switched to English':'Switched to English'
+};
+let LANG=(()=>{try{const q=new URLSearchParams(location.search).get('lang');if(q==='th'||q==='en')return q}catch(_){}return null})()||LS.get('canvy:lang',null)||((navigator.language||'').toLowerCase().startsWith('th')?'th':'en');
+const T=s=>LANG==='th'&&TH[s]?TH[s]:s;
+// patterns for messages built from numbers or names
+const TH_PAT=[
+  [/^Added (\d+) shapes? and (\d+) arrows?$/,(m)=>`เพิ่ม ${m[1]} รูป และ ${m[2]} ลูกศร`],[/^Added (\d+) shapes?$/,m=>`เพิ่ม ${m[1]} รูป`],[/^Added (\d+) arrows?$/,m=>`เพิ่ม ${m[1]} ลูกศร`],[/^Added a heading$/,()=>'เพิ่มหัวข้อแล้ว'],[/^Added (.+)$/,m=>`เพิ่ม ${m[1]} แล้ว`],
+  [/^Copied (\d+) items?$/,m=>`คัดลอก ${m[1]} ชิ้นแล้ว`],[/^Found “(.+)”$/,m=>`พบ “${m[1]}”`],[/^Tidied (\d+) shapes in (\d+) groups?$/,m=>`จัดเรียง ${m[1]} รูป ใน ${m[2]} กลุ่ม`],
+  [/^Imported (.+)$/,m=>`นำเข้า ${m[1]} แล้ว`],[/^Opened “(.+)”\. Your copy is saved in this browser\.$/,m=>`เปิด “${m[1]}” แล้ว สำเนาถูกบันทึกในเบราว์เซอร์นี้`],[/^Shape: (.+)$/,m=>`รูปทรง: ${T(m[1])}`],
+  [/^just now$/,()=>'เมื่อสักครู่'],[/^(\d+) min ago$/,m=>`${m[1]} นาทีที่แล้ว`],[/^(\d+) h ago$/,m=>`${m[1]} ชม. ที่แล้ว`],
+  [/^This diagram makes a long link \((\d+)k characters\)\..*$/,m=>`ไดอะแกรมนี้ทำให้ลิงก์ยาว (${m[1]}k ตัวอักษร) บางแอปแชตอาจตัดลิงก์ยาว ส่งไฟล์ JSON จะปลอดภัยกว่า`]
+];
+function TX(s){if(LANG!=='th')return s;if(TH[s])return TH[s];for(const[re,f]of TH_PAT){const m=s.match(re);if(m)return f(m)}return s}
+// translate UI text nodes and attributes in place; originals are kept so switching back is exact
+const ORIG=new WeakMap();
+function i18nNode(root){
+  if(!root||root.nodeType!==1&&root.nodeType!==3)return;
+  const skip=n=>n.closest&&n.closest('#stage,#editor,svg,input,textarea,#docName,.no-i18n');
+  const doText=t=>{const p=t.parentElement;if(!p||skip(p))return;const raw=ORIG.has(t)?ORIG.get(t):t.nodeValue;const key=raw.trim();if(!key)return;
+    if(!ORIG.has(t)&&!TH[key]&&!TH_PAT.some(([re])=>re.test(key)))return;ORIG.set(t,raw);const out=LANG==='th'?TX(key):key;t.nodeValue=raw.replace(key,out)};
+  const doEl=el=>{if(skip(el)&&!el.matches('input,textarea'))return;for(const a of['title','placeholder','aria-label']){if(!el.hasAttribute(a))continue;const k='i18n'+a.replace('-','');const raw=el.dataset[k]??el.getAttribute(a);if(!(raw in TH)&&!el.dataset[k])continue;el.dataset[k]=raw;el.setAttribute(a,LANG==='th'?T(raw):raw)}};
+  if(root.nodeType===3){doText(root);return}
+  doEl(root);root.querySelectorAll('[title],[placeholder],[aria-label]').forEach(doEl);
+  const w=document.createTreeWalker(root,NodeFilter.SHOW_TEXT);let n;while((n=w.nextNode()))doText(n);
+}
+const i18nObs=new MutationObserver(ms=>{if(LANG!=='th'&&!i18nDirty)return;for(const m of ms){if(m.type==='childList')m.addedNodes.forEach(i18nNode);else if(m.type==='characterData')i18nNode(m.target)}});
+let i18nDirty=false;
+function setLang(l){LANG=l;i18nDirty=true;LS.set('canvy:lang',l);document.documentElement.lang=l;i18nNode(document.body);$('#langBtn').textContent=l==='th'?'EN':'ไทย';$('#langBtn').title=l==='th'?'Switch to English':'เปลี่ยนเป็นภาษาไทย';
+  try{syncDir();syncShapeIcon();if(doc){syncLook();render()}}catch(_){}}
+
 /* ============================== state ============================== */
 let doc=null, els=[];
 let view={x:0,y:0,z:1};
@@ -573,7 +666,7 @@ function strokeCol(k,el){const s=S();
 function fillCol(k){return S().fills[k]||'none'}
 const swOf=el=>SW[el.sw||2]*S().swMul*(el.bold?1.4:1);
 
-function newDoc(name){return{id:uid(),name:name||'Untitled diagram',style:'pencil',elements:[],created:Date.now(),updated:Date.now(),view:null}}
+function newDoc(name){return{id:uid(),name:name||T('Untitled diagram'),style:'pencil',elements:[],created:Date.now(),updated:Date.now(),view:null}}
 function indexList(){return LS.get(K.index,[])}
 function writeIndex(){const idx=indexList().filter(d=>d.id!==doc.id);idx.unshift({id:doc.id,name:doc.name,updated:doc.updated,n:els.length});LS.set(K.index,idx)}
 
@@ -600,7 +693,7 @@ function openDoc(d){
   if(doc)save(true);
   doc=d;if(!STYLES[doc.style])doc.style='pencil';if(!Array.isArray(doc.elements))doc.elements=[];els=doc.elements;_sk='';
   sel.clear();undoStack=[];redoStack=[];
-  $('#docName').value=doc.name;
+  $('#docName').value=doc.name;document.title=doc.name+' · Canvy';
   syncLook();
   if(doc.view)view={...doc.view};else{view={x:innerWidth/2,y:innerHeight/2,z:1};if(els.length)fit()}
   remeasureAll();render();save(true);ensureFonts();
@@ -1123,13 +1216,14 @@ function openDial(x,y,flick){
 function closeDial(){$('#dial').classList.remove('show');$('#dialMenu').classList.remove('show');dialState=null}
 function showDialMenu(x,y,wp){
   const M=$('#dialMenu'),mod=/Mac/.test(navigator.platform)?'⌘':'Ctrl ';
-  const items=[['zin','Zoom in','+'],['zout','Zoom out','−'],['z100','Zoom to 100%',mod+'0'],['fit','Fit everything','0'],'-',['here','Center view here',''],['pan','Move canvas (hand)','H'],['sel','Select all',mod+'A']];
+  const items=[['t-select','Select','V'],['t-shape','Shapes','R'],['t-arrow','Arrow','A'],['t-text','Text','T'],['t-sticky','Sticky note','N'],['lib','Insert blocks…','I'],'-',['zin','Zoom in','+'],['zout','Zoom out','−'],['z100','Zoom to 100%',mod+'0'],['fit','Fit everything','0'],'-',['here','Center view here',''],['pan','Move canvas (hand)','H'],['sel','Select all',mod+'A']];
   if(clip)items.push(['paste','Paste here',mod+'V']);
   M.innerHTML=items.map(i=>i==='-'?'<hr>':`<button data-c="${i[0]}">${i[1]}<kbd>${i[2]}</kbd></button>`).join('');
   M.classList.add('show');const w=M.offsetWidth,h=M.offsetHeight;
-  let left=x+132;if(left+w>innerWidth-8)left=x-132-w;M.style.left=clamp(left,8,innerWidth-w-8)+'px';M.style.top=clamp(y-h/2,8,innerHeight-h-8)+'px';
+  let left=x+2,top=y+2;if(left+w>innerWidth-8)left=x-w-2;if(top+h>innerHeight-8)top=y-h-2;M.style.left=clamp(left,8,innerWidth-w-8)+'px';M.style.top=clamp(top,8,innerHeight-h-8)+'px';
   M.onclick=e=>{const b=e.target.closest('[data-c]');if(!b)return;const c=b.dataset.c;closeDial();
     ({zin:()=>zoomAt(1.25,x,y),zout:()=>zoomAt(1/1.25,x,y),z100:()=>zoomAt(1/view.z,x,y),fit,here:()=>{view.x+=innerWidth/2-x;view.y+=innerHeight/2-y;renderView();renderOverlay();saveViewSoon()},
+      't-select':()=>setTool('select'),'t-shape':()=>{setTool('shape');toggleShapeFly(true)},'t-arrow':()=>setTool('arrow'),'t-text':()=>setTool('text'),'t-sticky':()=>setTool('sticky'),lib:()=>openLib(),
       pan:()=>setTool('hand'),sel:()=>{setTool('select');sel=new Set(els.map(x=>x.id));render()},
       paste:()=>{const list=JSON.parse(clip),b=unionBox(list);pushUndo();const c2=cloneSet(list,wp[0]-(b.x+b.w/2),wp[1]-(b.y+b.h/2));els.push(...c2);sel=new Set(c2.map(e=>e.id));commit()}})[c]()};
 }
@@ -1154,9 +1248,8 @@ function openCtx(x,y,el){
   C.onclick=e=>{const b=e.target.closest('[data-c]');if(!b)return;C.classList.remove('show');
     ({edit:()=>{const one=selected()[0];if(one)startEdit(one)},dup:duplicate,copy:copySel,paste,front:()=>reorder(true),back:()=>reorder(false),zoom:zoomToSel,bigger:()=>scaleSel(1.2),smaller:()=>scaleSel(1/1.2),tidy:()=>tidy(true),del:deleteSel})[b.dataset.c]()};
 }
-function openCanvasCtx(x,y){ // right-click on empty canvas with something to paste: dial still opens; paste via keyboard
-  openDial(x,y,true);
-}
+// right-click / long-press / tap Space on empty canvas: a plain menu at the cursor (no dial)
+function openCanvasMenu(x,y){closeFloating();dialState={x,y,flick:false,hot:null,menuOnly:true};showDialMenu(x,y,toWorld(x,y))}
 
 /* ============================== pointer ============================== */
 function hitHandle(p){
@@ -1170,13 +1263,13 @@ let pressT=null;
 document.addEventListener('contextmenu',e=>{if(!e.target.closest('input,textarea,select'))e.preventDefault()},true);
 stage.addEventListener('pointerdown',e=>{
   if(editing){commitEdit();return}
-  if(dialState&&!dialState.flick&&e.button!==2){closeDial();return}
+  if(dialState&&e.button!==2){closeDial();return}
   closeFloating();
   const p=toWorld(e.clientX,e.clientY);
   if(e.button===2){
     const el=hitTest(p);
     if(el){if(!sel.has(el.id))sel=new Set([el.id]);if(tool!=='select')setTool('select');render();openCtx(e.clientX,e.clientY,el)}
-    else openDial(e.clientX,e.clientY,true);
+    else openCanvasMenu(e.clientX,e.clientY);
     return;
   }
   try{stage.setPointerCapture(e.pointerId)}catch(_){}
@@ -1196,7 +1289,7 @@ stage.addEventListener('pointerdown',e=>{
         if(e.altKey){const c=cloneSet(selected(),0,0);pushUndo(s0);els.push(...c);sel=new Set(c.map(x=>x.id));drag={kind:'move',last:p,start:p,applied:[0,0],snap:null,moved:true,set:withContents([...sel])}}
         else drag={kind:'move',last:p,start:p,applied:[0,0],snap:s0,moved:false,set:withContents([...sel])}}
       else{if(!e.shiftKey)sel.clear();drag={kind:'marquee',start:p,cur:p,base:new Set(sel)};
-        if(e.pointerType==='touch'){clearTimeout(pressT);const cx=e.clientX,cy=e.clientY;pressT=setTimeout(()=>{if(drag&&drag.kind==='marquee'&&Math.hypot(drag.cur[0]-drag.start[0],drag.cur[1]-drag.start[1])*view.z<8){drag=null;render();openDial(cx,cy,false)}},520)}}
+        if(e.pointerType==='touch'){clearTimeout(pressT);const cx=e.clientX,cy=e.clientY;pressT=setTimeout(()=>{if(drag&&drag.kind==='marquee'&&Math.hypot(drag.cur[0]-drag.start[0],drag.cur[1]-drag.start[1])*view.z<8){drag=null;render();openCanvasMenu(cx,cy)}},520)}}
       render();break}
     case'shape':case'sticky':case'frame':{
       const type=tool==='shape'?props.kind:tool;const el=makeShape(type,p[0],p[1],0,0);if(type==='frame')el.label='Frame '+(frames().length+1);
@@ -1492,7 +1585,7 @@ $('#cmdIn').addEventListener('keydown',e=>{
   else if(e.key==='Escape')e.target.blur();
 });
 $('#cmdIn').addEventListener('paste',e=>{const t=(e.clipboardData||{}).getData?.('text/plain')||'';if(/^\s*(graph|flowchart)\b/i.test(t)||t.includes('\n')){e.preventDefault();applyCommand(t)}});
-function syncDir(){$('#dirBtn').textContent=props.dir==='TB'?'TB ↓':'LR →';$('#dirBtn').title=`Typed diagrams flow ${props.dir==='TB'?'top to bottom':'left to right'} (click to switch)`}
+function syncDir(){$('#dirBtn').textContent=props.dir==='TB'?'TB ↓':'LR →';$('#dirBtn').title=LANG==='th'?`ไดอะแกรมที่พิมพ์จะเรียง${props.dir==='TB'?'จากบนลงล่าง':'จากซ้ายไปขวา'} (คลิกเพื่อสลับ)`:`Typed diagrams flow ${props.dir==='TB'?'top to bottom':'left to right'} (click to switch)`}
 $('#dirBtn').onclick=()=>{props.dir=props.dir==='TB'?'LR':'TB';saveProps();syncDir();toast(props.dir==='TB'?'New diagrams flow top to bottom':'New diagrams flow left to right')};
 
 /* ============================== Mermaid export ============================== */
@@ -1549,6 +1642,8 @@ const TEMPLATES=[
   {name:'Sequence of steps',desc:'A simple left-to-right pipeline',dir:'LR',cmd:'Collect -> Clean -> Analyze -> Visualize -> Share'},
   {name:'ขั้นตอนการสั่งซื้อ',desc:'ตัวอย่าง flow ภาษาไทย',dir:'LR',cmd:'user:ลูกค้า -> สั่งซื้อสินค้า -> {ชำระเงินสำเร็จ?}, {ชำระเงินสำเร็จ?} -(ใช่)-> ส่งอีเมลยืนยัน -> db:คำสั่งซื้อ, {ชำระเงินสำเร็จ?} -(ไม่)-> แจ้งลองใหม่'}
 ];
+const TPL_TH={'Flowchart':['ผังงาน','ขั้นตอนบนลงล่างพร้อมทางแยก'],'System architecture':['สถาปัตยกรรมระบบ','ไคลเอนต์ เกตเวย์ เซอร์วิส ฐานข้อมูล และคิว'],'RAG pipeline':['ระบบ RAG','สองทางเข้ารวมเป็นคำตอบ'],'State machine':['State machine','สถานะ ลูกศรวน และการเปลี่ยนสถานะ'],'Mind map':['แผนที่ความคิด','หัวข้อหลักกับโน้ตแตกแขนง'],'Sequence of steps':['ลำดับขั้นตอน','ไปป์ไลน์จากซ้ายไปขวา'],'Load-balanced service':['เซอร์วิสหลัง Load balancer','ทางเข้าเดียว 3 สำเนา'],'Cache-aside':['Cache-aside','อ่านแคชก่อน ไม่เจอค่อยอ่านฐานข้อมูล'],'Publish / subscribe':['Publish / subscribe','ผู้ส่งหนึ่ง ผู้รับหลายราย'],'Retry with backoff':['ลองใหม่เมื่อพลาด','วนกลับเพื่อลองใหม่'],'Request / response':['ร้องขอ / ตอบกลับ','สื่อสารสองทาง'],'Fan-out / fan-in':['กระจายงาน / รวมผล','แตกงานแล้วรวมผลลัพธ์'],'CQRS':['CQRS','แยกทางเขียนกับทางอ่าน'],'ETL pipeline':['ETL','ดึง แปลง และโหลดข้อมูล']};
+const tn=t=>LANG==='th'&&TPL_TH[t.name]?TPL_TH[t.name]:[t.name,t.desc];
 let libTab='systems',insN=0;
 const LIB_TABS=[['sections','Sections'],['systems','Systems'],['data','Data & APIs'],['notes','Notes'],['patterns','Patterns'],['icons','Icons'],['thai','ไทย'],['templates','Templates']];
 function renderLib(){
@@ -1556,7 +1651,7 @@ function renderLib(){
   $('#libTabs').innerHTML=LIB_TABS.map(([k,n])=>`<button data-tab="${k}" class="${k===libTab&&!q?'on':''}">${n}</button>`).join('');
   const sv=S();L.style.background=sv.dark?sv.bg:'';L.classList.toggle('dark',!!sv.dark);
   if(!q&&(libTab==='templates'||libTab==='patterns')){const list=libTab==='templates'?TEMPLATES:PATTERNS;
-    L.innerHTML='<div class="tpl">'+list.map((t,i)=>`<button data-${libTab==='templates'?'tpl':'pat'}="${i}"><b>${esc(t.name)}</b><small>${esc(t.desc)}</small><code>${esc(t.cmd.length>90?t.cmd.slice(0,88)+'…':t.cmd)}</code></button>`).join('')+'</div>';return}
+    L.innerHTML='<div class="tpl">'+list.map((t,i)=>`<button data-${libTab==='templates'?'tpl':'pat'}="${i}"><b>${esc(tn(t)[0])}</b><small>${esc(tn(t)[1])}</small><code>${esc(t.cmd.length>90?t.cmd.slice(0,88)+'…':t.cmd)}</code></button>`).join('')+'</div>';return}
   const groups=q?Object.entries(BLOCKS):[[libTab,BLOCKS[libTab]]];let h='<div class="lib">';let any=false;
   for(const[key,g]of groups){const items=g.items.map((b,i)=>[b,i]).filter(([b])=>!q||b.n.toLowerCase().includes(q)||(b.l||'').toLowerCase().includes(q)||b.k.includes(q)||(b.i||'').includes(q));if(!items.length)continue;any=true;
     if(q)h+=`<div class="cat">${esc(g.name)}</div>`;
@@ -1640,7 +1735,7 @@ addEventListener('keydown',e=>{
   if(KEYTOOL[k]){setTool(KEYTOOL[k]);toggleShapeFly(false);return}
 });
 addEventListener('keyup',e=>{if(e.key===' '&&spaceDown){spaceDown=false;stage.className=CURSOR[tool]||'';
-  if(!spaceUsed&&performance.now()-spaceAt<260&&!e.target.matches('input,textarea,select'))openDial(mouse[0],mouse[1],false)}});
+  if(!spaceUsed&&performance.now()-spaceAt<260&&!e.target.matches('input,textarea,select'))openCanvasMenu(mouse[0],mouse[1])}});
 addEventListener('paste',e=>{
   if(e.target.matches('input,textarea')||clip)return;
   const t=(e.clipboardData||{}).getData?.('text/plain');if(t&&(/->|→|-->|---/.test(t)||/^\s*(graph|flowchart)\b/i.test(t))){e.preventDefault();applyCommand(t)}
@@ -1650,7 +1745,7 @@ addEventListener('paste',e=>{
 $('#zIn').onclick=()=>zoomAt(1.2);$('#zOut').onclick=()=>zoomAt(1/1.2);$('#zPct').onclick=()=>zoomAt(1/view.z);$('#zFit').onclick=fit;
 $('#bUndo').onclick=undo;$('#bRedo').onclick=redo;$('#bHelp').onclick=()=>$('#help').classList.toggle('show');
 $('#btnTidy').onclick=()=>tidy(sel.size>=2);
-$('#docName').addEventListener('change',e=>{doc.name=e.target.value.trim()||'Untitled diagram';e.target.value=doc.name;save(true)});
+$('#docName').addEventListener('change',e=>{doc.name=e.target.value.trim()||T('Untitled diagram');e.target.value=doc.name;document.title=doc.name+' · Canvy';save(true)});
 $('#docName').addEventListener('keydown',e=>{if(e.key==='Enter'||e.key==='Escape')e.target.blur()});
 $$('[data-close]').forEach(b=>b.onclick=()=>$('#'+b.dataset.close).classList.remove('show'));
 function closeFloating(){let c=false;
@@ -1663,7 +1758,7 @@ function renderDocs(){
   const L=$('#docList');L.innerHTML='';
   for(const d of indexList().sort((a,b)=>b.updated-a.updated)){
     const it=document.createElement('div');it.className='item'+(d.id===doc.id?' on':'');
-    it.innerHTML=`<span class="dot"></span><span class="meta"><b>${esc(d.name)}</b><small>${ago(d.updated)} · ${d.n||0} item${d.n===1?'':'s'}</small></span><button class="x" title="Delete">Delete</button>`;
+    it.innerHTML=`<span class="dot"></span><span class="meta"><b>${esc(d.name)}</b><small>${TX(ago(d.updated))} · ${d.n||0} ${LANG==='th'?'ชิ้น':'item'+(d.n===1?'':'s')}</small></span><button class="x" title="Delete">Delete</button>`;
     it.onclick=e=>{if(e.target.closest('.x'))return;if(d.id!==doc.id)loadDoc(d.id);$('#docsDrawer').classList.remove('show')};
     const x=it.querySelector('.x');x.onclick=()=>{if(!x.classList.contains('confirm')){x.classList.add('confirm');x.textContent='Sure?';setTimeout(()=>{x.classList.remove('confirm');x.textContent='Delete'},2500);return}deleteDoc(d.id)};
     L.appendChild(it);
@@ -1687,7 +1782,7 @@ function renderHist(){
   const L=$('#histList'),h=LS.get(K.hist(doc.id),[]);L.innerHTML='';
   if(!h.length){L.innerHTML='<div class="note">No versions yet. They appear here as you work.</div>';return}
   h.forEach((v,i)=>{const it=document.createElement('div');it.className='item'+(i===0?' on':'');
-    it.innerHTML=`<span class="dot"></span><span class="meta"><b>${v.label?esc(v.label):new Date(v.t).toLocaleString(undefined,{weekday:'short',hour:'2-digit',minute:'2-digit'})}</b><small>${ago(v.t)} · ${v.n} item${v.n===1?'':'s'}</small></span><button class="btn sm">Restore</button>`;
+    it.innerHTML=`<span class="dot"></span><span class="meta"><b>${v.label?esc(v.label):new Date(v.t).toLocaleString(undefined,{weekday:'short',hour:'2-digit',minute:'2-digit'})}</b><small>${TX(ago(v.t))} · ${v.n} ${LANG==='th'?'ชิ้น':'item'+(v.n===1?'':'s')}</small></span><button class="btn sm">Restore</button>`;
     it.querySelector('button').onclick=()=>{if(v.data===snap()){toast('That version matches the canvas');return}autoSnapshot(true,'Before restore');pushUndo();setEls(JSON.parse(v.data));sel.clear();commit();renderHist();toast('Version restored. Undo is available.')};
     L.appendChild(it)});
 }
@@ -1724,9 +1819,10 @@ function sanitize(list){
 $('#btnShare').onclick=async()=>{
   closeFloating();$('#shareScrim').classList.add('show');const inp=$('#shareLink');inp.value='Preparing link…';
   if(!els.length){inp.value='Draw something first';$('#shareNote').textContent='The canvas is empty, so there is nothing to share yet.';return}
-  const code=await packDoc();const url=location.href.split('#')[0]+'#d='+code;inp.value=url;
+  const pv=$('#sharePv');pv.innerHTML='';const r0=buildSvg(true);if(r0){const im=new Image();im.alt='';im.src='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(r0.svg);pv.appendChild(im)}
+  const code=await packDoc();const url=location.href.split('#')[0].split('?')[0]+'#d='+code;inp.value=url;
   $('#shareNote').classList.toggle('warn',url.length>8000);
-  $('#shareNote').textContent=url.length>8000?`This diagram makes a long link (${Math.round(url.length/1000)}k characters). Some chat apps cut long links, so a JSON export may be safer.`:'The whole diagram is packed into this link. Nothing is uploaded: whoever opens it gets their own copy.';
+  $('#shareNote').textContent=TX(url.length>8000?`This diagram makes a long link (${Math.round(url.length/1000)}k characters). Some chat apps cut long links, so a JSON export may be safer.`:'The whole diagram is packed into this link. Nothing is uploaded: whoever opens it gets their own copy.');
 };
 $('#shareClose').onclick=()=>$('#shareScrim').classList.remove('show');
 $('#shareScrim').addEventListener('pointerdown',e=>{if(e.target.id==='shareScrim')$('#shareScrim').classList.remove('show')});
@@ -1745,6 +1841,23 @@ function buildSvg(withFontImport){
 }
 $('#exSvg').onclick=()=>{const r=buildSvg(true);if(!r)return toast('Nothing to export yet');download(new Blob([r.svg],{type:'image/svg+xml'}),slug()+'.svg')};
 $('#exJson').onclick=()=>{download(new Blob([JSON.stringify({app:'canvy',v:2,name:doc.name,style:doc.style,paper:doc.paper,strokeMode:doc.strokeMode,elements:els},null,1)],{type:'application/json'}),slug()+'.json')};
+async function diagramImage(scale=2){
+  const r=buildSvg(false);if(!r)return null;let svg=r.svg;try{svg=await inlineFonts(svg)}catch(_){}
+  const img=new Image();img.src='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(svg);await img.decode();return{img,W:r.W,H:r.H};
+}
+async function pngBlob(scale=2){const d=await diagramImage();if(!d)return null;const c=document.createElement('canvas');c.width=d.W*scale;c.height=d.H*scale;const x=c.getContext('2d');x.scale(scale,scale);x.drawImage(d.img,0,0);return new Promise(r=>c.toBlob(r,'image/png'))}
+async function cardBlob(){
+  const d=await diagramImage();if(!d)return null;const s=S(),c=document.createElement('canvas');c.width=1200;c.height=630;const x=c.getContext('2d');
+  x.fillStyle=s.bg;x.fillRect(0,0,1200,630);x.fillStyle=s.dot;for(let i=12;i<1200;i+=24)for(let j=12;j<630;j+=24){x.beginPath();x.arc(i,j,1.5,0,7);x.fill()}
+  const ink=s.dark?'#f1eee6':'#171717',muted=s.dark?'#b9b3a8':'#77736d';
+  try{await document.fonts.load('700 44px "Playpen Sans Thai"','Aก')}catch(_){}
+  x.fillStyle=ink;x.font="700 44px 'Playpen Sans Thai', sans-serif";let title=doc.name||'Canvy';while(x.measureText(title).width>1040&&title.length>4)title=title.slice(0,-2);if(title!==doc.name)title+='…';x.fillText(title,64,92);
+  x.fillStyle=muted;x.font="600 20px 'Playpen Sans Thai', sans-serif";x.fillText(LANG==='th'?'วาดด้วย Canvy · เปิดลิงก์เพื่อแก้ไขต่อ':'Made with Canvy · open the link to edit your own copy',64,128);
+  const box={x:48,y:160,w:1104,h:430},k=Math.min(box.w/d.W,box.h/d.H,1.6),w=d.W*k,h=d.H*k;x.drawImage(d.img,box.x+(box.w-w)/2,box.y+(box.h-h)/2,w,h);
+  return new Promise(r=>c.toBlob(r,'image/png'));
+}
+$('#copyImg').onclick=async()=>{try{const b=await pngBlob(2);if(!b)return toast('Nothing to export yet');await navigator.clipboard.write([new ClipboardItem({'image/png':b})]);const o=$('#copyImg').textContent;$('#copyImg').textContent=T('Image copied');setTimeout(()=>$('#copyImg').textContent=o,1600)}catch(_){toast('PNG export failed in this browser. Try SVG.')}};
+$('#dlCard').onclick=async()=>{const b=await cardBlob();if(!b)return toast('Nothing to export yet');download(b,slug()+'-preview.png')};
 $('#exPng').onclick=async()=>{
   const r=buildSvg(false);if(!r)return toast('Nothing to export yet');
   let svg=r.svg;
@@ -1809,14 +1922,15 @@ async function importFromHash(){
 }
 addEventListener('hashchange',()=>{if(location.hash.startsWith('#d='))importFromHash()});
 async function boot(){
-  buildProps();buildShapeFly();buildDial();buildLook();buildEmpty();syncShapeIcon();syncDir();setTool('select');
+  i18nObs.observe(document.body,{childList:true,subtree:true});$('#langBtn').onclick=()=>{setLang(LANG==='th'?'en':'th');toast(LANG==='th'?'เปลี่ยนเป็นภาษาไทยแล้ว':'Switched to English')};
+  buildProps();buildShapeFly();buildDial();buildLook();buildEmpty();syncShapeIcon();syncDir();setTool('select');setLang(LANG);
   if(await importFromHash())return;
   const last=LS.get(K.last,null),d=last&&LS.get(K.doc(last),null);
   if(d)openDoc(d);else{const first=indexList()[0],d2=first&&LS.get(K.doc(first.id),null);openDoc(d2||newDoc())}
 }
 function showMoveTip(x,y,dx,dy){const t=$('#moveTip');t.textContent=`${dx>=0?'+':''}${Math.round(dx)}, ${dy>=0?'+':''}${Math.round(dy)}`;t.style.left=(x+16)+'px';t.style.top=(y+18)+'px';t.style.display='block'}
 function hideMoveTip(){$('#moveTip').style.display='none'}
-let toastT=null;function toast(msg,ms=2200){const t=$('#toast');t.textContent=msg;t.classList.add('show');clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove('show'),ms)}
+let toastT=null;function toast(msg,ms=2200){const t=$('#toast');t.textContent=TX(msg);t.classList.add('show');clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove('show'),ms)}
 async function ensureFonts(){
   if(!document.fonts||!document.fonts.load||!doc)return;
   const st=S(),jobs=[];

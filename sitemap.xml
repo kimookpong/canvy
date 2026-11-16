@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">
+  <url>
+    <loc>https://kimookpong.github.io/canvy/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://kimookpong.github.io/canvy/"/>
+    <xhtml:link rel="alternate" hreflang="th" href="https://kimookpong.github.io/canvy/?lang=th"/>
+    <changefreq>weekly</changefreq><priority>1.0</priority>
+  </url>
+  <url>
+    <loc>https://kimookpong.github.io/canvy/app/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://kimookpong.github.io/canvy/app/"/>
+    <xhtml:link rel="alternate" hreflang="th" href="https://kimookpong.github.io/canvy/app/?lang=th"/>
+    <changefreq>weekly</changefreq><priority>0.8</priority>
+  </url>
+</urlset>
