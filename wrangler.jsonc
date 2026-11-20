@@ -8,6 +8,6 @@
   "routes": [{ "pattern": "canvy.thasala.dev", "custom_domain": true }],
   "workers_dev": true,
   "observability": { "enabled": true },
-  // pictures for link previews (/s/<id>); created automatically on the first deploy
-  "kv_namespaces": [{ "binding": "PREVIEWS" }]
+  // link-preview pictures (/s/<id>), shared diagrams and README images (/r/<slot>)
+  "kv_namespaces": [{ "binding": "PREVIEWS", "id": "ee2f3a6dc0f643a8b6fb3e678fbe3566" }]
 }
