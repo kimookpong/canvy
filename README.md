@@ -62,6 +62,16 @@ A hand-drawn diagram canvas that runs entirely in the browser. There is no accou
 | `## Heading` | Section title above the new shapes |
 | `, ; or new line` | Separate chains |
 
+### Diagrams in a GitHub README
+
+In the editor's Share box, **Make README image** uploads a PNG of the diagram and copies Markdown like:
+
+```md
+[![Canvy architecture](https://canvy.thasala.dev/r/<slot>.png)](https://canvy.thasala.dev/r/<slot>)
+```
+
+GitHub shows the picture; clicking it opens the diagram in Canvy. After editing, **Update README image** replaces the picture in place (GitHub shows it within about 5 minutes), so the README never needs editing again. Each slot has a random key kept only in the browser that made it; the Worker stores just its hash, so nobody else can replace the picture.
+
 ### Use Canvy from AI
 
 - **Command links**: `app/#c=<diagram>&title=…&dir=LR|TB&style=…` builds a diagram from Canvy syntax or Mermaid written into the link. Add `?view=1` for read-only.

@@ -1,7 +1,7 @@
 // Canvy service worker: works offline and always serves the newest pages when online.
 // Pages: network first (revalidated, so a new deploy shows up at once), cached copy when offline.
 // Fonts and static files: served from cache, refreshed in the background.
-const VERSION = 'canvy-v13';
+const VERSION = 'canvy-v14';
 const CORE = ['./', './app/', './favicon.svg', './manifest.webmanifest', './icon-192.png', './icon-512.png'];
 
 self.addEventListener('install', e => {

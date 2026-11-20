@@ -57,6 +57,69 @@ async function putPreview(request, env, url) {
   await env.PREVIEWS.put('pv:' + id, buf, { metadata: { t: title, ct: info.type }, expirationTtl: TTL });
   return new Response(null, { status: 204 });
 }
+// ---------- README images: /r/<slot>.png is a picture of a diagram that its owner can keep updating ----------
+// The browser that made the slot keeps a random key; only its hash is stored, and only that key can replace the picture.
+const SLOT_RE = /^[a-f0-9]{16}$/, KEY_RE = /^[a-f0-9]{32}$/, MAX_README = 2.5 * 1024 * 1024;
+const sha = async s => [...new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(s)))].map(b => b.toString(16).padStart(2, '0')).join('');
+function pngSize(buf) { const b = new Uint8Array(buf); if (b.length < 24 || b[0] !== 0x89 || b[1] !== 0x50 || b[2] !== 0x4e || b[3] !== 0x47) return null; const v = new DataView(buf); return { w: v.getUint32(16), h: v.getUint32(20) }; }
+async function readmeAuth(request, env, url) {
+  if (!env.PREVIEWS) return { res: new Response('README images are not set up', { status: 503 }) };
+  const origin = request.headers.get('Origin');
+  if (origin && origin !== url.origin) return { res: new Response('Forbidden', { status: 403 }) };
+  const slot = url.searchParams.get('slot') || '', key = request.headers.get('X-Canvy-Key') || '';
+  if (!SLOT_RE.test(slot) || !KEY_RE.test(key)) return { res: new Response('Bad slot or key', { status: 400 }) };
+  const kh = await sha('canvy-readme|' + key);
+  const cur = await env.PREVIEWS.getWithMetadata('r:' + slot, { type: 'stream' }); if (cur.value && cur.value.cancel) cur.value.cancel();
+  if (cur.metadata && cur.metadata.kh !== kh) return { res: new Response('This README image belongs to someone else', { status: 403 }) };
+  return { slot, kh, exists: !!cur.metadata, meta: cur.metadata };
+}
+async function putReadme(request, env, url) {
+  const a = await readmeAuth(request, env, url); if (a.res) return a.res;
+  const buf = await request.arrayBuffer();
+  if (buf.byteLength > MAX_README) return new Response('Too large', { status: 413 });
+  const size = pngSize(buf);
+  if (!size || size.w < 16 || size.h < 16 || size.w > 4096 || size.h > 4096) return new Response('Expected a PNG up to 4096x4096', { status: 415 });
+  let title = ''; try { title = decodeURIComponent(request.headers.get('X-Canvy-Title') || '').slice(0, 120); } catch { }
+  await env.PREVIEWS.put('r:' + a.slot, buf, { metadata: { kh: a.kh, t: title, w: size.w, h: size.h, u: Date.now() }, expirationTtl: TTL });
+  return new Response(null, { status: 204 });
+}
+async function putReadmeDiagram(request, env, url) {
+  const a = await readmeAuth(request, env, url); if (a.res) return a.res;
+  if (!a.exists) return new Response('Upload the picture first', { status: 409 });
+  const code = (await request.text()).trim();
+  if (!code || code.length > MAX_CODE || !CODE_RE.test(code)) return new Response('Bad diagram', { status: 400 });
+  await env.PREVIEWS.put('rc:' + a.slot, code, { expirationTtl: TTL });
+  return new Response(null, { status: 204 });
+}
+async function getReadmeImage(env, slot, request) {
+  const r = env.PREVIEWS && SLOT_RE.test(slot) ? await env.PREVIEWS.getWithMetadata('r:' + slot, { type: 'arrayBuffer' }) : null;
+  if (!r || !r.value) return new Response('Not found', { status: 404 });
+  const etag = '"' + ((r.metadata && r.metadata.u) || 0) + '"';
+  const h = { 'Content-Type': 'image/png', 'Cache-Control': 'public, max-age=300', ETag: etag };
+  if (request.headers.get('If-None-Match') === etag) return new Response(null, { status: 304, headers: h });
+  return new Response(r.value, { headers: h });
+}
+async function readmePage(env, url, slot) {
+  let title = '', code = '';
+  if (env.PREVIEWS && SLOT_RE.test(slot)) {
+    const r = await env.PREVIEWS.getWithMetadata('r:' + slot, { type: 'stream' }); if (r.value && r.value.cancel) r.value.cancel(); title = (r.metadata && r.metadata.t) || '';
+    const c = await env.PREVIEWS.get('rc:' + slot, { type: 'text' }); if (c && CODE_RE.test(c)) code = c;
+  }
+  return htmlPage(url, { name: title || 'Canvy diagram', img: url.origin + '/r/' + slot + '.png', canonical: url.origin + '/r/' + slot, code, large: true });
+}
+function htmlPage(url, { name, img, canonical, code, large }) {
+  const desc = 'แผนภาพที่วาดด้วย Canvy เปิดลิงก์เพื่อดูและแก้ไขสำเนาของคุณ · A hand-drawn diagram made with Canvy. Open the link to view and edit your own copy.';
+  const html = `<!DOCTYPE html><html lang="th"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>${esc(name)} · Canvy</title><meta name="description" content="${esc(desc)}"><meta name="robots" content="noindex">
+<meta property="og:type" content="website"><meta property="og:site_name" content="Canvy"><meta property="og:title" content="${esc(name)}">
+<meta property="og:description" content="${esc(desc)}"><meta property="og:url" content="${esc(canonical)}">
+<meta property="og:image" content="${esc(img)}">${large ? '' : '<meta property="og:image:width" content="1200"><meta property="og:image:height" content="630">'}<meta property="og:image:alt" content="${esc(name)}">
+<meta name="twitter:card" content="summary_large_image"><meta name="twitter:title" content="${esc(name)}"><meta name="twitter:image" content="${esc(img)}">
+<link rel="icon" href="/favicon.svg"><script>var D=${JSON.stringify(code)};location.replace('/app/'+location.search+(location.hash||(D?'#d='+D:'')))</script>
+</head><body style="font-family:system-ui;padding:40px"><p><a href="/app/">Open in Canvy</a></p></body></html>`;
+  return new Response(html, { headers: { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'public, max-age=300' } });
+}
+
 async function getPreviewImage(env, id) {
   const r = env.PREVIEWS && ID_RE.test(id) ? await env.PREVIEWS.getWithMetadata('pv:' + id, { type: 'arrayBuffer', cacheTtl: 86400 }) : null;
   if (!r || !r.value) return Response.redirect(new URL('/og-image.png', 'https://canvy.thasala.dev').href, 302);
@@ -68,21 +131,18 @@ async function sharePage(env, url, id) {
     const r = await env.PREVIEWS.getWithMetadata('pv:' + id, { type: 'stream', cacheTtl: 86400 }); if (r.value && r.value.cancel) r.value.cancel(); title = (r.metadata && r.metadata.t) || '';
     const c = await env.PREVIEWS.get('d:' + id, { type: 'text', cacheTtl: 86400 }); if (c && CODE_RE.test(c)) code = c;
   }
-  const name = title || 'Canvy diagram', img = url.origin + '/s/' + id + '.jpg', desc = 'แผนภาพที่วาดด้วย Canvy เปิดลิงก์เพื่อดูและแก้ไขสำเนาของคุณ · A hand-drawn diagram made with Canvy. Open the link to view and edit your own copy.';
-  const html = `<!DOCTYPE html><html lang="th"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-<title>${esc(name)} · Canvy</title><meta name="description" content="${esc(desc)}"><meta name="robots" content="noindex">
-<meta property="og:type" content="website"><meta property="og:site_name" content="Canvy"><meta property="og:title" content="${esc(name)}">
-<meta property="og:description" content="${esc(desc)}"><meta property="og:url" content="${esc(url.origin + '/s/' + id)}">
-<meta property="og:image" content="${esc(img)}"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630"><meta property="og:image:alt" content="${esc(name)}">
-<meta name="twitter:card" content="summary_large_image"><meta name="twitter:title" content="${esc(name)}"><meta name="twitter:image" content="${esc(img)}">
-<link rel="icon" href="/favicon.svg"><script>var D=${JSON.stringify(code)};location.replace('/app/'+location.search+(location.hash||(D?'#d='+D:'')))</script>
-</head><body style="font-family:system-ui;padding:40px"><p><a href="/app/">Open in Canvy</a></p></body></html>`;
-  return new Response(html, { headers: { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'public, max-age=300' } });
+  return htmlPage(url, { name: title || 'Canvy diagram', img: url.origin + '/s/' + id + '.jpg', canonical: url.origin + '/s/' + id, code });
 }
 
 export default {
   async fetch(request, env = {}) {
     const url = new URL(request.url);
+    if (url.pathname === '/api/readme' || url.pathname === '/api/readme-diagram') {
+      if (request.method !== 'PUT') return new Response('Method Not Allowed', { status: 405, headers: { Allow: 'PUT' } });
+      return url.pathname === '/api/readme' ? putReadme(request, env, url) : putReadmeDiagram(request, env, url);
+    }
+    const rm = url.pathname.match(/^\/r\/([a-f0-9]{16})(\.png)?$/);
+    if (rm && (request.method === 'GET' || request.method === 'HEAD')) return rm[2] ? getReadmeImage(env, rm[1], request) : readmePage(env, url, rm[1]);
     if (url.pathname === '/api/share') {
       if (request.method === 'PUT') return putShare(request, env, url);
       return new Response('Method Not Allowed', { status: 405, headers: { Allow: 'PUT' } });

@@ -108,6 +108,32 @@ async function exercise(label, s) {
   const noKv = await worker.fetch(new Request(base + '/api/preview?id=' + id, { method: 'PUT', body: jpeg, headers: { Origin: base } }), {});
   check('preview: without storage the app falls back', noKv.status === 503); }
 
+// 2c. README images: a slot its owner can keep updating
+{ const worker = (await import(join(root, 'worker/index.mjs'))).default;
+  const store = new Map(), env = { PREVIEWS: {
+    async put(k, v, o) { store.set(k, { v: typeof v === 'string' ? new TextEncoder().encode(v).buffer : v instanceof ArrayBuffer ? v : await new Response(v).arrayBuffer(), m: o?.metadata ?? null }); },
+    async get(k, o) { const e = store.get(k); if (!e) return null; const t = typeof o === 'string' ? o : o?.type; return t === 'text' ? new TextDecoder().decode(e.v) : t === 'stream' ? new Response(e.v).body : e.v; },
+    async getWithMetadata(k, o) { const e = store.get(k); if (!e) return { value: null, metadata: null }; const t = typeof o === 'string' ? o : o?.type; return { value: t === 'stream' ? new Response(e.v).body : e.v, metadata: e.m }; } } };
+  const png = (w, h, mark = 0) => { const b = new Uint8Array(64); b.set([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0, 0, 0, 13, 0x49, 0x48, 0x44, 0x52]); const v = new DataView(b.buffer); v.setUint32(16, w); v.setUint32(20, h); b[63] = mark; return b; };
+  const base = 'https://canvy.thasala.dev', slot = 'a1b2c3d4e5f60718', key = 'f'.repeat(32), other = 'e'.repeat(32);
+  const up = (body, k = key, h = {}, path = '/api/readme') => worker.fetch(new Request(base + path + '?slot=' + slot, { method: 'PUT', body, headers: { Origin: base, 'X-Canvy-Key': k, 'X-Canvy-Title': encodeURIComponent('Canvy architecture'), ...h } }), env);
+  check('readme: first upload makes the slot', (await up(png(1600, 900, 1))).status === 204);
+  check('readme: diagram stored for the click-through', (await up('zABC_def-123', key, {}, '/api/readme-diagram')).status === 204);
+  check('readme: owner can update the picture', (await up(png(1600, 900, 2))).status === 204);
+  check('readme: someone else cannot replace it', (await up(png(1600, 900, 3), other)).status === 403);
+  check('readme: someone else cannot change the diagram', (await up('zEVIL', other, {}, '/api/readme-diagram')).status === 403);
+  check('readme: only PNG accepted', (await up(new Uint8Array(64))).status === 415);
+  check('readme: huge pictures refused', (await up(png(5000, 900))).status === 415);
+  check('readme: bad key format refused', (await up(png(800, 600), 'nope')).status === 400);
+  check('readme: other site refused', (await up(png(800, 600), key, { Origin: 'https://evil.example' })).status === 403);
+  const img = await worker.fetch(new Request(base + '/r/' + slot + '.png'), env), bytes = new Uint8Array(await img.arrayBuffer());
+  check('readme: picture is the latest one, cached briefly', img.status === 200 && img.headers.get('content-type') === 'image/png' && img.headers.get('cache-control') === 'public, max-age=300' && bytes[63] === 2);
+  const etag = img.headers.get('etag'), again = await worker.fetch(new Request(base + '/r/' + slot + '.png', { headers: { 'If-None-Match': etag } }), env);
+  check('readme: unchanged picture answers 304', again.status === 304);
+  const page = await (await worker.fetch(new Request(base + '/r/' + slot), env)).text();
+  check('readme: clicking the picture opens the diagram', page.includes('var D="zABC_def-123"') && page.includes(`content="${base}/r/${slot}.png"`));
+  check('readme: unknown slot is 404', (await worker.fetch(new Request(base + '/r/0000000000000000.png'), env)).status === 404); }
+
 // 3. the .mcpb bundle: build, unzip, run the server the way the manifest says
 { execSync('sh mcp/build-mcpb.sh', { cwd: root, stdio: 'ignore' });
   check('mcpb: built', existsSync(join(root, 'canvy.mcpb')));
